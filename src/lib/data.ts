@@ -1,0 +1,79 @@
+import { Product, PricePoint, SiteStats } from "@/types";
+import fs from "fs";
+import path from "path";
+
+const DATA_DIR = path.join(process.cwd(), "public", "data");
+
+export function getAllProducts(): Product[] {
+  const filePath = path.join(DATA_DIR, "products.json");
+  if (!fs.existsSync(filePath)) return [];
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as Product[];
+}
+
+export function getProductBySlug(slug: string): Product | undefined {
+  const products = getAllProducts();
+  return products.find((p) => p.slug === slug);
+}
+
+export function getProductsByCategory(category: string): Product[] {
+  return getAllProducts().filter((p) => p.category === category);
+}
+
+export function getProductsByRetailer(retailer: string): Product[] {
+  return getAllProducts().filter((p) => p.retailer === retailer);
+}
+
+export function getPriceHistory(productId: number): PricePoint[] {
+  const filePath = path.join(DATA_DIR, "history", `${productId}.json`);
+  if (!fs.existsSync(filePath)) return [];
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as PricePoint[];
+}
+
+export function getStats(): SiteStats {
+  const filePath = path.join(DATA_DIR, "stats.json");
+  if (!fs.existsSync(filePath)) {
+    return {
+      totalProducts: 0,
+      totalPricePoints: 0,
+      retailers: [],
+      categories: [],
+      lastUpdated: new Date().toISOString(),
+      productsByRetailer: {},
+      productsByCategory: {},
+    };
+  }
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as SiteStats;
+}
+
+export function searchProducts(query: string): Product[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  const products = getAllProducts();
+  return products
+    .filter((p) => p.name.toLowerCase().includes(q))
+    .slice(0, 50);
+}
+
+export function getDeals(): Product[] {
+  const products = getAllProducts();
+  return products
+    .filter((p) => p.minPrice < p.maxPrice)
+    .sort((a, b) => {
+      const aDiscount = (a.maxPrice - a.currentPrice) / a.maxPrice;
+      const bDiscount = (b.maxPrice - b.currentPrice) / b.maxPrice;
+      return bDiscount - aDiscount;
+    })
+    .slice(0, 12);
+}
+
+export function formatPrice(price: number): string {
+  return `$${price.toFixed(2)}`;
+}
+
+export function getAmazonSearchUrl(productName: string): string {
+  const query = encodeURIComponent(productName);
+  return `https://www.amazon.ca/s?k=${query}&tag=trackaura00-20`;
+}

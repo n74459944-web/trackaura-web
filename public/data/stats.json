@@ -1,0 +1,25 @@
+{
+  "totalProducts": 1480,
+  "totalPricePoints": 6198,
+  "retailers": [
+    "Newegg Canada",
+    "Canada Computers"
+  ],
+  "categories": [
+    "ssds",
+    "gpus",
+    "headphones",
+    "other"
+  ],
+  "lastUpdated": "2026-03-08T11:45:15.077122",
+  "productsByRetailer": {
+    "Newegg Canada": 549,
+    "Canada Computers": 931
+  },
+  "productsByCategory": {
+    "headphones": 680,
+    "ssds": 186,
+    "other": 83,
+    "gpus": 531
+  }
+}
