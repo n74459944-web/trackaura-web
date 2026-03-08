@@ -1,6 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Product, CATEGORY_LABELS } from "@/types";
 import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
+```
+
+Save the file, then verify:
+```
+Get-Content C:\Users\crown\trackaura-web\src\components\ProductCard.tsx -Head 3
 
 function RetailerBadge({ retailer }: { retailer: string }) {
   const className = retailer === "Canada Computers" ? "badge-cc" : "badge-newegg";
