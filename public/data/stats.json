@@ -1,33 +1,33 @@
 {
-  "totalProducts": 2086,
-  "totalPricePoints": 7659,
+  "totalProducts": 2569,
+  "totalPricePoints": 8486,
   "retailers": [
-    "Canada Computers",
-    "Newegg Canada"
+    "Newegg Canada",
+    "Canada Computers"
   ],
   "categories": [
-    "monitors",
-    "keyboards",
-    "ssds",
-    "gpus",
-    "mice",
     "laptops",
     "other",
-    "headphones"
+    "monitors",
+    "mice",
+    "keyboards",
+    "ssds",
+    "headphones",
+    "gpus"
   ],
-  "lastUpdated": "2026-03-08T12:54:52.307672",
+  "lastUpdated": "2026-03-08T14:56:38.907907",
   "productsByRetailer": {
-    "Newegg Canada": 549,
+    "Newegg Canada": 1032,
     "Canada Computers": 1537
   },
   "productsByCategory": {
-    "headphones": 680,
-    "ssds": 203,
-    "monitors": 48,
-    "other": 73,
-    "keyboards": 87,
-    "gpus": 723,
-    "laptops": 159,
-    "mice": 113
+    "headphones": 682,
+    "keyboards": 333,
+    "ssds": 228,
+    "monitors": 64,
+    "other": 84,
+    "gpus": 868,
+    "laptops": 162,
+    "mice": 148
   }
 }
