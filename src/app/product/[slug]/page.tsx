@@ -17,6 +17,8 @@ export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
 }
 
+export const dynamicParams = true;
+
 export function generateMetadata({
   params,
 }: {
