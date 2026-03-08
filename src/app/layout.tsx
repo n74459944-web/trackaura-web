@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.trackaura.com"),
@@ -64,6 +63,20 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-5ZYSMH5GPN"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-5ZYSMH5GPN');
+            `,
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
@@ -87,7 +100,6 @@ export default function RootLayout({
         />
       </head>
       <body className="noise-bg">
-        <GoogleAnalytics />
         <Header />
         <main style={{ minHeight: "calc(100vh - 200px)" }}>{children}</main>
         <Footer />
