@@ -192,6 +192,32 @@ export default function HomePage() {
             marginBottom: "1.5rem",
           }}
         >
+          {/* Buying Guides */}
+      <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
+        <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.25rem", marginBottom: "1rem" }}>
+          Buying Guides
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
+          {categories.map((cat) => (
+            <Link
+              key={"best-" + cat.key}
+              href={"/best/" + cat.key}
+              className="card"
+              style={{ padding: "1rem 1.25rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "0.75rem" }}
+            >
+              <span style={{ fontSize: "1.5rem" }}>{cat.icon}</span>
+              <div>
+                <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.875rem", color: "var(--text-primary)" }}>
+                  {"Best " + cat.label}
+                </p>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                  Deals & price drops
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
           How TrackAura Works
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
