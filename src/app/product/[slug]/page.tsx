@@ -5,9 +5,8 @@ import {
   getAllProducts,
   getProductBySlug,
   getPriceHistory,
-  formatPrice,
-  getAmazonSearchUrl,
 } from "@/lib/data";
+import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
 
@@ -25,9 +24,21 @@ export function generateMetadata({
   const product = getProductBySlug(params.slug);
   if (!product) return { title: "Product Not Found" };
 
+  const title = `${product.name} Price History — ${product.retailer}`;
+  const description = `Track the price of ${product.name} at ${product.retailer}. Current price: $${product.currentPrice.toFixed(2)} CAD. Lowest: $${product.minPrice.toFixed(2)}. Compare across Canadian retailers.`;
+
   return {
-    title: `${product.name} Price History`,
-    description: `Track the price history of ${product.name} at ${product.retailer}. Current price: $${product.currentPrice.toFixed(2)} CAD. Compare prices across Canadian retailers.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `https://www.trackaura.com/product/${product.slug}`,
+    },
+    alternates: {
+      canonical: `https://www.trackaura.com/product/${product.slug}`,
+    },
   };
 }
 
@@ -58,8 +69,37 @@ export default function ProductPage({
     )
     .slice(0, 5);
 
+  // Structured data for Google rich results
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    url: `https://www.trackaura.com/product/${product.slug}`,
+    description: `Price tracking for ${product.name} at ${product.retailer}`,
+    offers: {
+      "@type": "Offer",
+      price: product.currentPrice,
+      priceCurrency: "CAD",
+      availability: "https://schema.org/InStock",
+      url: product.url,
+      seller: {
+        "@type": "Organization",
+        name: product.retailer,
+      },
+      priceValidUntil: new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ).toISOString().split("T")[0],
+    },
+  };
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      {/* Structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+
       {/* Breadcrumbs */}
       <nav style={{ display: "flex", gap: "0.5rem", fontSize: "0.8125rem", marginBottom: "1.5rem" }}>
         <Link href="/" className="accent-link">Home</Link>
