@@ -9,6 +9,7 @@ import {
 import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
+import ClickTracker from "@/components/ClickTracker";
 
 // Generate all product pages at build time
 export function generateStaticParams() {
@@ -101,7 +102,7 @@ export default function ProductPage({
       />
 
       {/* Breadcrumbs */}
-      <nav style={{ display: "flex", gap: "0.5rem", fontSize: "0.8125rem", marginBottom: "1.5rem" }}>
+      <nav style={{ display: "flex", gap: "0.5rem", fontSize: "0.8125rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         <Link href="/" className="accent-link">Home</Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
         <Link href="/products" className="accent-link">Products</Link>
@@ -150,7 +151,7 @@ export default function ProductPage({
             </h1>
 
             {/* Price display */}
-            <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
               <span className="price-tag" style={{ fontSize: "2rem" }}>
                 {formatPrice(product.currentPrice)}
               </span>
@@ -193,6 +194,7 @@ export default function ProductPage({
                   fontSize: "0.8125rem",
                   color: "var(--text-secondary)",
                   marginBottom: "1rem",
+                  flexWrap: "wrap",
                 }}
               >
                 <span>
@@ -209,25 +211,32 @@ export default function ProductPage({
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180 }}>
-            <a
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180, width: "100%", maxWidth: 220 }}>
+            <ClickTracker
               href={product.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              event="retailer_click"
+              label={product.name}
+              retailer={product.retailer}
+              category={product.category}
+              price={product.currentPrice}
               className="btn-primary"
-              style={{ textAlign: "center", textDecoration: "none" }}
+              style={{ textAlign: "center", textDecoration: "none", display: "block" }}
             >
               View at {product.retailer}
-            </a>
-            <a
+            </ClickTracker>
+            <ClickTracker
               href={getAmazonSearchUrl(product.name)}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
+              event="affiliate_click"
+              label={product.name}
+              retailer="Amazon"
+              category={product.category}
+              price={product.currentPrice}
               className="btn-amazon"
-              style={{ textAlign: "center", textDecoration: "none" }}
+              style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+              rel="nofollow"
             >
               Compare on Amazon
-            </a>
+            </ClickTracker>
           </div>
         </div>
       </div>

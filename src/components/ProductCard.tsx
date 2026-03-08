@@ -111,9 +111,20 @@ export default function ProductCard({ product }: { product: Product }) {
           rel="noopener noreferrer nofollow"
           className="btn-amazon"
           style={{ textDecoration: "none", whiteSpace: "nowrap" }}
-        >
-          Amazon
-        </a>
+          onClick={() => {
+            if (typeof window !== "undefined" && (window as any).gtag) {
+              (window as any).gtag("event", "affiliate_click", {
+              event_category: "affiliate",
+              event_label: product.name,
+              retailer: "Amazon",
+              product_category: product.category,
+              price: product.currentPrice,
+          });
+        }
+    }}
+>
+  Amazon
+</a>
       </div>
     </div>
   );
