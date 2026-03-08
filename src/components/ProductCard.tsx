@@ -3,11 +3,6 @@
 import Link from "next/link";
 import { Product, CATEGORY_LABELS } from "@/types";
 import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
-```
-
-Save the file, then verify:
-```
-Get-Content C:\Users\crown\trackaura-web\src\components\ProductCard.tsx -Head 3
 
 function RetailerBadge({ retailer }: { retailer: string }) {
   const className = retailer === "Canada Computers" ? "badge-cc" : "badge-newegg";
@@ -34,9 +29,20 @@ export default function ProductCard({ product }: { product: Product }) {
     : 0;
   const isAtLowest = product.currentPrice <= product.minPrice;
 
+  const trackClick = (event: string, retailer: string) => {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", event, {
+        event_category: event === "affiliate_click" ? "affiliate" : "outbound",
+        event_label: product.name,
+        retailer: retailer,
+        product_category: product.category,
+        price: product.currentPrice,
+      });
+    }
+  };
+
   return (
     <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-      {/* Top row: category + retailer */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span
           style={{
@@ -52,7 +58,6 @@ export default function ProductCard({ product }: { product: Product }) {
         <RetailerBadge retailer={product.retailer} />
       </div>
 
-      {/* Product name */}
       <Link
         href={`/product/${product.slug}`}
         style={{
@@ -71,7 +76,6 @@ export default function ProductCard({ product }: { product: Product }) {
         {product.name}
       </Link>
 
-      {/* Price area */}
       <div style={{ marginTop: "auto" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
           <span className="price-tag" style={{ fontSize: "1.375rem" }}>
@@ -93,7 +97,6 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Price range */}
         {hasDiscount && (
           <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>
             Range: {formatPrice(product.minPrice)} – {formatPrice(product.maxPrice)}
@@ -107,31 +110,20 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* Buttons */}
       <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
         <Link href={`/product/${product.slug}`} className="btn-secondary" style={{ flex: 1, textAlign: "center", textDecoration: "none" }}>
           View History
         </Link>
-        <a
+        
           href={getAmazonSearchUrl(product.name)}
           target="_blank"
           rel="noopener noreferrer nofollow"
           className="btn-amazon"
           style={{ textDecoration: "none", whiteSpace: "nowrap" }}
-          onClick={() => {
-            if (typeof window !== "undefined" && (window as any).gtag) {
-              (window as any).gtag("event", "affiliate_click", {
-              event_category: "affiliate",
-              event_label: product.name,
-              retailer: "Amazon",
-              product_category: product.category,
-              price: product.currentPrice,
-          });
-        }
-    }}
->
-  Amazon
-</a>
+          onClick={() => trackClick("affiliate_click", "Amazon")}
+        >
+          Amazon
+        </a>
       </div>
     </div>
   );
