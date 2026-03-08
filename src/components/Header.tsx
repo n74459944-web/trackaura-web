@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -9,10 +9,14 @@ const NAV_LINKS = [
   { href: "/products?category=headphones", label: "Headphones" },
   { href: "/products?category=gpus", label: "GPUs" },
   { href: "/products?category=ssds", label: "SSDs" },
+  { href: "/products?category=monitors", label: "Monitors" },
+  { href: "/products?category=keyboards", label: "Keyboards" },
+  { href: "/products?category=mice", label: "Mice" },
+  { href: "/products?category=laptops", label: "Laptops" },
 ];
 
 export default function Header() {
-  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header
@@ -44,6 +48,7 @@ export default function Header() {
             alignItems: "center",
             gap: "0.5rem",
             textDecoration: "none",
+            flexShrink: 0,
           }}
         >
           <span
@@ -76,41 +81,101 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Nav */}
-        <nav style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
-          {NAV_LINKS.map((link) => {
-            const isActive =
-              link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href.split("?")[0]) &&
-                  (link.href.includes("?")
-                    ? typeof window !== "undefined" &&
-                      window.location.search.includes(
-                        link.href.split("?")[1]
-                      )
-                    : !link.href.includes("?"));
-
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                style={{
-                  padding: "0.375rem 0.75rem",
-                  borderRadius: 6,
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                  color: isActive ? "var(--accent)" : "var(--text-secondary)",
-                  textDecoration: "none",
-                  transition: "color 0.15s",
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+        {/* Desktop nav */}
+        <nav className="desktop-nav">
+          {NAV_LINKS.slice(0, 6).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                padding: "0.375rem 0.75rem",
+                borderRadius: 6,
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                transition: "color 0.15s",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
+
+        {/* Hamburger button (mobile) */}
+        <button
+          className="mobile-menu-btn"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Menu"
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "0.5rem",
+            display: "none",
+          }}
+        >
+          <svg width={24} height={24} fill="none" stroke="var(--text-primary)" strokeWidth={2} viewBox="0 0 24 24">
+            {menuOpen ? (
+              <path d="M6 6l12 12M6 18L18 6" />
+            ) : (
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <div
+          className="mobile-dropdown"
+          style={{
+            borderTop: "1px solid var(--border)",
+            background: "var(--bg-secondary)",
+            padding: "0.75rem 1.5rem",
+          }}
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "block",
+                padding: "0.625rem 0",
+                fontSize: "0.9375rem",
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                borderBottom: "1px solid var(--border)",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        .desktop-nav {
+          display: flex;
+          gap: 0.25rem;
+          align-items: center;
+        }
+        .mobile-menu-btn {
+          display: none !important;
+        }
+        @media (max-width: 768px) {
+          .desktop-nav {
+            display: none !important;
+          }
+          .mobile-menu-btn {
+            display: block !important;
+          }
+        }
+      `}</style>
     </header>
   );
 }
