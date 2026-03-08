@@ -11,6 +11,8 @@ import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
 
+export const dynamic = "force-dynamic";
+
 // Generate all product pages at build time
 export function generateStaticParams() {
   const products = getAllProducts();
