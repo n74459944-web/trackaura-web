@@ -5,6 +5,7 @@ import { useState } from "react";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
+  { href: "/deals", label: "Deals" },
   { href: "/products", label: "All Products" },
   { href: "/products?category=headphones", label: "Headphones" },
   { href: "/products?category=gpus", label: "GPUs" },
@@ -40,7 +41,6 @@ export default function Header() {
           height: 64,
         }}
       >
-        {/* Logo */}
         <Link
           href="/"
           style={{
@@ -76,14 +76,12 @@ export default function Header() {
               color: "var(--text-primary)",
             }}
           >
-            Track
-            <span style={{ color: "var(--accent)" }}>Aura</span>
+            Track<span style={{ color: "var(--accent)" }}>Aura</span>
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="desktop-nav">
-          {NAV_LINKS.slice(0, 6).map((link) => (
+          {NAV_LINKS.slice(0, 7).map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -91,8 +89,8 @@ export default function Header() {
                 padding: "0.375rem 0.75rem",
                 borderRadius: 6,
                 fontSize: "0.8125rem",
-                fontWeight: 500,
-                color: "var(--text-secondary)",
+                fontWeight: link.label === "Deals" ? 600 : 500,
+                color: link.label === "Deals" ? "var(--accent)" : "var(--text-secondary)",
                 textDecoration: "none",
                 transition: "color 0.15s",
                 fontFamily: "'DM Sans', sans-serif",
@@ -103,7 +101,6 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Hamburger button (mobile) */}
         <button
           className="mobile-menu-btn"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -126,10 +123,8 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile dropdown */}
       {menuOpen && (
         <div
-          className="mobile-dropdown"
           style={{
             borderTop: "1px solid var(--border)",
             background: "var(--bg-secondary)",
@@ -145,8 +140,8 @@ export default function Header() {
                 display: "block",
                 padding: "0.625rem 0",
                 fontSize: "0.9375rem",
-                fontWeight: 500,
-                color: "var(--text-secondary)",
+                fontWeight: link.label === "Deals" ? 600 : 500,
+                color: link.label === "Deals" ? "var(--accent)" : "var(--text-secondary)",
                 textDecoration: "none",
                 borderBottom: "1px solid var(--border)",
                 fontFamily: "'DM Sans', sans-serif",
