@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { PricePoint } from "@/types";
+import Link from "next/link";
 
 interface PriceChartProps {
   data: PricePoint[];
