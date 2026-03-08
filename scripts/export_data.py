@@ -4,10 +4,8 @@ Export prices.db to JSON files for the Next.js frontend.
 Run this from your price-tracker folder:
     python C:\\Users\\crown\\trackaura-web\\scripts\\export_data.py
 
-Or copy it into your price-tracker folder and run:
-    python export_data.py
-
-It reads prices.db and writes JSON files to the trackaura-web/public/data/ folder.
+It reads prices.db and categories.json, then writes JSON files
+to the trackaura-web/public/data/ folder.
 """
 
 import sqlite3
@@ -19,10 +17,36 @@ from datetime import datetime
 # --- CONFIGURE THESE PATHS ---
 DB_PATH = os.environ.get("DB_PATH", "prices.db")
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "data")
-# If running from price-tracker folder, override OUTPUT_DIR:
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "price-tracker", "categories.json")
+
+# If running from price-tracker folder, override paths:
 ALT_OUTPUT = r"C:\Users\crown\trackaura-web\public\data"
+ALT_CONFIG = r"C:\Users\crown\price-tracker\categories.json"
 if os.path.isdir(os.path.dirname(ALT_OUTPUT)):
     OUTPUT_DIR = ALT_OUTPUT
+if os.path.isfile(ALT_CONFIG):
+    CONFIG_PATH = ALT_CONFIG
+
+
+def load_category_keywords():
+    """Load keyword mappings from categories.json if available."""
+    if os.path.isfile(CONFIG_PATH):
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        mappings = {}
+        for key, cat in config["categories"].items():
+            mappings[key] = cat.get("keywords", [])
+        return mappings
+    # Fallback hardcoded keywords
+    return {
+        "headphones": ["headphone", "headset", "earphone", "earbud", "ear bud"],
+        "gpus": ["graphics", "gpu", "geforce", "radeon", "rtx", "rx "],
+        "ssds": ["ssd", "solid state", "nvme", "m.2"],
+        "monitors": ["monitor", "display", "screen"],
+        "keyboards": ["keyboard", "mechanical keyboard", "keycap"],
+        "mice": ["mouse", "mice", "trackball", "trackpad"],
+        "laptops": ["laptop", "notebook", "chromebook"],
+    }
 
 
 def slugify(name: str) -> str:
@@ -31,18 +55,15 @@ def slugify(name: str) -> str:
     slug = re.sub(r'[^a-z0-9\s-]', '', slug)
     slug = re.sub(r'[\s-]+', '-', slug)
     slug = slug.strip('-')
-    return slug[:120]  # cap length
+    return slug[:120]
 
 
-def guess_category(name: str, url: str) -> str:
-    """Guess product category from name/URL."""
+def guess_category(name: str, url: str, keywords_map: dict) -> str:
+    """Guess product category from name/URL using config keywords."""
     combined = (name + " " + url).lower()
-    if any(kw in combined for kw in ["headphone", "headset", "earphone", "earbud", "ear bud"]):
-        return "headphones"
-    if any(kw in combined for kw in ["graphics", "gpu", "geforce", "radeon", "rtx", "rx "]):
-        return "gpus"
-    if any(kw in combined for kw in ["ssd", "solid state", "nvme", "m.2"]):
-        return "ssds"
+    for cat_key, keywords in keywords_map.items():
+        if any(kw in combined for kw in keywords):
+            return cat_key
     return "other"
 
 
@@ -54,6 +75,9 @@ def export():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(os.path.join(OUTPUT_DIR, "history"), exist_ok=True)
+
+    keywords_map = load_category_keywords()
+    print(f"Loaded {len(keywords_map)} categories from config")
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -96,15 +120,14 @@ def export():
     seen_slugs = {}
     for row in rows:
         slug = slugify(row["name"])
-        # Handle duplicate slugs
         if slug in seen_slugs:
             seen_slugs[slug] += 1
             slug = f"{slug}-{seen_slugs[slug]}"
         else:
             seen_slugs[slug] = 1
 
-        category = guess_category(row["name"], row["url"])
-        
+        category = guess_category(row["name"], row["url"], keywords_map)
+
         product = {
             "id": row["id"],
             "name": row["name"],
@@ -161,9 +184,13 @@ def export():
         json.dump(stats, f, indent=2)
     print(f"Exported stats.json")
 
+    # Category breakdown
+    print("\nProducts by category:")
+    for cat, count in sorted(stats["productsByCategory"].items(), key=lambda x: -x[1]):
+        print(f"  {cat}: {count}")
+
     conn.close()
     print(f"\nAll data exported to: {OUTPUT_DIR}")
-    print("Now run: cd trackaura-web && npm run build")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAllProducts, getStats } from "@/lib/data";
-import { CATEGORY_LABELS } from "@/types";
+import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import SearchBar from "@/components/SearchBar";
 import StatsBar from "@/components/StatsBar";
 import ProductCard from "@/components/ProductCard";
@@ -15,30 +15,24 @@ export default function HomePage() {
       const inCategory = allProducts
         .filter((p) => p.category === cat)
         .sort((a, b) => a.currentPrice - b.currentPrice);
-      return inCategory.slice(0, 4);
+      return inCategory.slice(0, 3);
     })
     .slice(0, 12);
 
-  const categories = [
-    {
-      key: "headphones",
-      label: "Headphones",
-      count: allProducts.filter((p) => p.category === "headphones").length,
-      icon: "🎧",
-    },
-    {
-      key: "gpus",
-      label: "Graphics Cards",
-      count: allProducts.filter((p) => p.category === "gpus").length,
-      icon: "🖥️",
-    },
-    {
-      key: "ssds",
-      label: "SSDs",
-      count: allProducts.filter((p) => p.category === "ssds").length,
-      icon: "💾",
-    },
-  ];
+  // Build categories dynamically from actual data
+  const categoryCounts: Record<string, number> = {};
+  for (const p of allProducts) {
+    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+  }
+  const categories = Object.entries(categoryCounts)
+    .filter(([key]) => key !== "other")
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, count]) => ({
+      key,
+      label: CATEGORY_LABELS[key] || key,
+      count,
+      icon: CATEGORY_ICONS[key] || "📦",
+    }));
 
   return (
     <div>
@@ -75,8 +69,8 @@ export default function HomePage() {
             margin: "0 auto 2rem",
           }}
         >
-          Price history for headphones, GPUs, and SSDs across Canada Computers,
-          Newegg, and Amazon.ca. Never overpay.
+          Price history for {categories.map(c => c.label.toLowerCase()).join(", ")}, and more across
+          Canada Computers, Newegg, and Amazon.ca. Never overpay.
         </p>
 
         {/* Search */}
@@ -105,7 +99,13 @@ export default function HomePage() {
         >
           Browse Categories
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.min(categories.length, 4)}, 1fr)`,
+            gap: "1rem",
+          }}
+        >
           {categories.map((cat) => (
             <Link
               key={cat.key}

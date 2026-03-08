@@ -28,14 +28,29 @@ export interface SiteStats {
   productsByCategory: Record<string, number>;
 }
 
-export type Category = "headphones" | "gpus" | "ssds" | "other";
+export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "other";
 export type Retailer = "Canada Computers" | "Newegg Canada";
 
 export const CATEGORY_LABELS: Record<string, string> = {
   headphones: "Headphones",
   gpus: "Graphics Cards",
   ssds: "SSDs",
+  monitors: "Monitors",
+  keyboards: "Keyboards",
+  mice: "Mice",
+  laptops: "Laptops",
   other: "Other",
+};
+
+export const CATEGORY_ICONS: Record<string, string> = {
+  headphones: "🎧",
+  gpus: "🖥️",
+  ssds: "💾",
+  monitors: "🖥️",
+  keyboards: "⌨️",
+  mice: "🖱️",
+  laptops: "💻",
+  other: "📦",
 };
 
 export const RETAILER_COLORS: Record<string, string> = {
