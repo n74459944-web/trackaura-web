@@ -39,6 +39,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
   keyboards: "Keyboards",
   mice: "Mice",
   laptops: "Laptops",
+  ram: "RAM",
+  cpus: "CPUs",
+  "power-supplies": "Power Supplies",
+  cases: "PC Cases",
+  motherboards: "Motherboards",
   other: "Other",
 };
 
@@ -50,6 +55,11 @@ export const CATEGORY_ICONS: Record<string, string> = {
   keyboards: "⌨️",
   mice: "🖱️",
   laptops: "💻",
+  ram: "🧠",
+  cpus: "⚡",
+  "power-supplies": "🔌",
+  cases: "🗄️",
+  motherboards: "🔧",
   other: "📦",
 };
 
