@@ -6,6 +6,7 @@ import { useState } from "react";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/deals", label: "Deals" },
+  { href: "/trends", label: "Price Index" },
   { href: "/brands", label: "Brands" },
   { href: "/changes", label: "Price Changes" },
   { href: "/products", label: "All Products" },
@@ -85,7 +86,7 @@ export default function Header() {
         </Link>
 
         <nav className="desktop-nav">
-          {NAV_LINKS.slice(0, 8).map((link) => (
+          {NAV_LINKS.slice(0, 9).map((link) => (
             <Link
               key={link.href}
               href={link.href}
