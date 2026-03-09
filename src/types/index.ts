@@ -45,6 +45,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
   cases: "PC Cases",
   motherboards: "Motherboards",
   other: "Other",
+  coolers: "CPU Coolers",
+  routers: "Routers",
+  webcams: "Webcams",
+  speakers: "Speakers",
+  "external-storage": "External Storage",
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
@@ -61,6 +66,11 @@ export const CATEGORY_ICONS: Record<string, string> = {
   cases: "🗄️",
   motherboards: "🔧",
   other: "📦",
+  coolers: "❄️",
+  routers: "📡",
+  webcams: "📷",
+  speakers: "🔊",
+  "external-storage": "💿",
 };
 
 export const RETAILER_COLORS: Record<string, string> = {
