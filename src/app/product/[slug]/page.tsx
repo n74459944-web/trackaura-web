@@ -14,12 +14,7 @@ import PriceAlert from "@/components/PriceAlert";
 import PriceCompare from "@/components/PriceCompare";
 import RelatedProducts from "@/components/RelatedProducts";
 
-export function generateStaticParams() {
-  const products = getAllProducts();
-  return products.map((p) => ({ slug: p.slug }));
-}
-
-export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
