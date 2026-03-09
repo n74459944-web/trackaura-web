@@ -12,6 +12,14 @@ function formatDate(dateStr: string): string {
   }
 }
 
+function extractBrand(name: string): string {
+  return name.split(/\s+/)[0]?.toUpperCase() || "";
+}
+
+function brandSlug(brand: string): string {
+  return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.trackaura.com";
   const products = getAllProducts();
@@ -21,6 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl, lastModified: today, changeFrequency: "daily", priority: 1.0 },
     { url: baseUrl + "/products", lastModified: today, changeFrequency: "daily", priority: 0.9 },
     { url: baseUrl + "/deals", lastModified: today, changeFrequency: "daily", priority: 0.9 },
+    { url: baseUrl + "/changes", lastModified: today, changeFrequency: "daily", priority: 0.85 },
   ];
 
   const categoryPages: MetadataRoute.Sitemap = Object.keys(CATEGORY_LABELS)
@@ -41,6 +50,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.85,
     }));
 
+  // Brand pages
+  const brandCounts: Record<string, number> = {};
+  for (const p of products) {
+    const brand = extractBrand(p.name);
+    if (brand.length >= 2) brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+  }
+  const brandPages: MetadataRoute.Sitemap = Object.entries(brandCounts)
+    .filter(([_, count]) => count >= 3)
+    .map(([brand]) => ({
+      url: baseUrl + "/brand/" + brandSlug(brand),
+      lastModified: today,
+      changeFrequency: "weekly" as const,
+      priority: 0.75,
+    }));
+
   const productPages: MetadataRoute.Sitemap = products.map((product) => ({
     url: baseUrl + "/product/" + product.slug,
     lastModified: formatDate(product.lastUpdated),
@@ -48,5 +72,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...categoryPages, ...bestPages, ...productPages];
+  return [...staticPages, ...categoryPages, ...bestPages, ...brandPages, ...productPages];
 }
