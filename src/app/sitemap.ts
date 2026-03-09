@@ -30,6 +30,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl + "/products", lastModified: today, changeFrequency: "daily", priority: 0.9 },
     { url: baseUrl + "/deals", lastModified: today, changeFrequency: "daily", priority: 0.9 },
     { url: baseUrl + "/changes", lastModified: today, changeFrequency: "daily", priority: 0.85 },
+    { url: baseUrl + "/about", lastModified: today, changeFrequency: "monthly", priority: 0.6 },
+    { url: baseUrl + "/how-it-works", lastModified: today, changeFrequency: "monthly", priority: 0.6 },
+    { url: baseUrl + "/privacy", lastModified: today, changeFrequency: "monthly", priority: 0.3 },
+    { url: baseUrl + "/terms", lastModified: today, changeFrequency: "monthly", priority: 0.3 },
   ];
 
   const categoryPages: MetadataRoute.Sitemap = Object.keys(CATEGORY_LABELS)
