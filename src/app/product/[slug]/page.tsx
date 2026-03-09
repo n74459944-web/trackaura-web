@@ -10,6 +10,7 @@ import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
+import PriceAlert from "@/components/PriceAlert";
 
 export function generateStaticParams() {
   const products = getAllProducts();
@@ -148,6 +149,8 @@ export default async function ProductPage({ params }: PageProps) {
               Compare on Amazon
             </ClickTracker>
           </div>
+
+          <PriceAlert productSlug={product.slug} productName={product.name} currentPrice={product.currentPrice} retailer={product.retailer} />
         </div>
       </div>
 
