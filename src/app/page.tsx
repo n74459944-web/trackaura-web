@@ -4,6 +4,7 @@ import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import SearchBar from "@/components/SearchBar";
 import StatsBar from "@/components/StatsBar";
 import ProductCard from "@/components/ProductCard";
+import EmailSignup from "@/components/EmailSignup";
 
 export default function HomePage() {
   const stats = getStats();
@@ -218,6 +219,12 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      
+      {/* Email signup */}
+      <section style={{ maxWidth: 600, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
+        <EmailSignup />
+      </section>
+
           How TrackAura Works
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
