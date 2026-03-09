@@ -110,7 +110,7 @@ export default function TermsPage() {
         <Section title="Contact">
           <p>
             {"Questions about these terms? Contact us at "}
-            <a href="mailto:alerts@trackaura.com" className="accent-link">alerts@trackaura.com</a>.
+            <a href="mailto:admin@trackaura.com" className="accent-link">admin@trackaura.com</a>.
           </p>
         </Section>
       </div>

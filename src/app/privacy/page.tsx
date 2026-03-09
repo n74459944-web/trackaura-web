@@ -82,7 +82,7 @@ export default function PrivacyPage() {
           <p>
             {"You can unsubscribe from emails at any time by clicking the unsubscribe link in any email we send. " +
             "If you want your email address deleted from our database entirely, " +
-            "contact us at alerts@trackaura.com and we\u2019ll remove it promptly."}
+            "contact us at admin@trackaura.com and we\u2019ll remove it promptly."}
           </p>
         </Section>
 
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
         <Section title="Contact">
           <p>
             {"If you have any questions about this privacy policy, contact us at "}
-            <a href="mailto:alerts@trackaura.com" className="accent-link">alerts@trackaura.com</a>.
+            <a href="mailto:admin@trackaura.com" className="accent-link">admin@trackaura.com</a>.
           </p>
         </Section>
       </div>

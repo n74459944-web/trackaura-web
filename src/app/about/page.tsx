@@ -154,8 +154,8 @@ export default function AboutPage() {
 
         <p style={{ marginBottom: "1.25rem" }}>
           {"If you have questions, suggestions, or want to report an issue, feel free to reach out at "}
-          <a href="mailto:alerts@trackaura.com" className="accent-link">
-            alerts@trackaura.com
+          <a href="mailto:admin@trackaura.com" className="accent-link">
+            admin@trackaura.com
           </a>
           .
         </p>
