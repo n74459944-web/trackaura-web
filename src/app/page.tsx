@@ -11,13 +11,10 @@ export default function HomePage() {
   const allProducts = getAllProducts();
 
   // Get a mix of products to feature (lowest-priced in each category)
-  const featured = Object.keys(CATEGORY_LABELS)
-    .flatMap((cat) => {
-      const inCategory = allProducts
-        .filter((p) => p.category === cat)
-        .sort((a, b) => a.currentPrice - b.currentPrice);
-      return inCategory.slice(0, 3);
-    })
+  const featured = allProducts
+    .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice && p.currentPrice >= 20)
+    .map((p) => ({ ...p, drop: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100 }))
+    .sort((a, b) => b.drop - a.drop)
     .slice(0, 12);
 
   // Build categories dynamically from actual data
