@@ -1,41 +1,43 @@
 {
-  "totalProducts": 2750,
-  "totalPricePoints": 10206,
+  "totalProducts": 5328,
+  "totalPricePoints": 14789,
   "retailers": [
-    "Canada Computers",
-    "Newegg Canada"
+    "Newegg Canada",
+    "Canada Computers"
   ],
   "categories": [
-    "laptops",
-    "ram",
     "ssds",
-    "monitors",
-    "gpus",
-    "other",
-    "keyboards",
-    "cpus",
     "mice",
+    "power-supplies",
+    "motherboards",
+    "cpus",
     "headphones",
+    "laptops",
+    "keyboards",
+    "ram",
+    "monitors",
     "cases",
-    "power-supplies"
+    "gpus",
+    "other"
   ],
-  "lastUpdated": "2026-03-09T07:36:22.772162",
+  "lastUpdated": "2026-03-09T08:07:03.458536",
   "productsByRetailer": {
-    "Newegg Canada": 1113,
-    "Canada Computers": 1637
+    "Newegg Canada": 2668,
+    "Canada Computers": 2660
   },
   "productsByCategory": {
-    "headphones": 683,
-    "keyboards": 340,
-    "ssds": 229,
-    "monitors": 230,
-    "cases": 2,
-    "gpus": 871,
-    "laptops": 163,
-    "ram": 3,
-    "cpus": 6,
-    "mice": 149,
-    "other": 67,
-    "power-supplies": 7
+    "other": 108,
+    "power-supplies": 718,
+    "headphones": 684,
+    "keyboards": 422,
+    "ssds": 466,
+    "ram": 635,
+    "mice": 281,
+    "monitors": 347,
+    "cpus": 245,
+    "gpus": 1147,
+    "cases": 24,
+    "laptops": 247,
+    "motherboards": 4
   }
 }
