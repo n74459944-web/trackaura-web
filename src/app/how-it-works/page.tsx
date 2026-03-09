@@ -63,6 +63,42 @@ export default function HowItWorksPage() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is TrackAura free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. We earn a small commission when you click through to Amazon.ca and make a purchase." }
+          },
+          {
+            "@type": "Question",
+            "name": "How often are prices updated?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Every 4 hours, 24 hours a day, 7 days a week." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which retailers do you track?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Currently Canada Computers and Newegg Canada, with Amazon.ca comparison links on every product." }
+          },
+          {
+            "@type": "Question",
+            "name": "Are the prices accurate?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Prices come directly from each retailer's website. We recommend verifying on the retailer's site before purchasing." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do price alerts work?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Enter your email and target price on any product page. We'll email you when the price drops to your target." }
+          },
+          {
+            "@type": "Question",
+            "name": "Why are all prices in CAD?",
+            "acceptedAnswer": { "@type": "Answer", "text": "TrackAura is built for Canadian shoppers. All prices are in Canadian dollars from Canadian retailer websites." }
+          }
+        ]
+      }) }} />
       <nav
         style={{
           display: "flex",
