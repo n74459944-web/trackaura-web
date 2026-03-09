@@ -12,6 +12,7 @@ import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
 import PriceAlert from "@/components/PriceAlert";
 import PriceCompare from "@/components/PriceCompare";
+import RelatedProducts from "@/components/RelatedProducts";
 
 export function generateStaticParams() {
   const products = getAllProducts();
@@ -67,6 +68,10 @@ export default async function ProductPage({ params }: PageProps) {
         nameWords.some((w: string) => p.name.toLowerCase().includes(w))
     )
     .slice(0, 5);
+    const related = allProducts
+      .filter((p) => p.id !== product.id && p.category === product.category)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 6);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -164,6 +169,8 @@ export default async function ProductPage({ params }: PageProps) {
       </div>
 
       <PriceCompare product={product} similar={similar} />
+
+      <RelatedProducts products={related} />
 
       <div style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6 }}>
         Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon links may earn TrackAura a commission.
