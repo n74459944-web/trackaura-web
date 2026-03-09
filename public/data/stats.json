@@ -6,16 +6,16 @@
     "Canada Computers"
   ],
   "categories": [
-    "laptops",
-    "gpus",
-    "mice",
-    "other",
-    "keyboards",
-    "headphones",
     "monitors",
-    "ssds"
+    "ssds",
+    "mice",
+    "headphones",
+    "gpus",
+    "laptops",
+    "other",
+    "keyboards"
   ],
-  "lastUpdated": "2026-03-09T06:00:49.512313",
+  "lastUpdated": "2026-03-09T06:01:45.572500",
   "productsByRetailer": {
     "Newegg Canada": 1113,
     "Canada Computers": 1537
