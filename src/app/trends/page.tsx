@@ -66,7 +66,7 @@ export default function TrendsPage() {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => b!.count - a!.count) as NonNullable<ReturnType<typeof Object.entries>>[];
+    .sort((a, b) => (b as any).count - (a as any).count) as any[];
 
   // Overall stats
   const totalProducts = allProducts.length;
