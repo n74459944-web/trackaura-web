@@ -10,6 +10,7 @@ import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
+import ShareButton from "@/components/ShareButton";
 
 export function generateStaticParams() {
   const products = getAllProducts();
@@ -110,6 +111,8 @@ export default async function ProductPage({ params }: PageProps) {
             <span className={product.retailer === "Canada Computers" ? "badge-cc" : "badge-newegg"} style={{ padding: "0.25rem 0.625rem", borderRadius: 999, fontSize: "0.75rem", fontWeight: 600, display: "inline-block", marginBottom: "0.75rem" }}>
               {product.retailer}
             </span>
+
+            <ShareButton name={product.name} slug={product.slug} />
 
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.5rem", lineHeight: 1.3, marginBottom: "1rem" }}>
               {product.name}
