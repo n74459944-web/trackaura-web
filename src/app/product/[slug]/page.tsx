@@ -11,6 +11,7 @@ import { CATEGORY_LABELS } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
 import PriceAlert from "@/components/PriceAlert";
+import PriceCompare from "@/components/PriceCompare";
 
 export function generateStaticParams() {
   const products = getAllProducts();
@@ -162,23 +163,7 @@ export default async function ProductPage({ params }: PageProps) {
         </p>
       </div>
 
-      {similar.length > 0 && (
-        <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "1rem", marginBottom: "1rem" }}>Compare Across Stores</h2>
-          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>Similar products at other retailers (name-based matching):</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {similar.map((p) => (
-              <Link key={p.id} href={"/product/" + p.slug} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", borderRadius: 8, border: "1px solid var(--border)", textDecoration: "none", transition: "all 0.15s" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "0.8125rem", color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</p>
-                  <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>{p.retailer}</p>
-                </div>
-                <span className="price-tag" style={{ fontSize: "0.9375rem", marginLeft: "1rem" }}>{formatPrice(p.currentPrice)}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <PriceCompare product={product} similar={similar} />
 
       <div style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6 }}>
         Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon links may earn TrackAura a commission.
