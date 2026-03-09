@@ -2,71 +2,64 @@
 
 import { useState } from "react";
 
+const SUPABASE_URL = "https://scsinqiyoxutvkopahbb.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjc2lucWl5b3h1dHZrb3BhaGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwMzkyNTIsImV4cCI6MjA4ODYxNTI1Mn0.tcFRAK1x9o0Dru39jK0Soo6yeA2Xz0O0C_vm989r_VA";
+
 export default function EmailSignup() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "exists" | "error">("idle");
 
-  const handleSubmit = () => {
-    if (!email || !email.includes("@")) return;
+  const handleSubmit = async () => {
+    if (!email || !email.includes("@") || !email.includes(".")) return;
     setStatus("saving");
 
-    // Store in localStorage for now - migrate to Supabase later
     try {
-      const existing = JSON.parse(localStorage.getItem("trackaura_emails") || "[]");
-      if (!existing.includes(email)) {
-        existing.push(email);
-        localStorage.setItem("trackaura_emails", JSON.stringify(existing));
-      }
+      const res = await fetch(SUPABASE_URL + "/rest/v1/email_subscribers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
 
-      // Track in Google Analytics
-      if (typeof window !== "undefined" && (window as any).gtag) {
-        (window as any).gtag("event", "email_signup", {
-          event_category: "engagement",
-          event_label: "price_alerts",
-        });
+      if (res.ok) {
+        setStatus("done");
+        setEmail("");
+        if (typeof window !== "undefined" && (window as any).gtag) {
+          (window as any).gtag("event", "email_signup", {
+            event_category: "engagement",
+            event_label: "price_alerts",
+          });
+        }
+      } else if (res.status === 409) {
+        setStatus("exists");
+      } else {
+        setStatus("error");
       }
-
-      setStatus("done");
-      setEmail("");
     } catch {
       setStatus("error");
     }
   };
 
   return (
-    <div
-      style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: "2rem",
-        textAlign: "center",
-      }}
-    >
-      <h3
-        style={{
-          fontFamily: "'Sora', sans-serif",
-          fontWeight: 700,
-          fontSize: "1.125rem",
-          marginBottom: "0.5rem",
-        }}
-      >
-        {"\uD83D\uDD14"} Price Drop Alerts
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "2rem", textAlign: "center" }}>
+      <h3 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", marginBottom: "0.5rem" }}>
+        {"\uD83D\uDD14 Price Drop Alerts"}
       </h3>
-      <p
-        style={{
-          color: "var(--text-secondary)",
-          fontSize: "0.875rem",
-          marginBottom: "1.25rem",
-          lineHeight: 1.5,
-        }}
-      >
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.25rem", lineHeight: 1.5 }}>
         Get notified when prices drop on Canadian electronics. Coming soon.
       </p>
 
       {status === "done" ? (
         <p style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.9375rem" }}>
-          {"\u2713"} You are on the list! We will notify you when alerts launch.
+          {"\u2713 You are on the list! We will notify you when alerts launch."}
+        </p>
+      ) : status === "exists" ? (
+        <p style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.9375rem" }}>
+          {"\u2713 You are already signed up! We will notify you when alerts launch."}
         </p>
       ) : (
         <div style={{ display: "flex", gap: "0.5rem", maxWidth: 440, margin: "0 auto" }}>
@@ -88,12 +81,7 @@ export default function EmailSignup() {
               fontFamily: "'DM Sans', sans-serif",
             }}
           />
-          <button
-            onClick={handleSubmit}
-            disabled={status === "saving"}
-            className="btn-primary"
-            style={{ whiteSpace: "nowrap" }}
-          >
+          <button onClick={handleSubmit} disabled={status === "saving"} className="btn-primary" style={{ whiteSpace: "nowrap" }}>
             {status === "saving" ? "..." : "Notify Me"}
           </button>
         </div>
