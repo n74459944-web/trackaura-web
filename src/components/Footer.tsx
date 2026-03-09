@@ -43,50 +43,38 @@ export default function Footer() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "3rem" }}>
+        <div style={{ display: "flex", gap: "3rem", flexWrap: "wrap" }}>
           <div>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "0.75rem",
-                fontFamily: "'Sora', sans-serif",
-              }}
-            >
+            <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontFamily: "'Sora', sans-serif" }}>
               Categories
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <Link href="/products?category=headphones" className="accent-link" style={{ fontSize: "0.875rem" }}>
-                Headphones
-              </Link>
-              <Link href="/products?category=gpus" className="accent-link" style={{ fontSize: "0.875rem" }}>
-                Graphics Cards
-              </Link>
-              <Link href="/products?category=ssds" className="accent-link" style={{ fontSize: "0.875rem" }}>
-                SSDs
-              </Link>
+              <Link href="/products?category=gpus" className="accent-link" style={{ fontSize: "0.875rem" }}>Graphics Cards</Link>
+              <Link href="/products?category=cpus" className="accent-link" style={{ fontSize: "0.875rem" }}>CPUs</Link>
+              <Link href="/products?category=ram" className="accent-link" style={{ fontSize: "0.875rem" }}>RAM</Link>
+              <Link href="/products?category=monitors" className="accent-link" style={{ fontSize: "0.875rem" }}>Monitors</Link>
+              <Link href="/products?category=laptops" className="accent-link" style={{ fontSize: "0.875rem" }}>Laptops</Link>
+              <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>All Products</Link>
             </div>
           </div>
           <div>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "0.75rem",
-                fontFamily: "'Sora', sans-serif",
-              }}
-            >
+            <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontFamily: "'Sora', sans-serif" }}>
               Retailers
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <span style={{ fontSize: "0.875rem", color: "var(--cc-color)" }}>Canada Computers</span>
               <span style={{ fontSize: "0.875rem", color: "var(--newegg-color)" }}>Newegg Canada</span>
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontFamily: "'Sora', sans-serif" }}>
+              Company
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <Link href="/about" className="accent-link" style={{ fontSize: "0.875rem" }}>About</Link>
+              <Link href="/how-it-works" className="accent-link" style={{ fontSize: "0.875rem" }}>How It Works</Link>
+              <Link href="/privacy" className="accent-link" style={{ fontSize: "0.875rem" }}>Privacy Policy</Link>
+              <Link href="/terms" className="accent-link" style={{ fontSize: "0.875rem" }}>Terms of Use</Link>
             </div>
           </div>
         </div>
