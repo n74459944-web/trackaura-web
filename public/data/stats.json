@@ -2,20 +2,20 @@
   "totalProducts": 2650,
   "totalPricePoints": 9276,
   "retailers": [
-    "Newegg Canada",
-    "Canada Computers"
+    "Canada Computers",
+    "Newegg Canada"
   ],
   "categories": [
-    "keyboards",
-    "mice",
-    "gpus",
-    "headphones",
     "other",
-    "laptops",
+    "mice",
     "ssds",
-    "monitors"
+    "gpus",
+    "laptops",
+    "keyboards",
+    "monitors",
+    "headphones"
   ],
-  "lastUpdated": "2026-03-09T04:27:27.145291",
+  "lastUpdated": "2026-03-09T05:20:55.472264",
   "productsByRetailer": {
     "Newegg Canada": 1113,
     "Canada Computers": 1537
