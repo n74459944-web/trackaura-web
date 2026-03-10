@@ -7,18 +7,11 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/deals", label: "Deals" },
   { href: "/trends", label: "Price Index" },
+  { href: "/products", label: "Products" },
   { href: "/brands", label: "Brands" },
   { href: "/changes", label: "Price Changes" },
-  { href: "/products", label: "All Products" },
   { href: "/about", label: "About" },
   { href: "/how-it-works", label: "How It Works" },
-  { href: "/products?category=headphones", label: "Headphones" },
-  { href: "/products?category=gpus", label: "GPUs" },
-  { href: "/products?category=ssds", label: "SSDs" },
-  { href: "/products?category=monitors", label: "Monitors" },
-  { href: "/products?category=keyboards", label: "Keyboards" },
-  { href: "/products?category=mice", label: "Mice" },
-  { href: "/products?category=laptops", label: "Laptops" },
 ];
 
 export default function Header() {
@@ -86,7 +79,7 @@ export default function Header() {
         </Link>
 
         <nav className="desktop-nav">
-          {NAV_LINKS.slice(0, 9).map((link) => (
+          {NAV_LINKS.slice(0, 7).map((link) => (
             <Link
               key={link.href}
               href={link.href}
