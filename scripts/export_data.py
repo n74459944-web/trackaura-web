@@ -59,11 +59,29 @@ def slugify(name: str) -> str:
 
 
 def guess_category(name: str, url: str, keywords_map: dict) -> str:
-    """Guess product category from name/URL using config keywords."""
-    combined = (name + " " + url).lower()
+    """Guess product category from name using config keywords."""
+    name_lower = name.lower()
+
+    # Accessories that get miscategorized — send to "other"
+    accessory_words = [
+        "cable", "adapter", "converter", "splitter", "extender", "extension",
+        "bracket", "mount", "stand", "holder", "riser", "hub",
+        "cleaning", "cloth", "wipe", "tool kit", "screwdriver",
+        "earpad", "ear pad", "replacement pad", "cushion",
+        "sticker", "decal", "skin", "cover", "sleeve", "bag", "case for",
+        "anti-static", "thermal paste", "thermal pad", "heatsink for",
+    ]
+    # Only exclude if it looks like a pure accessory (short name or clearly not a main product)
+    is_accessory = any(w in name_lower for w in accessory_words)
+
     for cat_key, keywords in keywords_map.items():
-        if any(kw in combined for kw in keywords):
+        if any(kw in name_lower for kw in keywords):
+            # If it matched but looks like an accessory, keep checking other categories
+            # Only assign if it's not clearly an accessory
+            if is_accessory and cat_key in ["gpus", "ssds", "cpus", "monitors", "motherboards", "ram"]:
+                continue
             return cat_key
+
     return "other"
 
 
