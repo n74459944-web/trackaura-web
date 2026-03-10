@@ -18,14 +18,28 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
   const initialCategory = searchParams.get("category") || "all";
   const initialRetailer = searchParams.get("retailer") || "all";
 
-  const [allProducts] = useState<Product[]>(initialProducts);
+  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
   const [category, setCategory] = useState(initialCategory);
   const [retailer, setRetailer] = useState(initialRetailer);
   const [sort, setSort] = useState<SortKey>("biggest-drop");
+  const [loading, setLoading] = useState(initialProducts.length === 0);
   const [page, setPage] = useState(1);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fallback: if server didn't provide products, fetch client-side
+  useEffect(() => {
+    if (initialProducts.length === 0) {
+      fetch("/data/products.json")
+        .then((r) => r.json())
+        .then((data) => {
+          setAllProducts(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [initialProducts]);
 
   // Sync URL params
   useEffect(() => {
@@ -119,9 +133,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           {pageTitle}
         </h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-          {filtered.length.toLocaleString() + " products" +
-            (atLowestCount > 0 ? " \u00B7 " + atLowestCount + " at lowest price" : "") +
-            (withDropsCount > 0 ? " \u00B7 " + withDropsCount + " with price drops" : "")}
+          {loading
+            ? "Loading..."
+            : filtered.length.toLocaleString() + " products" +
+              (atLowestCount > 0 ? " \u00B7 " + atLowestCount + " at lowest price" : "") +
+              (withDropsCount > 0 ? " \u00B7 " + withDropsCount + " with price drops" : "")}
         </p>
       </div>
 
@@ -294,7 +310,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
       </div>
 
       {/* Product grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
+          Loading products...
+        </div>
+      ) : filtered.length === 0 ? (
         <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
           No products found with these filters.
         </div>
