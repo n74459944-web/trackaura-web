@@ -13,10 +13,7 @@ export const metadata: Metadata = {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/data/products.json`, {
+    const res = await fetch("https://www.trackaura.com/data/products.json", {
       cache: "no-store",
     });
     if (!res.ok) return [];
