@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Product, CATEGORY_LABELS } from "@/types";
-import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
+import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
 
 function RetailerBadge({ retailer }: { retailer: string }) {
   const cn = retailer === "Canada Computers" ? "badge-cc" : "badge-newegg";
@@ -11,6 +11,12 @@ function RetailerBadge({ retailer }: { retailer: string }) {
       {retailer}
     </span>
   );
+}
+
+function getRetailerShortName(retailer: string): string {
+  if (retailer === "Canada Computers") return "CC";
+  if (retailer === "Newegg Canada") return "Newegg";
+  return retailer;
 }
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -29,6 +35,9 @@ export default function ProductCard({ product }: { product: Product }) {
       });
     }
   };
+
+  const retailerUrl = getRetailerAffiliateUrl(product);
+  const isAffiliate = product.retailer === "Newegg Canada";
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -68,7 +77,24 @@ export default function ProductCard({ product }: { product: Product }) {
         <Link href={"/product/" + product.slug} className="btn-secondary" style={{ flex: 1, textAlign: "center", textDecoration: "none" }}>
           View History
         </Link>
-        <a href={getAmazonSearchUrl(product.name)} target="_blank" rel="noopener noreferrer nofollow" className="btn-amazon" style={{ textDecoration: "none", whiteSpace: "nowrap" }} onClick={function() { trackClick("affiliate_click", "Amazon"); }}>
+        <a
+          href={retailerUrl}
+          target="_blank"
+          rel={isAffiliate ? "noopener noreferrer nofollow sponsored" : "noopener noreferrer"}
+          className={product.retailer === "Newegg Canada" ? "btn-newegg" : "btn-cc"}
+          style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+          onClick={function() { trackClick(isAffiliate ? "affiliate_click" : "retailer_click", product.retailer); }}
+        >
+          {getRetailerShortName(product.retailer)}
+        </a>
+        <a
+          href={getAmazonSearchUrl(product.name)}
+          target="_blank"
+          rel="noopener noreferrer nofollow sponsored"
+          className="btn-amazon"
+          style={{ textDecoration: "none", whiteSpace: "nowrap" }}
+          onClick={function() { trackClick("affiliate_click", "Amazon"); }}
+        >
           Amazon
         </a>
       </div>

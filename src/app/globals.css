@@ -165,6 +165,40 @@ h1, h2, h3, h4, h5, h6 {
   background: #e68a00;
 }
 
+/* Newegg button */
+.btn-newegg {
+  background: var(--newegg-color);
+  color: #111;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-newegg:hover {
+  background: #e07000;
+}
+
+/* Canada Computers button */
+.btn-cc {
+  background: var(--cc-color);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-cc:hover {
+  background: #cf2f3d;
+}
+
 /* Pill filter */
 .filter-pill {
   padding: 0.375rem 0.875rem;
@@ -208,7 +242,6 @@ h1, h2, h3, h4, h5, h6 {
 .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
 
 /* ===== MOBILE RESPONSIVE STYLES ===== */
-/* Add this to the END of your existing globals.css */
 
 @media (max-width: 768px) {
   /* Smaller hero text */
@@ -279,7 +312,9 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.125rem !important;
   }
 
-  .btn-amazon {
+  .btn-amazon,
+  .btn-newegg,
+  .btn-cc {
     padding: 0.375rem 0.5rem !important;
     font-size: 0.6875rem !important;
   }
