@@ -11,11 +11,27 @@ export default function HomePage() {
   const allProducts = getAllProducts();
 
   // Get a mix of products to feature (lowest-priced in each category)
-  const featured = allProducts
-    .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice && p.currentPrice >= 20)
-    .map((p) => ({ ...p, drop: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100 }))
-    .sort((a, b) => b.drop - a.drop)
-    .slice(0, 12);
+  const featured = (() => {
+    // Try products with actual price drops first
+    const withDrops = allProducts
+      .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice && p.currentPrice >= 30)
+      .map((p) => ({ ...p, drop: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100 }))
+      .sort((a, b) => b.drop - a.drop)
+      .slice(0, 12);
+
+    if (withDrops.length >= 6) return withDrops;
+
+    // Fallback: popular categories, mid-range prices, diverse mix
+    const categories = ["gpus", "cpus", "monitors", "laptops", "ram", "ssds"];
+    return categories
+      .flatMap((cat) =>
+        allProducts
+          .filter((p) => p.category === cat && p.currentPrice >= 50 && p.currentPrice <= 2000)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 2)
+      )
+      .slice(0, 12);
+  })();
 
   // Build categories dynamically from actual data
   const categoryCounts: Record<string, number> = {};
