@@ -4,36 +4,28 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Product, CATEGORY_LABELS } from "@/types";
 import ProductCard from "@/components/ProductCard";
-import SearchBar from "@/components/SearchBar";
 
 type SortKey = "name" | "price-asc" | "price-desc" | "biggest-drop" | "at-lowest" | "newest";
 
 const PRODUCTS_PER_PAGE = 48;
 
-export default function ProductsClient() {
+interface ProductsClientProps {
+  initialProducts: Product[];
+}
+
+export default function ProductsClient({ initialProducts }: ProductsClientProps) {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "all";
   const initialRetailer = searchParams.get("retailer") || "all";
 
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allProducts] = useState<Product[]>(initialProducts);
   const [category, setCategory] = useState(initialCategory);
   const [retailer, setRetailer] = useState(initialRetailer);
   const [sort, setSort] = useState<SortKey>("biggest-drop");
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    fetch("/data/products.json")
-      .then((r) => r.json())
-      .then((data) => {
-        setAllProducts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   // Sync URL params
   useEffect(() => {
@@ -127,11 +119,9 @@ export default function ProductsClient() {
           {pageTitle}
         </h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-          {loading
-            ? "Loading..."
-            : filtered.length.toLocaleString() + " products" +
-              (atLowestCount > 0 ? " \u00B7 " + atLowestCount + " at lowest price" : "") +
-              (withDropsCount > 0 ? " \u00B7 " + withDropsCount + " with price drops" : "")}
+          {filtered.length.toLocaleString() + " products" +
+            (atLowestCount > 0 ? " \u00B7 " + atLowestCount + " at lowest price" : "") +
+            (withDropsCount > 0 ? " \u00B7 " + withDropsCount + " with price drops" : "")}
         </p>
       </div>
 
@@ -304,11 +294,7 @@ export default function ProductsClient() {
       </div>
 
       {/* Product grid */}
-      {loading ? (
-        <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
-          Loading products...
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
           No products found with these filters.
         </div>
@@ -347,7 +333,7 @@ export default function ProductsClient() {
                   cursor: page === 1 ? "default" : "pointer",
                 }}
               >
-                \u2190 Prev
+                ← Prev
               </button>
 
               {generatePageNumbers(page, totalPages).map((p, i) =>
@@ -380,7 +366,7 @@ export default function ProductsClient() {
                   cursor: page === totalPages ? "default" : "pointer",
                 }}
               >
-                Next \u2192
+                Next →
               </button>
 
               <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginLeft: "0.5rem" }}>

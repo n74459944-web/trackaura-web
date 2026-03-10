@@ -1,6 +1,11 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
+import fs from "fs";
+import path from "path";
 import ProductsClient from "./ProductsClient";
+import { Product } from "@/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "All Products",
@@ -8,7 +13,19 @@ export const metadata: Metadata = {
     "Browse and filter all tracked Canadian electronics products. Compare prices across Canada Computers and Newegg Canada.",
 };
 
-export default function ProductsPage() {
+async function getProducts(): Promise<Product[]> {
+  try {
+    const filePath = path.join(process.cwd(), "public", "data", "products.json");
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export default async function ProductsPage() {
+  const products = await getProducts();
+
   return (
     <Suspense
       fallback={
@@ -17,7 +34,7 @@ export default function ProductsPage() {
         </div>
       }
     >
-      <ProductsClient />
+      <ProductsClient initialProducts={products} />
     </Suspense>
   );
 }
