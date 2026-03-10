@@ -1,7 +1,5 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import fs from "fs";
-import path from "path";
 import ProductsClient from "./ProductsClient";
 import { Product } from "@/types";
 
@@ -15,9 +13,14 @@ export const metadata: Metadata = {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const filePath = path.join(process.cwd(), "public", "data", "products.json");
-    const raw = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(raw);
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/data/products.json`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return await res.json();
   } catch {
     return [];
   }
