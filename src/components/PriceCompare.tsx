@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Product } from "@/types";
+import { getRetailerAffiliateUrl } from "@/lib/utils";
 
 interface CompareProps {
   product: Product;
@@ -14,6 +15,18 @@ export default function PriceCompare({ product, similar }: CompareProps) {
   const allOptions = [product, ...similar].sort((a, b) => a.currentPrice - b.currentPrice);
   const cheapestPrice = allOptions[0].currentPrice;
   const savings = allOptions[allOptions.length - 1].currentPrice - cheapestPrice;
+
+  const trackClick = (p: Product, event: string) => {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", event, {
+        event_category: event === "affiliate_click" ? "affiliate" : "outbound",
+        event_label: p.name,
+        retailer: p.retailer,
+        product_category: p.category,
+        price: p.currentPrice,
+      });
+    }
+  };
 
   return (
     <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
@@ -29,9 +42,11 @@ export default function PriceCompare({ product, similar }: CompareProps) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        {allOptions.map((p, i) => {
+        {allOptions.map((p) => {
           const isCheapest = p.currentPrice === cheapestPrice;
           const isCurrentProduct = p.id === product.id;
+          const affiliateUrl = getRetailerAffiliateUrl(p);
+          const isAffiliate = p.retailer === "Newegg Canada";
 
           return (
             <div
@@ -84,11 +99,12 @@ export default function PriceCompare({ product, similar }: CompareProps) {
                   {"$" + p.currentPrice.toFixed(2)}
                 </span>
                 <a
-                  href={p.url}
+                  href={affiliateUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel={isAffiliate ? "noopener noreferrer nofollow sponsored" : "noopener noreferrer"}
                   className={isCheapest ? "btn-primary" : "btn-secondary"}
                   style={{ textDecoration: "none", fontSize: "0.75rem", padding: "0.375rem 0.75rem", whiteSpace: "nowrap" }}
+                  onClick={() => trackClick(p, isAffiliate ? "affiliate_click" : "retailer_click")}
                 >
                   {isCheapest ? "Buy Now" : "View"}
                 </a>
@@ -99,7 +115,7 @@ export default function PriceCompare({ product, similar }: CompareProps) {
       </div>
 
       <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: "0.75rem" }}>
-        Prices compared using name-based matching. Products may differ slightly between retailers.
+        Prices compared across Canadian retailers using product matching. Products may have minor variations.
       </p>
     </div>
   );

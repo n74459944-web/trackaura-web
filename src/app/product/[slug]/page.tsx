@@ -6,8 +6,9 @@ import {
   getProductBySlug,
   getPriceHistory,
 } from "@/lib/data";
-import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
+import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
 import { CATEGORY_LABELS } from "@/types";
+import { Product } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
 import PriceAlert from "@/components/PriceAlert";
@@ -17,6 +18,131 @@ import RelatedProducts from "@/components/RelatedProducts";
 export const dynamic = "force-dynamic";
 
 type PageProps = { params: Promise<{ slug: string }> };
+
+// ---- Improved product matching ----
+
+// Common filler words to ignore when matching
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "from", "that", "this", "your",
+  "desktop", "laptop", "gaming", "computer", "processor", "graphics",
+  "card", "memory", "module", "internal", "external", "solid", "state",
+  "drive", "compatible", "support", "series", "edition", "version",
+  "black", "white", "red", "blue", "green", "grey", "gray", "silver",
+  "gold", "pink", "brown", "orange", "purple",
+]);
+
+// Known brand names to prioritize in matching
+const BRANDS = [
+  "samsung", "intel", "amd", "nvidia", "asus", "msi", "gigabyte",
+  "corsair", "kingston", "crucial", "western", "seagate", "noctua",
+  "logitech", "razer", "steelseries", "hyperx", "cooler master",
+  "nzxt", "evga", "sapphire", "asrock", "biostar", "zotac",
+  "pny", "patriot", "gskill", "g.skill", "team", "thermaltake",
+  "be quiet", "fractal", "lian", "phanteks", "deepcool", "arctic",
+  "acer", "dell", "lenovo", "benq", "viewsonic", "lg", "sony",
+  "jbl", "sennheiser", "audio-technica", "shokz", "maxell",
+  "tp-link", "netgear", "linksys", "dlink", "ubiquiti",
+  "western digital", "wd", "sandisk", "hynix", "micron",
+  "roccat", "redragon", "keychron", "ducky", "anne",
+  "antec", "montech", "lga", "ryzen", "geforce", "radeon",
+];
+
+function extractBrand(name: string): string | null {
+  const lower = name.toLowerCase();
+  // Check multi-word brands first (longer match takes priority)
+  const sorted = [...BRANDS].sort((a, b) => b.length - a.length);
+  for (const brand of sorted) {
+    if (lower.includes(brand)) return brand;
+  }
+  return null;
+}
+
+function extractKeyTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s.-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+}
+
+// Extract model-like tokens: alphanumeric patterns (e.g., "9100", "RX9070", "DDR5", "i5-12400")
+function extractModelTokens(name: string): string[] {
+  const matches = name.match(/[a-zA-Z]*\d+[a-zA-Z0-9\-.]*/g) || [];
+  return matches
+    .map((m) => m.toLowerCase())
+    .filter((m) => m.length >= 2);
+}
+
+function computeMatchScore(source: Product, candidate: Product): number {
+  // Must be same category
+  if (candidate.category !== source.category) return 0;
+
+  // Must be different retailer
+  if (candidate.retailer === source.retailer) return 0;
+
+  // Must not be the same product
+  if (candidate.id === source.id) return 0;
+
+  const sourceBrand = extractBrand(source.name);
+  const candidateBrand = extractBrand(candidate.name);
+
+  // Brand must match if both have one
+  if (sourceBrand && candidateBrand && sourceBrand !== candidateBrand) return 0;
+
+  // Brand match bonus
+  let score = 0;
+  if (sourceBrand && candidateBrand && sourceBrand === candidateBrand) {
+    score += 15;
+  }
+
+  // Model number matching (most important signal)
+  const sourceModels = extractModelTokens(source.name);
+  const candidateModels = extractModelTokens(candidate.name);
+  let modelMatches = 0;
+  for (const m of sourceModels) {
+    if (candidateModels.some((cm) => cm === m || cm.includes(m) || m.includes(cm))) {
+      modelMatches++;
+    }
+  }
+  score += modelMatches * 10;
+
+  // General keyword overlap
+  const sourceTokens = extractKeyTokens(source.name);
+  const candidateTokens = new Set(extractKeyTokens(candidate.name));
+  let wordMatches = 0;
+  for (const token of sourceTokens) {
+    if (candidateTokens.has(token)) wordMatches++;
+  }
+
+  // Percentage of source keywords matched
+  const overlapRatio = sourceTokens.length > 0 ? wordMatches / sourceTokens.length : 0;
+  score += overlapRatio * 20;
+
+  // Penalize large price differences (likely different products)
+  const priceDiff = Math.abs(source.currentPrice - candidate.currentPrice);
+  const avgPrice = (source.currentPrice + candidate.currentPrice) / 2;
+  if (avgPrice > 0) {
+    const priceRatio = priceDiff / avgPrice;
+    if (priceRatio > 0.5) score -= 10; // >50% price difference is suspicious
+    if (priceRatio > 1.0) score -= 20; // >100% price difference is very suspicious
+  }
+
+  return score;
+}
+
+function findSimilarProducts(product: Product, allProducts: Product[]): Product[] {
+  const MINIMUM_SCORE = 25; // Must have brand + at least one model match
+
+  const scored = allProducts
+    .map((p) => ({ product: p, score: computeMatchScore(product, p) }))
+    .filter((s) => s.score >= MINIMUM_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  return scored.map((s) => s.product);
+}
+
+// ---- Page ----
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -54,19 +180,13 @@ export default async function ProductPage({ params }: PageProps) {
     : 0;
 
   const allProducts = getAllProducts();
-  const nameWords = product.name.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-  const similar = allProducts
-    .filter(
-      (p) =>
-        p.id !== product.id &&
-        p.retailer !== product.retailer &&
-        nameWords.some((w: string) => p.name.toLowerCase().includes(w))
-    )
-    .slice(0, 5);
-    const related = allProducts
-      .filter((p) => p.id !== product.id && p.category === product.category)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 6);
+  const similar = findSimilarProducts(product, allProducts);
+  const related = allProducts
+    .filter((p) => p.id !== product.id && p.category === product.category)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 6);
+
+  const retailerUrl = getRetailerAffiliateUrl(product);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -143,7 +263,7 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180, width: "100%", maxWidth: 220 }}>
-            <ClickTracker href={product.url} event="retailer_click" label={product.name} retailer={product.retailer} category={product.category} price={product.currentPrice} className="btn-primary" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
+            <ClickTracker href={retailerUrl} event={product.retailer === "Newegg Canada" ? "affiliate_click" : "retailer_click"} label={product.name} retailer={product.retailer} category={product.category} price={product.currentPrice} className="btn-primary" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
               {"View at " + product.retailer}
             </ClickTracker>
             <ClickTracker href={getAmazonSearchUrl(product.name)} event="affiliate_click" label={product.name} retailer="Amazon" category={product.category} price={product.currentPrice} className="btn-amazon" style={{ textAlign: "center", textDecoration: "none", display: "block" }} rel="nofollow">
@@ -168,7 +288,7 @@ export default async function ProductPage({ params }: PageProps) {
       <RelatedProducts products={related} />
 
       <div style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6 }}>
-        Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon links may earn TrackAura a commission.
+        Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon and Newegg links may earn TrackAura a commission.
       </div>
     </div>
   );
