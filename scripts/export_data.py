@@ -249,55 +249,96 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
     return "other"
 
 def make_short_name(name: str) -> str:
-    """Create a clean short product name for card displays."""
-    short = name
-
-    # Remove parenthesized part/model numbers at the end
-    short = re.sub(r'\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)\s*$', '', short)
+    """Create a clean short product name for card displays.
     
-    # Remove common marketing phrases
-    removals = [
-        r',?\s*Best for\s+.*',
-        r',?\s*Seq\.?\s*Read\s+Speeds?\s+Up\s+to\s+[\d,]+\s*MB/s.*',
-        r',?\s*Up\s+to\s+[\d,]+\s*MB/s.*',
-        r',?\s*for\s+High\s+End\s+Computing.*',
-        r',?\s*for\s+AI\s+Computing.*',
-        r',?\s*for\s+Gaming\s+and\s+Heavy\s+Duty.*',
-        r',?\s*with\s+(Height\s+)?Adjustable.*$',
-        r',?\s*for\s+Work/Game/Office.*$',
-        r',?\s*for\s+Gaming\s*&\s*Home\s+Office.*$',
-        r',?\s*with\s+Stitched\s+Edge.*$',
-        r',?\s*Non-Slip\s+Rubber\s+Base.*$',
-        r',?\s*Internal\s+Solid\s+State\s+(Hard\s+)?Drive.*$',
-        r',?\s*Internal\s+Gaming\s+SSD\s+Solid\s+State\s+Drive.*$',
-        r'\s*-\s*\d+\s*Pack\s*$',
+    Strategy: Keep brand + model + one key spec (capacity/size).
+    Strip everything that's specs, marketing, or redundancy.
+    """
+    short = name.strip()
+
+    # 1. Remove parenthesized part/model numbers anywhere
+    #    e.g., (MZ-V9P1T0B/AM), (BX8071512400), (Black)
+    short = re.sub(r'\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)', '', short)
+
+    # 2. Remove everything after these cut-off phrases
+    #    These indicate the start of marketing/spec dumps
+    cut_phrases = [
+        r',?\s*Seq\.?\s*Read\s+Speed',
+        r',?\s*Up\s+to\s+[\d,]+\s*MB/s',
+        r',?\s*Best\s+for\s+',
+        r',?\s*for\s+High\s+End\s+',
+        r',?\s*for\s+AI\s+Computing',
+        r',?\s*for\s+Gaming\s+and\s+',
+        r',?\s*for\s+Work/Game',
+        r',?\s*for\s+Gaming\s*&',
+        r',?\s*for\s+Home\s+Office',
+        r',?\s*Internal\s+Solid\s+State',
+        r',?\s*Internal\s+Gaming\s+SSD',
+        r',?\s*Internal\s+SSD',
+        r',?\s*Solid\s+State\s+Drive',
+        r',?\s*with\s+Height\s+Adjustable',
+        r',?\s*with\s+Stitched\s+Edge',
+        r',?\s*with\s+Adjustable',
+        r',?\s*Non-Slip\s+Rubber',
+        r',?\s*with\s+Google\s+Assistant',
+        r',?\s*with\s+NF-[A-Z]',
+        r',?\s*with\s+High-Performance',
+        r',?\s*with\s+NA-HC',
+        r',?\s*Compatible\s+with\s+',
+        r',?\s*Support[s]?\s+\d+mm\s+Radiator',
+        r',?\s*Supports?\s+M-ATX',
     ]
-    for pattern in removals:
+    for pattern in cut_phrases:
+        short = re.split(pattern, short, flags=re.IGNORECASE)[0]
+
+    # 3. Remove redundant repeated brand/model info after a dash
+    #    e.g., "Intel Core i5-12400 - Core i5 12th Gen Alder Lake 6-Core..."
+    #    Keep everything before the " - " if what follows repeats earlier info
+    if ' - ' in short:
+        parts = short.split(' - ', 1)
+        before_words = set(parts[0].lower().split())
+        after_words = set(parts[1].lower().split()[:5])
+        overlap = before_words & after_words
+        # If 2+ words from before appear in after, it's redundant
+        if len(overlap) >= 2:
+            short = parts[0]
+
+    # 4. Remove spec dumps: long sequences of specs after the model
+    #    Pattern: number + Buttons, number + x Wheel, number + dpi, etc.
+    spec_patterns = [
+        r'\s+\d+\s+Buttons\s+.*$',
+        r'\s+\d+\s+x\s+Wheel\s+.*$',
+        r'\s+USB\s+(2\.0|3\.0|3\.2|Wired)\s+\d+\s+dpi\s+.*$',
+    ]
+    for pattern in spec_patterns:
         short = re.sub(pattern, '', short, flags=re.IGNORECASE)
 
-    # Remove trailing filler words
-    filler_endings = [
-        r',?\s*Desktop\s*$',
-        r',?\s*Black\s*$',
-        r',?\s*White\s*$',
-    ]
-    for pattern in filler_endings:
-        short = re.sub(pattern, '', short, flags=re.IGNORECASE)
+    # 5. Remove trailing color words if name is still long
+    if len(short) > 60:
+        short = re.sub(r'\s*[-,]\s*(Black|White|Red|Blue|Green|Grey|Gray|Silver|Gold|Pink|Brown)\s*$', '', short, flags=re.IGNORECASE)
 
-    # Clean up
+    # 6. Remove trailing punctuation and cleanup
     short = re.sub(r'[\s,\-]+$', '', short).strip()
+    
+    # 7. Remove trailing lone dash or incomplete words
+    short = re.sub(r'\s+-\s*$', '', short).strip()
+    short = re.sub(r'\s+\w$', '', short).strip()  # trailing single char
 
-    # Cap at 80 chars with clean word break
-    if len(short) > 80:
-        short = short[:80]
+    # 8. Cap at 70 chars with clean word break
+    if len(short) > 70:
+        short = short[:70]
         last_space = short.rfind(' ')
-        if last_space > 30:
+        if last_space > 25:
             short = short[:last_space]
         short = re.sub(r'[\s,\-]+$', '', short)
 
-    # If we trimmed too aggressively, fall back
+    # 9. Safety: if we trimmed too aggressively, fall back to first 70 chars
     if len(short) < 10:
-        return name[:80]
+        short = name[:70]
+        last_space = short.rfind(' ')
+        if last_space > 25:
+            short = short[:last_space]
+        short = re.sub(r'[\s,\-]+$', '', short)
 
     return short
 
