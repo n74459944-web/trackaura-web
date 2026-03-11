@@ -2,8 +2,6 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getStats } from "@/lib/data";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "How TrackAura Works — Price Tracking for Canadian Electronics",
   description:

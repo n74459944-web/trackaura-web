@@ -3,8 +3,6 @@ import Link from "next/link";
 import fs from "fs";
 import path from "path";
 
-export const dynamic = "force-dynamic";
-
 interface BlogPost {
   slug: string;
   title: string;

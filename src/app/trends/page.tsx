@@ -4,8 +4,6 @@ import { getAllProducts } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
   title: "Canadian Electronics Price Trends — TrackAura Price Index",
   description:

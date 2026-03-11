@@ -1,9 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
+import { getAllProducts } from "@/lib/data";
 import ProductsClient from "./ProductsClient";
-import { Product } from "@/types";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "All Products",
@@ -11,20 +9,8 @@ export const metadata: Metadata = {
     "Browse and filter all tracked Canadian electronics products. Compare prices across Canada Computers and Newegg Canada.",
 };
 
-async function getProducts(): Promise<Product[]> {
-  try {
-    const res = await fetch("https://www.trackaura.com/data/products.json", {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
-}
-
-export default async function ProductsPage() {
-  const products = await getProducts();
+export default function ProductsPage() {
+  const products = getAllProducts();
 
   return (
     <Suspense

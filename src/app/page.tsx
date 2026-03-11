@@ -6,8 +6,6 @@ import StatsBar from "@/components/StatsBar";
 import ProductCard from "@/components/ProductCard";
 import EmailSignup from "@/components/EmailSignup";
 
-export const dynamic = "force-dynamic";
-
 export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
