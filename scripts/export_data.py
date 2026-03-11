@@ -58,8 +58,146 @@ def slugify(name: str) -> str:
     return slug[:120]
 
 
+# --- Category classification rules ---
+
+# Words that BLOCK a product from being in a category, even if keywords match.
+# For example, a laptop with "RTX 5060" should NOT be classified as a GPU.
+CATEGORY_BLOCKLIST = {
+    "gpus": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "pre-built", "all-in-one", "aio pc", "workstation pc",
+        "motherboard", "mobo", "mainboard",
+        "power supply", "psu",
+        "keycap", "key cap", "keyboard",
+        "mouse pad", "mousepad", "desk mat",
+        "case for", "pc case", "computer case", "tower case",
+        "monitor", "display",
+        "cpu cooler", "heatsink", "liquid cool",
+    ],
+    "cpus": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "pre-built", "all-in-one", "aio pc",
+        "motherboard", "mobo", "mainboard",
+        "graphics card", "gpu", "geforce", "radeon",
+        "cooler", "heatsink", "liquid cool", "aio",
+        "power supply", "psu",
+        "ram", "memory module", "dimm",
+    ],
+    "ssds": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "motherboard", "mobo", "mainboard",
+        "graphics card", "gpu",
+    ],
+    "ram": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "motherboard", "mobo", "mainboard",
+        "graphics card", "gpu",
+    ],
+    "monitors": [
+        "laptop", "notebook",
+        "monitor arm", "monitor mount", "monitor stand", "monitor cable",
+        "screen protector",
+    ],
+    "motherboards": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "graphics card",
+    ],
+    "keyboards": [
+        "mouse", "mice",  # Canada Computers shares a keyboards-mice page
+    ],
+    "mice": [
+        "keyboard",  # Opposite direction
+    ],
+    "coolers": [
+        "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
+        "graphics card", "gpu",
+    ],
+    "laptops": [],
+    "power-supplies": [
+        "laptop", "notebook",
+    ],
+    "cases": [
+        "laptop", "notebook",
+        "phone case", "tablet case", "ipad case",
+    ],
+    "routers": [],
+    "webcams": [],
+    "speakers": [
+        "headphone", "headset", "earphone", "earbud",
+    ],
+    "headphones": [
+        "speaker", "soundbar",
+    ],
+    "external-storage": [],
+}
+
+# Strong identifiers that override weaker keyword matches.
+# If a product name contains one of these, it's DEFINITELY this category.
+STRONG_IDENTIFIERS = {
+    "laptops": [
+        "laptop", "notebook", "chromebook", "ultrabook",
+        "macbook", "thinkpad", "ideapad", "vivobook", "zenbook",
+        "rog strix g14", "rog strix g15", "rog strix g16",
+        "rog zephyrus", "legion 5", "legion 7", "legion pro",
+        "omen transcend", "omen 16", "omen 17",
+        "swift go", "swift x", "nitro v",
+        "raider ge", "stealth 16", "stealth 14",
+    ],
+    "motherboards": [
+        "motherboard", "mainboard", "mobo",
+        "lga 1700", "lga 1851", "lga 1200", "lga 1151",
+        "socket am4", "socket am5",
+        "b650", "b850", "x670", "x870", "z790", "z890",
+        "b550", "b450", "a620", "b760", "h770", "b660",
+        "b365m", "h81 m-atx",
+    ],
+    "coolers": [
+        "cpu cooler", "cpu liquid cooler", "aio cooler",
+        "heatsink", "liquid cooling",
+        "noctua nh-", "hyper 212",
+        "240mm radiator", "280mm radiator", "360mm radiator",
+        "hyperflow", "kraken", "icue elite",
+    ],
+    "cases": [
+        "computer case", "pc case", "atx case", "mid tower",
+        "mini itx case", "micro atx case", "full tower",
+        "tempered glass case", "chassis",
+    ],
+    "mice": [
+        "gaming mouse", "wireless mouse", "mouse pad", "mousepad",
+        "desk mat", "mouse mat",
+    ],
+    "keyboards": [
+        "keycap", "key cap", "keycaps",
+        "gaming keyboard", "mechanical keyboard", "wireless keyboard",
+    ],
+}
+
+# Categories checked in priority order.
+# More specific categories FIRST so they match before generic ones.
+CATEGORY_PRIORITY = [
+    "laptops",        # Check first: laptops contain CPU/GPU keywords
+    "motherboards",   # Motherboards contain CPU socket keywords
+    "coolers",        # Coolers mention CPU brands
+    "cases",          # Cases mention ATX/tower keywords
+    "mice",           # Before keyboards (shared CC page)
+    "keyboards",      # Before keyboards
+    "monitors",
+    "headphones",
+    "speakers",
+    "webcams",
+    "routers",
+    "external-storage",
+    "gpus",           # Late: many products mention GPU keywords
+    "cpus",           # Late: many products mention CPU keywords
+    "ssds",
+    "ram",
+    "power-supplies",
+]
+
+
 def guess_category(name: str, url: str, keywords_map: dict) -> str:
-    """Guess product category from name using config keywords."""
+    """Guess product category from name using config keywords + validation rules."""
     name_lower = name.lower()
 
     # Accessories that get miscategorized — send to "other"
@@ -71,16 +209,39 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
         "sticker", "decal", "skin", "cover", "sleeve", "bag", "case for",
         "anti-static", "thermal paste", "thermal pad", "heatsink for",
     ]
-    # Only exclude if it looks like a pure accessory (short name or clearly not a main product)
     is_accessory = any(w in name_lower for w in accessory_words)
+    if is_accessory:
+        # Still allow some categories for accessories (keycaps -> keyboards, mouse pad -> mice)
+        for cat_key in ["keyboards", "mice"]:
+            strong = STRONG_IDENTIFIERS.get(cat_key, [])
+            if any(s in name_lower for s in strong):
+                return cat_key
+        return "other"
 
-    for cat_key, keywords in keywords_map.items():
-        if any(kw in name_lower for kw in keywords):
-            # If it matched but looks like an accessory, keep checking other categories
-            # Only assign if it's not clearly an accessory
-            if is_accessory and cat_key in ["gpus", "ssds", "cpus", "monitors", "motherboards", "ram"]:
-                continue
+    # Step 1: Check strong identifiers first (highest confidence)
+    for cat_key in CATEGORY_PRIORITY:
+        strong = STRONG_IDENTIFIERS.get(cat_key, [])
+        if any(s in name_lower for s in strong):
             return cat_key
+
+    # Step 2: Keyword matching with blocklist validation, in priority order
+    for cat_key in CATEGORY_PRIORITY:
+        keywords = keywords_map.get(cat_key, [])
+        if not keywords:
+            continue
+
+        # Check if any keyword matches
+        has_keyword = any(kw in name_lower for kw in keywords)
+        if not has_keyword:
+            continue
+
+        # Check blocklist — if ANY blocklist word is present, skip this category
+        blocklist = CATEGORY_BLOCKLIST.get(cat_key, [])
+        is_blocked = any(bw in name_lower for bw in blocklist)
+        if is_blocked:
+            continue
+
+        return cat_key
 
     return "other"
 
@@ -136,6 +297,7 @@ def export():
     """).fetchall()
 
     seen_slugs = {}
+    reclassified = 0
     for row in rows:
         slug = slugify(row["name"])
         if slug in seen_slugs:
