@@ -51,6 +51,7 @@ export default function Header() {
           }}
         >
           <span
+            aria-hidden="true"
             style={{
               width: 28,
               height: 28,
