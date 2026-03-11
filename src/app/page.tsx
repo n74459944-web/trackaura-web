@@ -82,6 +82,8 @@ export default function HomePage() {
           maxWidth: 800,
           margin: "0 auto",
           textAlign: "center",
+          position: "relative",
+          zIndex: 10,
         }}
       >
         <h1
