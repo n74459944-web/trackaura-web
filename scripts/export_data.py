@@ -73,6 +73,9 @@ CATEGORY_BLOCKLIST = {
         "case for", "pc case", "computer case", "tower case",
         "monitor", "display",
         "cpu cooler", "heatsink", "liquid cool",
+        "water block", "waterblock", "water cooling block", "gpu block",
+        "backplate", "gpu bracket", "gpu holder", "gpu support",
+        "anti-sag", "sag bracket",
     ],
     "cpus": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
