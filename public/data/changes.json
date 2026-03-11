@@ -1,5 +1,44 @@
 [
   {
+    "name": "Razer Blade 16\" OLED AMD Ryzen AI 9 365 RTX 5070 32GB 1TB WIN11H",
+    "slug": "razer-blade-16-oled-amd-ryzen-ai-9-365-rtx-5070-32gb-1tb-win11h",
+    "url": "https://www.canadacomputers.com/en/gaming-laptops/269868/razer-blade-16-oled-amd-ryzen-ai-9-365-rtx-5070-32gb-1tb-win11h-rz09-05286en3-r3u1.html",
+    "retailer": "Canada Computers",
+    "category": "gpus",
+    "oldPrice": 2999.0,
+    "newPrice": 2499.0,
+    "diff": -500.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-11T10:01:21"
+  },
+  {
+    "name": "BenQ GW2490T 23.8\"  FHD 1920x1080 IPS 100Hz 5ms (GTG) Office Monitor",
+    "slug": "benq-gw2490t-238-fhd-1920x1080-ips-100hz-5ms-gtg-office-monitor",
+    "url": "https://www.canadacomputers.com/en/24-under-home-office-monitors/260485/benq-gw2490t-23-8-fhd-1920x1080-ips-100hz-5ms-gtg-office-monitor-gw2490t.html",
+    "retailer": "Canada Computers",
+    "category": "monitors",
+    "oldPrice": 159.99,
+    "newPrice": 154.99,
+    "diff": -5.0,
+    "pct": -3.1,
+    "direction": "down",
+    "changedAt": "2026-03-11T09:59:25"
+  },
+  {
+    "name": "Havit TW969 True Wireless Earbuds, Blue",
+    "slug": "havit-tw969-true-wireless-earbuds-blue",
+    "url": "https://www.canadacomputers.com/en/true-wireless-earphones/244703/havit-tw969-true-wireless-earbuds-blue-202012003193754.html",
+    "retailer": "Canada Computers",
+    "category": "headphones",
+    "oldPrice": 14.88,
+    "newPrice": 11.88,
+    "diff": -3.0,
+    "pct": -20.2,
+    "direction": "down",
+    "changedAt": "2026-03-11T09:57:37"
+  },
+  {
     "name": "MSI Raider 16 HX AI 16\" Intel Ultra 9-275HX RTX 5090 64GB 2TB Win11H(Open Box)",
     "slug": "msi-raider-16-hx-ai-16-intel-ultra-9-275hx-rtx-5090-64gb-2tb-win11hopen-box",
     "url": "https://www.canadacomputers.com/en/gaming-laptops/283838/msi-raider-16-hx-ai-16-intel-ultra-9-275hx-rtx-5090-64gb-2tb-win11h-raider-16-hx-ai-a2xwjg-669ca.html",
@@ -24,19 +63,6 @@
     "pct": -9.1,
     "direction": "down",
     "changedAt": "2026-03-11T05:00:32"
-  },
-  {
-    "name": "Samsung Odyssey G6 32\" QHD 240Hz 1ms GTG Curved Gaming Monitor",
-    "slug": "samsung-odyssey-g6-32-qhd-240hz-1ms-gtg-curved-gaming-monitor",
-    "url": "https://www.canadacomputers.com/en/30-45-gaming-monitors/252473/samsung-odyssey-g6-32-qhd-240hz-1ms-gtg-curved-gaming-monitor-ls32bg652enxgo.html",
-    "retailer": "Canada Computers",
-    "category": "monitors",
-    "oldPrice": 659.99,
-    "newPrice": 383.88,
-    "diff": -276.11,
-    "pct": -41.8,
-    "direction": "down",
-    "changedAt": "2026-03-11T04:58:31"
   },
   {
     "name": "BEYERDYNAMIC DT 700 PRO X Studio headphones for recording & monitoring(Open Box)",
@@ -1272,31 +1298,5 @@
     "pct": 13.7,
     "direction": "up",
     "changedAt": "2026-03-10T04:43:32"
-  },
-  {
-    "name": "Adesso WKB-3100UB 2.4 GHz RF Wireless Mini keyboard built-in Optical trackball, with mini receiver and receiver holder",
-    "slug": "adesso-wkb-3100ub-24-ghz-rf-wireless-mini-keyboard-built-in-optical-trackball-with-mini-receiver-and-receiver-holder",
-    "url": "https://www.newegg.ca/adesso-easytrack-3100-wkb-3100ub-usb-rf-wireless/p/N82E16823166102",
-    "retailer": "Newegg Canada",
-    "category": "keyboards",
-    "oldPrice": 74.99,
-    "newPrice": 77.27,
-    "diff": 2.28,
-    "pct": 3.0,
-    "direction": "up",
-    "changedAt": "2026-03-10T04:42:45"
-  },
-  {
-    "name": "MSI 27\" UHD 4K 240Hz with G-Sync Compatible 0.03ms HDR400 USB-C DCI-P3 99% Ai Navigator DP 2.1 OLED Gaming Computer Monitor with Height Adjustable, Swivel, Pivot & Tilt stand MPG 272URX QD-OLED",
-    "slug": "msi-27-uhd-4k-240hz-with-g-sync-compatible-003ms-hdr400-usb-c-dci-p3-99-ai-navigator-dp-21-oled-gaming-computer-monitor-",
-    "url": "https://www.newegg.ca/msi-272urx-qd-oled-27-uhd-240-hz-mpg-black/p/N82E16824475467",
-    "retailer": "Newegg Canada",
-    "category": "gpus",
-    "oldPrice": 1673.33,
-    "newPrice": 1629.99,
-    "diff": -43.34,
-    "pct": -2.6,
-    "direction": "down",
-    "changedAt": "2026-03-10T04:40:46"
   }
 ]

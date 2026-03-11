@@ -1,41 +1,41 @@
 {
-  "totalProducts": 13366,
-  "totalPricePoints": 91613,
+  "totalProducts": 13467,
+  "totalPricePoints": 94075,
   "retailers": [
     "Newegg Canada",
     "Canada Computers"
   ],
   "categories": [
     "speakers",
-    "ssds",
-    "headphones",
-    "other",
-    "monitors",
-    "keyboards",
-    "routers",
     "mice",
-    "cases",
-    "ram",
-    "cpus",
-    "laptops",
-    "external-storage",
+    "monitors",
+    "other",
     "power-supplies",
-    "coolers",
-    "gpus",
     "motherboards",
-    "webcams"
+    "cpus",
+    "ssds",
+    "cases",
+    "headphones",
+    "gpus",
+    "keyboards",
+    "external-storage",
+    "webcams",
+    "routers",
+    "laptops",
+    "ram",
+    "coolers"
   ],
-  "lastUpdated": "2026-03-11T05:56:29.260326",
+  "lastUpdated": "2026-03-11T10:57:19.972185",
   "productsByRetailer": {
     "Newegg Canada": 9086,
-    "Canada Computers": 4280
+    "Canada Computers": 4381
   },
   "productsByCategory": {
-    "other": 1803,
+    "other": 1811,
     "power-supplies": 727,
     "laptops": 966,
     "ssds": 426,
-    "coolers": 802,
+    "coolers": 892,
     "monitors": 1175,
     "motherboards": 1595,
     "cpus": 389,
@@ -46,7 +46,7 @@
     "keyboards": 1047,
     "ram": 999,
     "speakers": 8,
-    "gpus": 1059,
+    "gpus": 1062,
     "webcams": 25,
     "external-storage": 1
   }
