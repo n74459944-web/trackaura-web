@@ -1,5 +1,31 @@
 [
   {
+    "name": "BEYERDYNAMIC DT 700 PRO X Studio headphones for recording & monitoring(Open Box)",
+    "slug": "beyerdynamic-dt-700-pro-x-studio-headphones-for-recording-monitoringopen-box",
+    "url": "https://www.canadacomputers.com/en/over-ear-headphones/248972/beyerdynamic-dt-700-pro-x-studio-headphones-for-recording-monitoring-737704.html",
+    "retailer": "Canada Computers",
+    "category": "headphones",
+    "oldPrice": 386.99,
+    "newPrice": 296.99,
+    "diff": -90.0,
+    "pct": -23.3,
+    "direction": "down",
+    "changedAt": "2026-03-10T23:25:11"
+  },
+  {
+    "name": "BEYERDYNAMIC DT 700 PRO X Studio headphones for recording & monitoring",
+    "slug": "beyerdynamic-dt-700-pro-x-studio-headphones-for-recording-monitoring",
+    "url": "https://www.canadacomputers.com/en/over-ear-headphones/210081/beyerdynamic-dt-700-pro-x-studio-headphones-for-recording-monitoring-737704.html",
+    "retailer": "Canada Computers",
+    "category": "headphones",
+    "oldPrice": 429.99,
+    "newPrice": 329.99,
+    "diff": -100.0,
+    "pct": -23.3,
+    "direction": "down",
+    "changedAt": "2026-03-10T23:25:11"
+  },
+  {
     "name": "ASUS Mouse Pads -",
     "slug": "asus-mouse-pads",
     "url": "https://www.canadacomputers.com/en/mouse-pads/182372/asus-mouse-pads-nc02-rog-scabbard.html",
@@ -180,19 +206,6 @@
     "pct": -7.5,
     "direction": "down",
     "changedAt": "2026-03-10T18:02:11"
-  },
-  {
-    "name": "CORSAIR CORSAIR RM1000e 1000W Gold ATX Power Supply, Black(Open Box)",
-    "slug": "corsair-corsair-rm1000e-1000w-gold-atx-power-supply-blackopen-box",
-    "url": "https://www.canadacomputers.com/en/power-supplies/270664/corsair-corsair-rm1000e-1000w-gold-atx-power-supply-black-cp-9020297-na.html",
-    "retailer": "Canada Computers",
-    "category": "power-supplies",
-    "oldPrice": 152.99,
-    "newPrice": 179.99,
-    "diff": 27.0,
-    "pct": 17.6,
-    "direction": "up",
-    "changedAt": "2026-03-10T17:38:34"
   },
   {
     "name": "TP-Link N300 Wireless Extender, Wi-Fi Router (TL-WR841N) - 2 x 5dBi High Power Antennas, Supports Access Point, WISP, Up to 300Mbps",
@@ -1284,19 +1297,6 @@
     "diff": 49.01,
     "pct": 30.6,
     "direction": "up",
-    "changedAt": "2026-03-10T04:45:36"
-  },
-  {
-    "name": "Wireless Gaming Keyboard and Mouse Combo,3 in 1 Rainbow LED Rechargeable Keyboard Mouse with 3800mAh Battery Metal Panel,10 Colors RGB Gaming Mouse Pad (32.5x12x0.15 inch),7 Colors Mute Gaming Mouse",
-    "slug": "wireless-gaming-keyboard-and-mouse-combo3-in-1-rainbow-led-rechargeable-keyboard-mouse-with-3800mah-battery-metal-panel1",
-    "url": "https://www.newegg.ca/p/0TH-06RZ-000T6",
-    "retailer": "Newegg Canada",
-    "category": "keyboards",
-    "oldPrice": 289.99,
-    "newPrice": 209.99,
-    "diff": -80.0,
-    "pct": -27.6,
-    "direction": "down",
     "changedAt": "2026-03-10T04:45:36"
   }
 ]
