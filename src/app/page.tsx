@@ -123,7 +123,7 @@ export default function HomePage() {
         className="animate-in animate-delay-3"
         style={{ maxWidth: 700, margin: "0 auto 3rem", padding: "0 1.5rem" }}
       >
-        <StatsBar stats={stats} />
+        <StatsBar stats={{ ...stats, categories: stats.categories.filter((c: string) => c !== "other") }} />
       </section>
 
       {/* Categories */}
