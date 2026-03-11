@@ -174,6 +174,11 @@ STRONG_IDENTIFIERS = {
         "keycap", "key cap", "keycaps",
         "gaming keyboard", "mechanical keyboard", "wireless keyboard",
     ],
+    "monitors": [
+        "computer monitor", "gaming monitor", "office monitor",
+        "curved monitor", "ultrawide monitor", "portable monitor",
+        "ips monitor", "oled monitor", "4k monitor",
+    ],
 }
 
 # Categories checked in priority order.
