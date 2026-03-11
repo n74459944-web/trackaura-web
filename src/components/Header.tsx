@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/products", label: "Products" },
   { href: "/brands", label: "Brands" },
   { href: "/changes", label: "Price Changes" },
+  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/how-it-works", label: "How It Works" },
 ];
@@ -79,7 +80,7 @@ export default function Header() {
         </Link>
 
         <nav className="desktop-nav">
-          {NAV_LINKS.slice(0, 7).map((link) => (
+          {NAV_LINKS.slice(0, 8).map((link) => (
             <Link
               key={link.href}
               href={link.href}
