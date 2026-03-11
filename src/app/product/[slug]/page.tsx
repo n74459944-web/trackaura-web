@@ -242,25 +242,41 @@ export default async function ProductPage({ params }: PageProps) {
 
   const retailerUrl = getRetailerAffiliateUrl(product);
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    url: "https://www.trackaura.com/product/" + product.slug,
-    description: "Price tracking for " + product.name + " at " + product.retailer,
-    offers: {
-      "@type": "Offer",
-      price: product.currentPrice,
-      priceCurrency: "CAD",
-      availability: "https://schema.org/InStock",
-      url: product.url,
-      seller: {
-        "@type": "Organization",
-        name: product.retailer,
+ // Extract brand for structured data
+  const productBrand = extractBrand(product.name);
+
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      url: "https://www.trackaura.com/product/" + product.slug,
+      description: "Price tracking for " + product.name + " at " + product.retailer,
+      ...(productBrand ? { brand: { "@type": "Brand", name: productBrand.charAt(0).toUpperCase() + productBrand.slice(1) } } : {}),
+      offers: {
+        "@type": "Offer",
+        price: product.currentPrice,
+        priceCurrency: "CAD",
+        availability: "https://schema.org/InStock",
+        url: product.url,
+        seller: {
+          "@type": "Organization",
+          name: product.retailer,
+        },
+        priceValidUntil: new Date(Date.now() + 86400000).toISOString().split("T")[0],
       },
-      priceValidUntil: new Date(Date.now() + 86400000).toISOString().split("T")[0],
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://www.trackaura.com" },
+        { "@type": "ListItem", position: 2, name: "Products", item: "https://www.trackaura.com/products" },
+        { "@type": "ListItem", position: 3, name: CATEGORY_LABELS[product.category] || product.category, item: "https://www.trackaura.com/products?category=" + product.category },
+        { "@type": "ListItem", position: 4, name: product.name },
+      ],
+    },
+  ];
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 1.5rem" }}>
