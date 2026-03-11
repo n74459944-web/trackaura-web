@@ -11,7 +11,6 @@ import {
   ReferenceLine,
 } from "recharts";
 import { PricePoint } from "@/types";
-import Link from "next/link";
 
 interface PriceChartProps {
   data: PricePoint[];
@@ -73,53 +72,62 @@ export default function PriceChart({ data, currentPrice, minPrice, maxPrice }: P
   const yMin = Math.floor(Math.min(...prices) * 0.95);
   const yMax = Math.ceil(Math.max(...prices) * 1.05);
 
+  const isSparse = data.length < 7;
+
   return (
-    <div style={{ width: "100%", height: 320 }}>
-      <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
-          <XAxis
-            dataKey="date"
-            tickFormatter={formatDate}
-            stroke="var(--text-secondary)"
-            fontSize={11}
-            tickLine={false}
-            axisLine={{ stroke: "var(--border)" }}
-          />
-          <YAxis
-            domain={[yMin, yMax]}
-            tickFormatter={(v: number) => `$${v}`}
-            stroke="var(--text-secondary)"
-            fontSize={11}
-            tickLine={false}
-            axisLine={{ stroke: "var(--border)" }}
-            width={60}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          {minPrice < maxPrice && (
-            <ReferenceLine
-              y={minPrice}
-              stroke="var(--accent)"
-              strokeDasharray="4 4"
-              opacity={0.5}
-              label={{
-                value: `Low: $${minPrice.toFixed(2)}`,
-                fill: "var(--accent)",
-                fontSize: 10,
-                position: "insideTopRight",
-              }}
+    <div>
+      <div style={{ width: "100%", height: 320 }}>
+        <ResponsiveContainer>
+          <LineChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatDate}
+              stroke="var(--text-secondary)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={{ stroke: "var(--border)" }}
             />
-          )}
-          <Line
-            type="stepAfter"
-            dataKey="price"
-            stroke="var(--accent)"
-            strokeWidth={2}
-            dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }}
-            activeDot={{ r: 5, fill: "var(--accent)", stroke: "var(--bg-primary)", strokeWidth: 2 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+            <YAxis
+              domain={[yMin, yMax]}
+              tickFormatter={(v: number) => `$${v}`}
+              stroke="var(--text-secondary)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={{ stroke: "var(--border)" }}
+              width={60}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            {minPrice < maxPrice && (
+              <ReferenceLine
+                y={minPrice}
+                stroke="var(--accent)"
+                strokeDasharray="4 4"
+                opacity={0.5}
+                label={{
+                  value: `Low: $${minPrice.toFixed(2)}`,
+                  fill: "var(--accent)",
+                  fontSize: 10,
+                  position: "insideTopRight",
+                }}
+              />
+            )}
+            <Line
+              type="stepAfter"
+              dataKey="price"
+              stroke="var(--accent)"
+              strokeWidth={2}
+              dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: "var(--accent)", stroke: "var(--bg-primary)", strokeWidth: 2 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      {isSparse && (
+        <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.5rem", fontStyle: "italic" }}>
+          {"Building price history \u2014 prices are checked every 4 hours. Set a price alert to get notified of drops."}
+        </p>
+      )}
     </div>
   );
 }
