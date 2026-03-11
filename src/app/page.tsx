@@ -191,24 +191,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section
-        style={{
-          maxWidth: 800,
-          margin: "0 auto 4rem",
-          padding: "0 1.5rem",
-          textAlign: "center",
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "'Sora', sans-serif",
-            fontWeight: 700,
-            fontSize: "1.25rem",
-            marginBottom: "1.5rem",
-          }}
-        >
-          {/* Buying Guides */}
+      {/* Buying Guides */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.25rem", marginBottom: "1rem" }}>
           Buying Guides
@@ -234,12 +217,29 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-      
+
       {/* Email signup */}
       <section style={{ maxWidth: 600, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <EmailSignup />
       </section>
 
+      {/* How it works */}
+      <section
+        style={{
+          maxWidth: 800,
+          margin: "0 auto 4rem",
+          padding: "0 1.5rem",
+          textAlign: "center",
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: "'Sora', sans-serif",
+            fontWeight: 700,
+            fontSize: "1.25rem",
+            marginBottom: "1.5rem",
+          }}
+        >
           How TrackAura Works
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
