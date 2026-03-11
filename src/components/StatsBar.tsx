@@ -1,11 +1,14 @@
 import { SiteStats } from "@/types";
 
 export default function StatsBar({ stats }: { stats: SiteStats }) {
+  // Calculate how often prices update (every 4 hours = 6x/day)
+  const updatesPerDay = "6x / Day";
+
   const items = [
     { label: "Products Tracked", value: stats.totalProducts.toLocaleString() },
     { label: "Price Points", value: stats.totalPricePoints.toLocaleString() },
-    { label: "Retailers", value: stats.retailers.length.toString() },
     { label: "Categories", value: stats.categories.length.toString() },
+    { label: "Price Updates", value: updatesPerDay },
   ];
 
   return (
@@ -54,6 +57,27 @@ export default function StatsBar({ stats }: { stats: SiteStats }) {
           </div>
         ))}
       </div>
+
+      {/* Retailer logos strip */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "0.5rem",
+          marginTop: "1rem",
+          fontSize: "0.75rem",
+          color: "var(--text-secondary)",
+        }}
+      >
+        <span>Tracking prices from</span>
+        <span style={{ fontWeight: 700, color: "var(--cc-color)" }}>Canada Computers</span>
+        <span style={{ color: "var(--border)" }}>•</span>
+        <span style={{ fontWeight: 700, color: "var(--newegg-color)" }}>Newegg Canada</span>
+        <span style={{ color: "var(--border)" }}>•</span>
+        <span style={{ fontWeight: 700, color: "#ff9900" }}>Amazon.ca</span>
+      </div>
+
       <style>{`
         .stats-grid {
           grid-template-columns: repeat(4, 1fr);
