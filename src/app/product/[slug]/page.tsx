@@ -7,7 +7,7 @@ import {
   getPriceHistory,
 } from "@/lib/data";
 import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
-import { CATEGORY_LABELS } from "@/types";
+import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import { Product } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
@@ -46,6 +46,27 @@ const BRANDS = [
   "roccat", "redragon", "keychron", "ducky", "anne",
   "antec", "montech", "lga", "ryzen", "geforce", "radeon",
 ];
+
+// Related categories: what someone browsing this category might also want
+const RELATED_CATEGORIES: Record<string, string[]> = {
+  gpus: ["cpus", "power-supplies", "monitors", "cases", "motherboards"],
+  cpus: ["gpus", "motherboards", "coolers", "ram"],
+  monitors: ["gpus", "keyboards", "mice", "webcams"],
+  ssds: ["ram", "motherboards", "external-storage", "cases"],
+  ram: ["cpus", "motherboards", "ssds"],
+  keyboards: ["mice", "monitors", "headphones"],
+  mice: ["keyboards", "monitors", "headphones"],
+  laptops: ["monitors", "keyboards", "mice", "external-storage", "headphones"],
+  motherboards: ["cpus", "ram", "ssds", "gpus", "cases"],
+  "power-supplies": ["gpus", "cases", "motherboards"],
+  cases: ["power-supplies", "motherboards", "coolers", "gpus"],
+  coolers: ["cpus", "motherboards", "cases"],
+  headphones: ["speakers", "webcams", "keyboards"],
+  speakers: ["headphones", "monitors"],
+  routers: ["webcams", "external-storage"],
+  webcams: ["monitors", "headphones", "routers"],
+  "external-storage": ["ssds", "laptops"],
+};
 
 function extractBrand(name: string): string | null {
   const lower = name.toLowerCase();
@@ -319,6 +340,43 @@ export default async function ProductPage({ params }: PageProps) {
       <PriceCompare product={product} similar={similar} />
 
       <RelatedProducts products={related} />
+
+      {/* Link to buying guide */}
+      <div className="card" style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", marginBottom: "0.25rem" }}>
+            {(CATEGORY_ICONS[product.category] || "\uD83D\uDCE6") + " Best " + (CATEGORY_LABELS[product.category] || product.category) + " Deals"}
+          </p>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+            {"See our full buying guide with budget, mid-range, and high-end picks."}
+          </p>
+        </div>
+        <Link href={"/best/" + product.category} className="btn-secondary" style={{ textDecoration: "none", fontSize: "0.8125rem", whiteSpace: "nowrap" }}>
+          View Buying Guide
+        </Link>
+      </div>
+
+      {/* Related categories */}
+      {(RELATED_CATEGORIES[product.category] || []).length > 0 && (
+        <div className="card" style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", marginBottom: "0.75rem" }}>
+            Related Categories
+          </h2>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {(RELATED_CATEGORIES[product.category] || []).map((cat) => (
+              <Link
+                key={cat}
+                href={"/products?category=" + cat}
+                className="filter-pill"
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.375rem" }}
+              >
+                <span>{CATEGORY_ICONS[cat] || "\uD83D\uDCE6"}</span>
+                <span>{CATEGORY_LABELS[cat] || cat}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6 }}>
         Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon and Newegg links may earn TrackAura a commission.
