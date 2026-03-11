@@ -106,7 +106,7 @@ export default function SearchBar({ large }: SearchBarProps) {
             border: "1px solid var(--border)",
             borderRadius: 12,
             overflow: "hidden",
-            zIndex: 100,
+            zIndex: 999,
             boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
           }}
         >
