@@ -12,6 +12,10 @@ export interface Product {
   priceCount: number;
   firstSeen: string;
   lastUpdated: string;
+  imageUrl?: string;
+  brand?: string;
+  description?: string;
+  specs?: Record<string, string>;
 }
 
 export interface PricePoint {
