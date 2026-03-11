@@ -181,10 +181,43 @@ export default async function ProductPage({ params }: PageProps) {
 
   const allProducts = getAllProducts();
   const similar = findSimilarProducts(product, allProducts);
-  const related = allProducts
-    .filter((p) => p.id !== product.id && p.category === product.category)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 6);
+  // Related products: same category, prefer same brand and similar price
+  const related = (() => {
+    const sameCat = allProducts.filter(
+      (p) => p.id !== product.id && p.category === product.category
+    );
+    const getBrand = (name: string) => {
+      const words = name.split(/\s+/);
+      if (words[0] && words[0].length <= 3 && words[1]) return (words[0] + " " + words[1]).toLowerCase();
+      return (words[0] || "").toLowerCase();
+    };
+    const productBrand = getBrand(product.name);
+    const scored = sameCat.map((p) => {
+      let score = 0;
+      if (getBrand(p.name) === productBrand) score += 20;
+      const priceDiff = Math.abs(p.currentPrice - product.currentPrice);
+      const avgPrice = (p.currentPrice + product.currentPrice) / 2;
+      if (avgPrice > 0) {
+        const ratio = priceDiff / avgPrice;
+        if (ratio < 0.2) score += 10;
+        else if (ratio < 0.5) score += 5;
+      }
+      if (p.minPrice < p.maxPrice) score += 3;
+      if (p.retailer !== product.retailer) score += 5;
+      return { product: p, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    const result: typeof allProducts = [];
+    let sameBrandCount = 0;
+    for (const s of scored) {
+      if (result.length >= 6) break;
+      const isSameBrand = getBrand(s.product.name) === productBrand;
+      if (isSameBrand && sameBrandCount >= 3) continue;
+      result.push(s.product);
+      if (isSameBrand) sameBrandCount++;
+    }
+    return result;
+  })();
 
   const retailerUrl = getRetailerAffiliateUrl(product);
 
