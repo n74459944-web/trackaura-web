@@ -50,16 +50,16 @@ export default function EmailSignup() {
         {"\uD83D\uDD14 Price Drop Alerts"}
       </h3>
       <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.25rem", lineHeight: 1.5 }}>
-        Get notified when prices drop on Canadian electronics. Coming soon.
+        Get emailed when prices drop on the products you care about. Set alerts on any product page, or sign up below for weekly deal digests.
       </p>
 
       {status === "done" ? (
         <p style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.9375rem" }}>
-          {"\u2713 You are on the list! We will notify you when alerts launch."}
+          {"\u2713 You're in! You'll receive price drop alerts by email."}
         </p>
       ) : status === "exists" ? (
         <p style={{ color: "var(--accent)", fontWeight: 600, fontSize: "0.9375rem" }}>
-          {"\u2713 You are already signed up! We will notify you when alerts launch."}
+          {"\u2713 You're already signed up! Check any product page to set specific price alerts."}
         </p>
       ) : (
         <div style={{ display: "flex", gap: "0.5rem", maxWidth: 440, margin: "0 auto" }}>
@@ -82,7 +82,7 @@ export default function EmailSignup() {
             }}
           />
           <button onClick={handleSubmit} disabled={status === "saving"} className="btn-primary" style={{ whiteSpace: "nowrap" }}>
-            {status === "saving" ? "..." : "Notify Me"}
+            {status === "saving" ? "..." : "Sign Up"}
           </button>
         </div>
       )}
