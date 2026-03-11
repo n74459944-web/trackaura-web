@@ -248,6 +248,58 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
 
     return "other"
 
+def make_short_name(name: str) -> str:
+    """Create a clean short product name for card displays."""
+    short = name
+
+    # Remove parenthesized part/model numbers at the end
+    short = re.sub(r'\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)\s*$', '', short)
+    
+    # Remove common marketing phrases
+    removals = [
+        r',?\s*Best for\s+.*',
+        r',?\s*Seq\.?\s*Read\s+Speeds?\s+Up\s+to\s+[\d,]+\s*MB/s.*',
+        r',?\s*Up\s+to\s+[\d,]+\s*MB/s.*',
+        r',?\s*for\s+High\s+End\s+Computing.*',
+        r',?\s*for\s+AI\s+Computing.*',
+        r',?\s*for\s+Gaming\s+and\s+Heavy\s+Duty.*',
+        r',?\s*with\s+(Height\s+)?Adjustable.*$',
+        r',?\s*for\s+Work/Game/Office.*$',
+        r',?\s*for\s+Gaming\s*&\s*Home\s+Office.*$',
+        r',?\s*with\s+Stitched\s+Edge.*$',
+        r',?\s*Non-Slip\s+Rubber\s+Base.*$',
+        r',?\s*Internal\s+Solid\s+State\s+(Hard\s+)?Drive.*$',
+        r',?\s*Internal\s+Gaming\s+SSD\s+Solid\s+State\s+Drive.*$',
+        r'\s*-\s*\d+\s*Pack\s*$',
+    ]
+    for pattern in removals:
+        short = re.sub(pattern, '', short, flags=re.IGNORECASE)
+
+    # Remove trailing filler words
+    filler_endings = [
+        r',?\s*Desktop\s*$',
+        r',?\s*Black\s*$',
+        r',?\s*White\s*$',
+    ]
+    for pattern in filler_endings:
+        short = re.sub(pattern, '', short, flags=re.IGNORECASE)
+
+    # Clean up
+    short = re.sub(r'[\s,\-]+$', '', short).strip()
+
+    # Cap at 80 chars with clean word break
+    if len(short) > 80:
+        short = short[:80]
+        last_space = short.rfind(' ')
+        if last_space > 30:
+            short = short[:last_space]
+        short = re.sub(r'[\s,\-]+$', '', short)
+
+    # If we trimmed too aggressively, fall back
+    if len(short) < 10:
+        return name[:80]
+
+    return short
 
 def export():
     if not os.path.exists(DB_PATH):
@@ -314,6 +366,7 @@ def export():
         product = {
             "id": row["id"],
             "name": row["name"],
+            "shortName": make_short_name(row["name"]),
             "slug": slug,
             "url": row["url"],
             "retailer": row["retailer"],

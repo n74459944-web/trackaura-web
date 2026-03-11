@@ -19,47 +19,6 @@ function getRetailerShortName(retailer: string): string {
   return retailer;
 }
 
-/**
- * Create a cleaner short name for product cards.
- * Strips marketing fluff, part numbers, and excessive specs.
- */
-function getShortName(name: string): string {
-  let short = name;
-
-  // Remove parenthesized part numbers and model codes at the end
-  // e.g., "(MZ-VAP2T0B/AM)" or "(BX8071512400)"
-  short = short.replace(/\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)$/i, "");
-
-  // Remove common marketing phrases
-  const fluffPatterns = [
-    /,?\s*Best for\s+.*/i,
-    /,?\s*Seq\.?\s*Read\s+Speeds?\s+Up\s+to\s+[\d,]+\s*MB\/s/i,
-    /,?\s*Up\s+to\s+[\d,]+\s*MB\/s/i,
-    /,?\s*with\s+(Height\s+)?Adjustable.*$/i,
-    /,?\s*for\s+Work\/Game\/Office.*$/i,
-    /,?\s*for\s+Gaming\s*&\s*Home\s+Office.*$/i,
-  ];
-  for (const pattern of fluffPatterns) {
-    short = short.replace(pattern, "");
-  }
-
-  // Trim trailing commas, dashes, spaces
-  short = short.replace(/[\s,\-]+$/, "").trim();
-
-  // If we trimmed too aggressively, fall back
-  if (short.length < 15) return name;
-
-  // Cap at ~80 chars with clean word break
-  if (short.length > 80) {
-    short = short.slice(0, 80);
-    const lastSpace = short.lastIndexOf(" ");
-    if (lastSpace > 40) short = short.slice(0, lastSpace);
-    short = short.replace(/[\s,\-]+$/, "");
-  }
-
-  return short;
-}
-
 export default function ProductCard({ product }: { product: Product }) {
   const hasDiscount = product.minPrice < product.maxPrice;
   const discountPercent = hasDiscount ? Math.round(((product.maxPrice - product.currentPrice) / product.maxPrice) * 100) : 0;
@@ -79,7 +38,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const retailerUrl = getRetailerAffiliateUrl(product);
   const isAffiliate = product.retailer === "Newegg Canada";
-  const shortName = getShortName(product.name);
+  const shortName = product.shortName || product.name;
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
