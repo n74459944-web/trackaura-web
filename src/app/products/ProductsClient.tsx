@@ -79,7 +79,12 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
 
     // Sort
     if (sort === "price-asc") {
-      result = [...result].sort((a, b) => a.currentPrice - b.currentPrice);
+      result = [...result].sort((a, b) => {
+        // Push $0 and sub-$1 products to the end
+        if (a.currentPrice < 1 && b.currentPrice >= 1) return 1;
+        if (b.currentPrice < 1 && a.currentPrice >= 1) return -1;
+        return a.currentPrice - b.currentPrice;
+      });
     } else if (sort === "price-desc") {
       result = [...result].sort((a, b) => b.currentPrice - a.currentPrice);
     } else if (sort === "biggest-drop") {
