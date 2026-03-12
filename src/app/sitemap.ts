@@ -84,6 +84,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "when-to-buy-gpu-canada",
     "canada-computers-vs-newegg-prices",
     "how-to-save-money-pc-build-canada",
+    "rtx-5070-canada-price-tracking",
+    "is-now-good-time-buy-electronics-canada",
   ].map((slug) => ({
     url: baseUrl + "/blog/" + slug,
     lastModified: today,
