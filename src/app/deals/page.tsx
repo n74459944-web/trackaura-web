@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default function DealsPage() {
-  const products = getAllProducts();
+  const products = getAllProducts().filter((p) => p.category !== "other");
 
   return (
     <Suspense
