@@ -127,7 +127,13 @@ export default function SearchBar({ large }: SearchBarProps) {
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-card-hover)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+              {product.imageUrl && (
+                <div style={{ width: 36, height: 36, flexShrink: 0, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  <img src={product.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} loading="lazy" />
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
                 <p
                   style={{
                     fontSize: "0.8125rem",
@@ -137,12 +143,13 @@ export default function SearchBar({ large }: SearchBarProps) {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  {product.name}
+                  {product.shortName || product.name}
                 </p>
                 <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>
                   {product.retailer}
                 </p>
               </div>
+            </div>
               <span className="price-tag" style={{ fontSize: "0.875rem", marginLeft: "1rem" }}>
                 {formatPrice(product.currentPrice)}
               </span>
