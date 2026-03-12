@@ -94,9 +94,9 @@ export default function HomePage() {
             marginBottom: "1rem",
           }}
         >
-          Track Canadian
+          Stop Guessing.
           <br />
-          <span className="gradient-text">Electronics Prices</span>
+          <span className="gradient-text">Check the Price History.</span>
         </h1>
         <p
           className="animate-in animate-delay-1"
@@ -108,8 +108,8 @@ export default function HomePage() {
             margin: "0 auto 2rem",
           }}
         >
-          Price history for {categories.map(c => c.label.toLowerCase()).join(", ")}, and more across
-          Canada Computers, Newegg, and Amazon.ca. Never overpay.
+          I scrape {stats.totalProducts.toLocaleString()}+ products from Canada Computers and Newegg
+          every 4 hours so you can see if that "sale" is actually a deal.
         </p>
 
         {/* Search */}
@@ -269,18 +269,18 @@ export default function HomePage() {
           {[
             {
               step: "1",
-              title: "We Scrape",
-              desc: "Prices collected every 4 hours from Canadian retailers.",
+              title: "Prices Get Logged",
+              desc: "Every 4 hours, a scraper on my PC grabs prices from Canada Computers and Newegg.",
             },
             {
               step: "2",
-              title: "You Search",
-              desc: "Find your product and see its complete price history.",
+              title: "History Builds Up",
+              desc: "Over time you get a real price chart \u2014 so you can tell a genuine drop from a fake sale.",
             },
             {
               step: "3",
-              title: "You Save",
-              desc: "Buy at the right time or compare on Amazon.ca.",
+              title: "You Buy Smarter",
+              desc: "Set a price alert. When the price hits your number, you get an email.",
             },
           ].map((item) => (
             <div key={item.step}>
@@ -318,6 +318,15 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+      {/* Built by */}
+      <section style={{ maxWidth: 600, margin: "0 auto 4rem", padding: "0 1.5rem", textAlign: "center" }}>
+        <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.7 }}>
+          Built by a solo dev in Quebec who got tired of checking three different stores manually.
+          TrackAura is a side project \u2014 no VC money, no team, just a Python script and a lot of stubbornness.
+          {" "}
+          <Link href="/about" style={{ color: "var(--accent)" }}>More about the project →</Link>
+        </p>
       </section>
     </div>
   );
