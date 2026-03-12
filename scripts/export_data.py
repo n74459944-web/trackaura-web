@@ -156,7 +156,7 @@ STRONG_IDENTIFIERS = {
     ],
     "coolers": [
         "cpu cooler", "cpu liquid cooler", "aio cooler",
-        "heatsink", "liquid cooling",
+        "cpu heatsink", "liquid cooling",
         "noctua nh-", "hyper 212",
         "240mm radiator", "280mm radiator", "360mm radiator",
         "hyperflow", "kraken", "icue elite",
@@ -178,6 +178,10 @@ STRONG_IDENTIFIERS = {
         "computer monitor", "gaming monitor", "office monitor",
         "curved monitor", "ultrawide monitor", "portable monitor",
         "ips monitor", "oled monitor", "4k monitor",
+    ],
+    "ssds": [
+        "ssd", "solid state drive", "nvme drive",
+        "with heatsink",
     ],
 }
 
