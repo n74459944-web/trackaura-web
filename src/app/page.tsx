@@ -171,7 +171,7 @@ export default function HomePage() {
                 {cat.label}
               </p>
               <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                {cat.count} products
+                {cat.count} {cat.count === 1 ? "product" : "products"}
               </p>
             </Link>
           ))}
