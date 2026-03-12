@@ -49,6 +49,17 @@ export default function ProductCard({ product }: { product: Product }) {
         <RetailerBadge retailer={product.retailer} />
       </div>
 
+      {product.imageUrl && (
+        <div style={{ width: "100%", height: 140, background: "#fff", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <img
+            src={product.imageUrl}
+            alt={shortName}
+            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <Link href={"/product/" + product.slug} title={product.name} style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", color: "var(--text-primary)", textDecoration: "none", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {shortName}
       </Link>
