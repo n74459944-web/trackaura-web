@@ -145,6 +145,8 @@ STRONG_IDENTIFIERS = {
         "omen transcend", "omen 16", "omen 17",
         "swift go", "swift x", "nitro v",
         "raider ge", "stealth 16", "stealth 14",
+        "dell latitude", "dell inspiron", "dell xps",
+        "hp pavilion", "hp probook", "hp elitebook",
     ],
     "motherboards": [
         "motherboard", "mainboard", "mobo",
