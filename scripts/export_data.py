@@ -417,7 +417,9 @@ def export():
         else:
             seen_slugs[slug] = 1
 
-        category = guess_category(row["name"], row["url"], keywords_map)
+        # Prefer AI-assigned category, fall back to keyword rules
+        ai_category = row["source_category"] if row["source_category"] and row["source_category"] != "other" and row["source_category"] in keywords_map else ""
+        category = ai_category if ai_category else guess_category(row["name"], row["url"], keywords_map)
 
         product = {
             "id": row["id"],
