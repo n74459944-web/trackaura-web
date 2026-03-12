@@ -381,6 +381,7 @@ def export():
             p.brand,
             p.description,
             p.specs,
+            p.source_category,
             pp_latest.price as current_price,
             pp_latest.timestamp as last_updated,
             pp_stats.min_price,
