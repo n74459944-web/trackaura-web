@@ -16,7 +16,7 @@ import PriceAlert from "@/components/PriceAlert";
 import PriceCompare from "@/components/PriceCompare";
 import RelatedProducts from "@/components/RelatedProducts";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 14400; // 4 hours, matches scrape cycle
 
 type PageProps = { params: Promise<{ slug: string }> };
 
