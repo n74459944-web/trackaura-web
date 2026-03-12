@@ -98,6 +98,10 @@ function extractModelTokens(name: string): string[] {
 function computeMatchScore(source: Product, candidate: Product): number {
   // Must be same category
   if (candidate.category !== source.category) return 0;
+  // Block laptop vs non-laptop matches (they share GPU/CPU keywords but aren't comparable)
+  const sourceIsLaptop = source.name.toLowerCase().includes("laptop") || source.name.toLowerCase().includes("notebook");
+  const candidateIsLaptop = candidate.name.toLowerCase().includes("laptop") || candidate.name.toLowerCase().includes("notebook");
+  if (sourceIsLaptop !== candidateIsLaptop) return 0;
 
   // Must be different retailer
   if (candidate.retailer === source.retailer) return 0;
