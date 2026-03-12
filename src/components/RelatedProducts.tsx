@@ -27,8 +27,13 @@ export default function RelatedProducts({ products }: { products: Product[] }) {
               gap: "0.375rem",
             }}
           >
+            {p.imageUrl && (
+              <div style={{ width: "100%", height: 80, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <img src={p.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} loading="lazy" />
+              </div>
+            )}
             <p style={{ fontSize: "0.8125rem", color: "var(--text-primary)", fontWeight: 500, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>
-              {p.name}
+              {p.shortName || p.name}
             </p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
               <span className="price-tag" style={{ fontSize: "0.9375rem" }}>
