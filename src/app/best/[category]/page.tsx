@@ -437,41 +437,18 @@ function ProductRow({ product, badge }: { product: Product & { drop?: number; sa
   const isAffiliate = product.retailer === "Newegg Canada";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderBottom: "1px solid var(--border)", gap: "0.75rem", flexWrap: "wrap" }}>
-      <div style={{ flex: 1, minWidth: 200 }}>
-        <Link href={"/product/" + product.slug} style={{ fontSize: "0.875rem", color: "var(--text-primary)", textDecoration: "none", fontWeight: 500 }}>
-          {product.name}
-        </Link>
-        <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>{product.retailer}</p>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        {badge && (
-          <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", background: "var(--accent-glow)", padding: "0.125rem 0.5rem", borderRadius: 4, whiteSpace: "nowrap" }}>{badge}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 200 }}>
+        {product.imageUrl && (
+          <div style={{ width: 44, height: 44, flexShrink: 0, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <img src={product.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} loading="lazy" />
+          </div>
         )}
-        <span className="price-tag" style={{ fontSize: "1rem" }}>{formatPrice(product.currentPrice)}</span>
-        <a
-          href={affiliateUrl}
-          target="_blank"
-          rel={isAffiliate ? "noopener noreferrer nofollow sponsored" : "noopener noreferrer"}
-          className={product.retailer === "Newegg Canada" ? "btn-newegg" : "btn-cc"}
-          style={{ textDecoration: "none", fontSize: "0.6875rem", padding: "0.375rem 0.625rem", whiteSpace: "nowrap" }}
-        >
-          {product.retailer === "Newegg Canada" ? "Newegg" : "CC"}
-        </a>
-        <ClickTracker
-          href={getAmazonSearchUrl(product.name)}
-          event="affiliate_click"
-          label={product.name}
-          retailer="Amazon"
-          category={product.category}
-          price={product.currentPrice}
-          className="btn-amazon"
-          style={{ textDecoration: "none", fontSize: "0.6875rem", padding: "0.375rem 0.625rem" }}
-          rel="nofollow"
-        >
-          Amazon
-        </ClickTracker>
+        <div>
+          <Link href={"/product/" + product.slug} style={{ fontSize: "0.875rem", color: "var(--text-primary)", textDecoration: "none", fontWeight: 500 }}>
+            {product.shortName || product.name}
+          </Link>
+          <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>{product.retailer}</p>
+        </div>
       </div>
-    </div>
   );
 }
