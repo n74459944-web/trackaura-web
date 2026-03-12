@@ -39,7 +39,7 @@ export default function Footer() {
             }}
           >
             Canadian electronics price tracking. Compare prices across retailers
-            and never overpay.
+            and never overpay. Prices updated every 4 hours.
           </p>
         </div>
 
@@ -59,11 +59,11 @@ export default function Footer() {
           </div>
           <div>
             <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontFamily: "'Sora', sans-serif" }}>
-              Retailers
+              Retailers We Track
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.875rem", color: "var(--cc-color)" }}>Canada Computers</span>
-              <span style={{ fontSize: "0.875rem", color: "var(--newegg-color)" }}>Newegg Canada</span>
+              <a href="https://www.canadacomputers.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.875rem", color: "var(--cc-color)", textDecoration: "none" }}>Canada Computers</a>
+              <a href="https://www.newegg.ca" target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.875rem", color: "var(--newegg-color)", textDecoration: "none" }}>Newegg Canada</a>
             </div>
           </div>
           <div>
@@ -73,6 +73,7 @@ export default function Footer() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <Link href="/about" className="accent-link" style={{ fontSize: "0.875rem" }}>About</Link>
               <Link href="/how-it-works" className="accent-link" style={{ fontSize: "0.875rem" }}>How It Works</Link>
+              <Link href="/blog" className="accent-link" style={{ fontSize: "0.875rem" }}>Blog</Link>
               <Link href="/privacy" className="accent-link" style={{ fontSize: "0.875rem" }}>Privacy Policy</Link>
               <Link href="/terms" className="accent-link" style={{ fontSize: "0.875rem" }}>Terms of Use</Link>
               <Link href="/trends" className="accent-link" style={{ fontSize: "0.875rem" }}>Price Index</Link>
@@ -92,11 +93,13 @@ export default function Footer() {
           alignItems: "center",
           fontSize: "0.75rem",
           color: "var(--text-secondary)",
+          flexWrap: "wrap",
+          gap: "0.5rem",
         }}
       >
         <p>&copy; {new Date().getFullYear()} TrackAura. Prices in CAD.</p>
         <p style={{ fontSize: "0.6875rem", opacity: 0.6 }}>
-          As an Amazon Associate, TrackAura earns from qualifying purchases.
+          Amazon and Newegg links may earn TrackAura a commission.
         </p>
       </div>
     </footer>
