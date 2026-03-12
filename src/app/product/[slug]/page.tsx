@@ -11,6 +11,7 @@ import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import { Product } from "@/types";
 import PriceChart from "@/components/PriceChart";
 import ClickTracker from "@/components/ClickTracker";
+import ProductInfo from "@/components/ProductInfo";
 import PriceAlert from "@/components/PriceAlert";
 import PriceCompare from "@/components/PriceCompare";
 import RelatedProducts from "@/components/RelatedProducts";
@@ -296,6 +297,7 @@ export default async function ProductPage({ params }: PageProps) {
         </span>
       </nav>
 
+      <ProductInfo product={product} />    
       <div className="card" style={{ padding: "2rem", marginBottom: "1.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
           <div style={{ flex: 1, minWidth: 280 }}>
