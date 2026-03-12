@@ -6,24 +6,24 @@
     "Newegg Canada"
   ],
   "categories": [
-    "other",
-    "cpus",
-    "ram",
-    "power-supplies",
     "speakers",
-    "motherboards",
-    "mice",
-    "headphones",
-    "ssds",
     "routers",
-    "cases",
-    "gpus",
+    "mice",
+    "motherboards",
+    "cpus",
     "keyboards",
+    "power-supplies",
+    "laptops",
+    "ssds",
+    "headphones",
     "monitors",
+    "gpus",
+    "ram",
+    "cases",
     "coolers",
-    "laptops"
+    "other"
   ],
-  "lastUpdated": "2026-03-12T04:21:53.326313",
+  "lastUpdated": "2026-03-12T07:01:03.271361",
   "productsByRetailer": {
     "Newegg Canada": 10188,
     "Canada Computers": 4611
