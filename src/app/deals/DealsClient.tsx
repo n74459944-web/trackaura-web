@@ -4,20 +4,27 @@ import { useState, useEffect, useMemo } from "react";
 import { Product, CATEGORY_LABELS } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
-export default function DealsClient() {
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState("all");
-  const [loading, setLoading] = useState(true);
+interface DealsClientProps {
+  initialProducts: Product[];
+}
 
+export default function DealsClient({ initialProducts }: DealsClientProps) {
+  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
+  const [category, setCategory] = useState("all");
+  const [loading, setLoading] = useState(initialProducts.length === 0);
+
+  // Fallback: fetch client-side if server didn't provide data
   useEffect(() => {
-    fetch("/data/products.json")
-      .then((r) => r.json())
-      .then((data) => {
-        setAllProducts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+    if (initialProducts.length === 0) {
+      fetch("/data/products.json")
+        .then((r) => r.json())
+        .then((data) => {
+          setAllProducts(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+  }, [initialProducts]);
 
   const deals = useMemo(() => {
     let products = allProducts.filter(

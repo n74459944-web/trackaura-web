@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
+import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
 
 export const metadata: Metadata = {
@@ -12,6 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default function DealsPage() {
+  const products = getAllProducts();
+
   return (
     <Suspense
       fallback={
@@ -20,7 +23,7 @@ export default function DealsPage() {
         </div>
       }
     >
-      <DealsClient />
+      <DealsClient initialProducts={products} />
     </Suspense>
   );
 }
