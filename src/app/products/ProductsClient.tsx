@@ -58,7 +58,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      result = result.filter((p) => p.name.toLowerCase().includes(q));
+      const words = q.split(/\s+/).filter((w) => w.length > 0);
+      result = result.filter((p) => {
+        const name = p.name.toLowerCase();
+        return words.every((w) => name.includes(w));
+      });
     }
 
     // Category filter

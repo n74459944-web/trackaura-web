@@ -32,8 +32,12 @@ export default function SearchBar({ large }: SearchBarProps) {
       return;
     }
     const q = query.toLowerCase();
+    const words = q.split(/\s+/).filter((w) => w.length > 0);
     const filtered = allProducts
-      .filter((p) => p.name.toLowerCase().includes(q))
+      .filter((p) => {
+        const name = p.name.toLowerCase();
+        return words.every((w) => name.includes(w));
+      })
       .slice(0, 8);
     setResults(filtered);
     setIsOpen(filtered.length > 0);
