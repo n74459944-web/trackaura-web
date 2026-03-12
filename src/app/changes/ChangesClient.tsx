@@ -18,17 +18,24 @@ interface PriceChange {
   changedAt: string;
 }
 
-export default function ChangesClient() {
-  const [changes, setChanges] = useState<PriceChange[]>([]);
-  const [filter, setFilter] = useState<"all" | "down" | "up">("all");
-  const [loading, setLoading] = useState(true);
+interface ChangesClientProps {
+  initialChanges: PriceChange[];
+}
 
+export default function ChangesClient({ initialChanges }: ChangesClientProps) {
+  const [changes, setChanges] = useState<PriceChange[]>(initialChanges);
+  const [filter, setFilter] = useState<"all" | "down" | "up">("all");
+  const [loading, setLoading] = useState(initialChanges.length === 0);
+
+  // Fallback: fetch client-side if server didn't provide data
   useEffect(() => {
-    fetch("/data/changes.json")
-      .then((r) => r.json())
-      .then((data) => { setChanges(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+    if (initialChanges.length === 0) {
+      fetch("/data/changes.json")
+        .then((r) => r.json())
+        .then((data) => { setChanges(data); setLoading(false); })
+        .catch(() => setLoading(false));
+    }
+  }, [initialChanges]);
 
   const filtered = useMemo(() => {
     if (filter === "all") return changes;
