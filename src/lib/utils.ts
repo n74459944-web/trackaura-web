@@ -14,40 +14,43 @@ export function formatPrice(price: number): string {
 function buildAmazonQuery(productName: string): string {
   let q = productName;
 
-  // Remove parenthesized part numbers at the end: (MZ-VAP2T0B/AM), (BX8071512400)
+  // Remove parenthesized part numbers: (MZ-VAP2T0B/AM)
   q = q.replace(/\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)\s*$/i, "");
 
-  // Remove common marketing phrases
-  q = q.replace(/,?\s*Best for\s+.*/i, "");
-  q = q.replace(/,?\s*Seq\.?\s*Read\s+Speeds?\s+Up\s+to\s+[\d,]+\s*MB\/s/i, "");
-  q = q.replace(/,?\s*Up\s+to\s+[\d,]+\s*MB\/s/i, "");
-  q = q.replace(/,?\s*with\s+(Height\s+)?Adjustable.*$/i, "");
-  q = q.replace(/,?\s*for\s+Work\/Game\/Office.*$/i, "");
-  q = q.replace(/,?\s*for\s+Gaming\s*&\s*Home\s+Office.*$/i, "");
-  q = q.replace(/,?\s*with\s+Stitched\s+Edge.*$/i, "");
-  q = q.replace(/,?\s*Non-Slip\s+Rubber\s+Base.*$/i, "");
+  // Remove "Refurbished" prefix
+  q = q.replace(/^Refurbished\s*/i, "");
 
-  // Remove filler words that hurt search precision
+  // Remove everything after common spec dumps
+  q = q.replace(/,?\s*PCI\s*Express.*$/i, "");
+  q = q.replace(/,?\s*PCIe.*$/i, "");
+  q = q.replace(/,?\s*SATA\s*(III|6).*$/i, "");
+  q = q.replace(/,?\s*Seq\.?\s*Read.*$/i, "");
+  q = q.replace(/,?\s*Up\s+to\s+[\d,]+\s*MB\/s.*$/i, "");
+  q = q.replace(/,?\s*Best\s+for\s+.*$/i, "");
+  q = q.replace(/,?\s*with\s+(Height\s+)?Adjustable.*$/i, "");
+  q = q.replace(/,?\s*for\s+(Work|Gaming|Home|Office).*$/i, "");
+  q = q.replace(/,?\s*Non-Slip.*$/i, "");
+  q = q.replace(/,?\s*with\s+Stitched.*$/i, "");
+
+  // Remove filler words
   const fillerWords = [
-    "Desktop", "Processor", "Graphics Card",
-    "Internal Solid State Drive",
-    "Wired", "Wireless",
+    "Desktop", "Processor", "Graphics Card", "Video Card",
+    "Internal Solid State Drive", "Internal SSD",
+    "Wired", "Wireless", "OC Edition", "OC",
+    "Edition", "ATX", "mATX", "Mini-ITX",
   ];
   for (const word of fillerWords) {
     q = q.replace(new RegExp(`\\b${word}\\b`, "gi"), " ");
   }
 
-  // Remove "Refurbished" prefix
-  q = q.replace(/^Refurbished\s*/i, "");
-
-  // Clean up extra spaces and trailing punctuation
+  // Clean up
   q = q.replace(/\s+/g, " ").replace(/[\s,\-]+$/, "").trim();
 
-  // If still too long (>80 chars), take the first ~80 chars at a word boundary
-  if (q.length > 80) {
-    q = q.slice(0, 80);
+  // Cap at 60 chars — shorter queries match better on Amazon
+  if (q.length > 60) {
+    q = q.slice(0, 60);
     const lastSpace = q.lastIndexOf(" ");
-    if (lastSpace > 30) q = q.slice(0, lastSpace);
+    if (lastSpace > 20) q = q.slice(0, lastSpace);
     q = q.replace(/[\s,\-]+$/, "");
   }
 
