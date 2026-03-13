@@ -60,8 +60,8 @@ export function getAmazonSearchUrl(productName: string): string {
 }
 
 export function getNeweggAffiliateUrl(productUrl: string): string {
-  const encoded = encodeURIComponent(productUrl);
-  return `https://click.linksynergy.com/deeplink?id=${RAKUTEN_AFFILIATE_ID}&mid=${NEWEGG_MERCHANT_ID}&murl=${encoded}`;
+  // Rakuten affiliate terminated — link directly for now
+  return productUrl;
 }
 
 export function getRetailerAffiliateUrl(product: { url: string; retailer: string }): string {
