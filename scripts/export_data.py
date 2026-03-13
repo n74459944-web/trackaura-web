@@ -427,6 +427,15 @@ def export():
         ai_category = row["source_category"] if row["source_category"] and row["source_category"] != "other" and row["source_category"] in keywords_map else ""
         category = ai_category if ai_category else guess_category(row["name"], row["url"], keywords_map)
 
+        # Validate: blocklist overrides even AI-assigned categories
+        # (catches keycaps labeled as GPUs, prebuilts labeled as GPUs, etc.)
+        if category != "other":
+            name_lower = row["name"].lower()
+            blocklist = CATEGORY_BLOCKLIST.get(category, [])
+            if any(bw in name_lower for bw in blocklist):
+                # AI got it wrong — re-classify with keyword rules
+                category = guess_category(row["name"], row["url"], keywords_map)
+
         product = {
             "id": row["id"],
             "name": row["name"],

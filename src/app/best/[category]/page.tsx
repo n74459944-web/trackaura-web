@@ -6,6 +6,7 @@ import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import { Product } from "@/types";
 import ClickTracker from "@/components/ClickTracker";
+export const revalidate = 14400; // 4 hours, matches scrape cycle
 
 // Price tiers per category: [budget_max, midrange_max] — everything above is high-end
 const TIER_THRESHOLDS: Record<string, [number, number]> = {
