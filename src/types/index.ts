@@ -33,13 +33,14 @@ export interface SiteStats {
   productsByCategory: Record<string, number>;
 }
 
-export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "other";
+export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "other";
 export type Retailer = "Canada Computers" | "Newegg Canada";
 
 export const CATEGORY_LABELS: Record<string, string> = {
   headphones: "Headphones",
   gpus: "Graphics Cards",
   ssds: "SSDs",
+  "hard-drives": "Hard Drives",
   monitors: "Monitors",
   keyboards: "Keyboards",
   mice: "Mice",
@@ -61,6 +62,7 @@ export const CATEGORY_ICONS: Record<string, string> = {
   headphones: "🎧",
   gpus: "🖥️",
   ssds: "💾",
+  "hard-drives": "💽",
   monitors: "🖥️",
   keyboards: "⌨️",
   mice: "🖱️",

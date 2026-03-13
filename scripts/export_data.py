@@ -132,6 +132,9 @@ CATEGORY_BLOCKLIST = {
         "speaker", "soundbar",
     ],
     "external-storage": [],
+    "ssds": ["hard drive", "hdd", "barracuda", "ironwolf", "nas drive"],
+    "hard-drives": ["ssd", "solid state", "nvme", "m.2", "external", "portable"
+    ],
 }
 
 # Strong identifiers that override weaker keyword matches.
@@ -184,6 +187,8 @@ STRONG_IDENTIFIERS = {
     "ssds": [
         "ssd", "solid state drive", "nvme drive",
         "with heatsink",
+    ],
+    "hard-drives": ["barracuda", "ironwolf", "wd red", "wd blue", "wd black", "wd gold", "wd purple", "red plus", "red pro", "ultrastar"
     ],
 }
 
