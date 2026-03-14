@@ -163,8 +163,21 @@ CATEGORY_BLOCKLIST = {
     ],
     "gaming-consoles": [
         "laptop", "notebook", "desktop pc",
-        "controller skin", "console skin", "charging dock",
-        "headset", "gaming chair",
+        # Accessories
+        "controller skin", "console skin",
+        "headset", "gaming chair", "racing chair", "office chair",
+        "controller holder", "cable guys",
+        "performance grips", "kontrolfreek",
+        "stick module", "component pack",
+        # VR / streaming kit
+        "vive", "vr2", "pc adapter", "streaming kit",
+        # Kitchen / random junk from CC pages
+        "cuisinart", "vacuum bag", "vacuum sealer", "vacuum rol",
+        "waffle maker",
+        # Mini arcades / retro toys (not real consoles)
+        "mini arcade", "micro player", "pocket player",
+        "dreamgear", "my arcade", "atari portable",
+        "joystick player",
     ],
     "smart-home": [
         "laptop", "notebook",
@@ -173,6 +186,8 @@ CATEGORY_BLOCKLIST = {
     "ups-power": [
         "laptop", "notebook",
         "power supply", "psu", "atx",
+        # Gaming/office chairs that CC puts on UPS/surge pages
+        "chair", "head cushion",
     ],
     "network-switches": [
         "laptop", "notebook",
