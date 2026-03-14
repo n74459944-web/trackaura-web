@@ -527,16 +527,19 @@ def export():
         else:
             seen_slugs[slug] = 1
 
-        # Prefer source category from retailer, fall back to keyword rules
-        # source_category may be a config key ("tvs") or a label ("TVs") from older scrapes
+        # --- CATEGORY CLASSIFICATION ---
+        # Source category from scraper is a HINT, not gospel truth.
+        # Retailers put random junk on category pages (gaming chairs on UPS pages, etc.)
+        # So we validate: the product name must match at least one keyword or 
+        # strong identifier for the category. If it doesn't, fall through to guess_category.
+        
         source_cat = row["source_category"] or ""
         
         # Build label-to-key lookup if not already done
         if not hasattr(export, '_label_to_key'):
             export._label_to_key = {}
             for k, v in keywords_map.items():
-                export._label_to_key[k] = k  # key -> key (already correct)
-            # Also map labels from categories.json
+                export._label_to_key[k] = k
             if os.path.isfile(CONFIG_PATH):
                 with open(CONFIG_PATH, "r", encoding="utf-8") as cf:
                     cfg = json.load(cf)
@@ -548,36 +551,33 @@ def export():
         if source_cat:
             sc_lower = source_cat.lower()
             if source_cat in keywords_map:
-                # Already a valid config key (e.g., "tvs")
                 resolved_cat = source_cat
             elif sc_lower in export._label_to_key:
-                # It's a label (e.g., "TVs" -> "tvs")
                 resolved_cat = export._label_to_key[sc_lower]
         
-        if resolved_cat and resolved_cat != "other":
+        name_lower = row["name"].lower()
+        
+        # Validate: does the product name actually belong in the source category?
+        def name_matches_category(cat_key, name_lower):
+            """Check if a product name has any keyword or strong identifier for a category."""
+            # Check strong identifiers first
+            strong = STRONG_IDENTIFIERS.get(cat_key, [])
+            if any(s in name_lower for s in strong):
+                return True
+            # Check regular keywords
+            keywords = keywords_map.get(cat_key, [])
+            if any(kw in name_lower for kw in keywords):
+                return True
+            return False
+        
+        if resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
+            # Source category is valid AND the name confirms it — use it
             category = resolved_cat
         else:
+            # Source category missing, "other", or name doesn't match — classify from scratch
             category = guess_category(row["name"], row["url"], keywords_map)
-
-        # Validate: blocklist overrides even retailer-assigned categories
-        # (catches accessories that landed on a wrong category page)
-        if category != "other":
-            name_lower = row["name"].lower()
-            blocklist = CATEGORY_BLOCKLIST.get(category, [])
-            if any(bw in name_lower for bw in blocklist):
-                # Wrong category — try all other categories with full blocklist checks
-                category = "other"
-                for cat_key in CATEGORY_PRIORITY:
-                    if cat_key == resolved_cat:
-                        continue
-                    keywords = keywords_map.get(cat_key, [])
-                    if not keywords:
-                        continue
-                    if any(kw in name_lower for kw in keywords):
-                        cat_blocklist = CATEGORY_BLOCKLIST.get(cat_key, [])
-                        if not any(bw in name_lower for bw in cat_blocklist):
-                            category = cat_key
-                            break
+            if resolved_cat and resolved_cat != "other" and category != resolved_cat:
+                reclassified += 1
 
         product = {
             "id": row["id"],
@@ -641,7 +641,7 @@ def export():
     print(f"Exported stats.json")
 
     # Category breakdown
-    print("\nProducts by category:")
+    print(f"\nProducts by category ({reclassified} reclassified from retailer source):")
     for cat, count in sorted(stats["productsByCategory"].items(), key=lambda x: -x[1]):
         print(f"  {cat}: {count}")
 
