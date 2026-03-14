@@ -491,7 +491,6 @@ def export():
             p.description,
             p.specs,
             p.source_category,
-            p.category as validated_category,
             pp_latest.price as current_price,
             pp_latest.timestamp as last_updated,
             pp_stats.min_price,
@@ -520,7 +519,6 @@ def export():
 
     seen_slugs = {}
     reclassified = 0
-    rows_validated = {}  # Track which products used the DB validated category
     for row in rows:
         slug = slugify(row["name"])
         if slug in seen_slugs:
@@ -530,58 +528,56 @@ def export():
             seen_slugs[slug] = 1
 
         # --- CATEGORY CLASSIFICATION ---
-        # Priority: 
-        #   1. validated 'category' column (set by validate_categories.py)
-        #   2. guess_category() as fallback for products not yet validated
+        # Source category from scraper is a HINT, not gospel truth.
+        # Retailers put random junk on category pages (gaming chairs on UPS pages, etc.)
+        # So we validate: the product name must match at least one keyword or 
+        # strong identifier for the category. If it doesn't, fall through to guess_category.
         
-        validated_cat = row["validated_category"] or ""
         source_cat = row["source_category"] or ""
         
-        if validated_cat and validated_cat != "other":
-            # Validator already classified this product — trust it
-            category = validated_cat
-            rows_validated[row["id"]] = True
+        # Build label-to-key lookup if not already done
+        if not hasattr(export, '_label_to_key'):
+            export._label_to_key = {}
+            for k, v in keywords_map.items():
+                export._label_to_key[k] = k
+            if os.path.isfile(CONFIG_PATH):
+                with open(CONFIG_PATH, "r", encoding="utf-8") as cf:
+                    cfg = json.load(cf)
+                for k, v in cfg["categories"].items():
+                    export._label_to_key[v["label"].lower()] = k
+        
+        # Resolve source_category to a config key
+        resolved_cat = ""
+        if source_cat:
+            sc_lower = source_cat.lower()
+            if source_cat in keywords_map:
+                resolved_cat = source_cat
+            elif sc_lower in export._label_to_key:
+                resolved_cat = export._label_to_key[sc_lower]
+        
+        name_lower = row["name"].lower()
+        
+        # Validate: does the product name actually belong in the source category?
+        def name_matches_category(cat_key, name_lower):
+            """Check if a product name has any keyword or strong identifier for a category."""
+            # Check strong identifiers first
+            strong = STRONG_IDENTIFIERS.get(cat_key, [])
+            if any(s in name_lower for s in strong):
+                return True
+            # Check regular keywords
+            keywords = keywords_map.get(cat_key, [])
+            if any(kw in name_lower for kw in keywords):
+                return True
+            return False
+        
+        if resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
+            # Source category is valid AND the name confirms it — use it
+            category = resolved_cat
         else:
-            # No validated category yet — fall back to export-time classification
-            # Build label-to-key lookup if not already done
-            if not hasattr(export, '_label_to_key'):
-                export._label_to_key = {}
-                for k, v in keywords_map.items():
-                    export._label_to_key[k] = k
-                if os.path.isfile(CONFIG_PATH):
-                    with open(CONFIG_PATH, "r", encoding="utf-8") as cf:
-                        cfg = json.load(cf)
-                    for k, v in cfg["categories"].items():
-                        export._label_to_key[v["label"].lower()] = k
-            
-            # Resolve source_category to a config key
-            resolved_cat = ""
-            if source_cat:
-                sc_lower = source_cat.lower()
-                if source_cat in keywords_map:
-                    resolved_cat = source_cat
-                elif sc_lower in export._label_to_key:
-                    resolved_cat = export._label_to_key[sc_lower]
-            
-            name_lower = row["name"].lower()
-            
-            # Validate: does the product name actually belong in the source category?
-            def name_matches_category(cat_key, name_lower):
-                """Check if a product name has any keyword or strong identifier for a category."""
-                strong = STRONG_IDENTIFIERS.get(cat_key, [])
-                if any(s in name_lower for s in strong):
-                    return True
-                keywords = keywords_map.get(cat_key, [])
-                if any(kw in name_lower for kw in keywords):
-                    return True
-                return False
-            
-            if resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
-                category = resolved_cat
-            else:
-                category = guess_category(row["name"], row["url"], keywords_map)
-                if resolved_cat and resolved_cat != "other" and category != resolved_cat:
-                    reclassified += 1
+            # Source category missing, "other", or name doesn't match — classify from scratch
+            category = guess_category(row["name"], row["url"], keywords_map)
+            if resolved_cat and resolved_cat != "other" and category != resolved_cat:
+                reclassified += 1
 
         product = {
             "id": row["id"],
@@ -640,17 +636,12 @@ def export():
         stats["productsByRetailer"][p["retailer"]] = stats["productsByRetailer"].get(p["retailer"], 0) + 1
         stats["productsByCategory"][p["category"]] = stats["productsByCategory"].get(p["category"], 0) + 1
 
-    # Count how many used validated category vs fallback
-    validated_count = sum(1 for p in products if rows_validated.get(p["id"], False))
-    fallback_count = len(products) - validated_count
-
     with open(os.path.join(OUTPUT_DIR, "stats.json"), "w") as f:
         json.dump(stats, f, indent=2)
     print(f"Exported stats.json")
 
     # Category breakdown
-    print(f"\nProducts by category:")
-    print(f"  ({validated_count} from validator, {fallback_count} from fallback, {reclassified} reclassified)")
+    print(f"\nProducts by category ({reclassified} reclassified from retailer source):")
     for cat, count in sorted(stats["productsByCategory"].items(), key=lambda x: -x[1]):
         print(f"  {cat}: {count}")
 
