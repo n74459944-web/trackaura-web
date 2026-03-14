@@ -48,6 +48,26 @@ export function getStats(): SiteStats {
   return JSON.parse(raw) as SiteStats;
 }
 
+export interface PriceIndexDay {
+  date: string;
+  avg: number;
+  median?: number;
+  count: number;
+}
+
+export interface PriceIndex {
+  generated: string;
+  overall: PriceIndexDay[];
+  categories: Record<string, PriceIndexDay[]>;
+}
+
+export function getPriceIndex(): PriceIndex | null {
+  const filePath = path.join(DATA_DIR, "price-index.json");
+  if (!fs.existsSync(filePath)) return null;
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as PriceIndex;
+}
+
 export function searchProducts(query: string): Product[] {
   const q = query.toLowerCase().trim();
   if (!q) return [];

@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { getAllProducts } from "@/lib/data";
+import { getAllProducts, getPriceIndex } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
+import PriceIndexChart from "@/components/PriceIndexChart";
 
 export const metadata: Metadata = {
   title: "Canadian Electronics Price Trends — TrackAura Price Index",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 
 export default function TrendsPage() {
   const allProducts = getAllProducts();
+  const priceIndex = getPriceIndex();
   const month = new Date().toLocaleString("en-CA", { month: "long" });
   const year = new Date().getFullYear();
 
@@ -37,13 +39,13 @@ export default function TrendsPage() {
       ).length;
       const dropPercent = products.length > 0 ? Math.round((withDrops / products.length) * 100) : 0;
 
-      // Calculate average distance from historical low
-      const avgFromLow =
-        products.length > 0
-          ? products.reduce((sum, p) => {
-              if (p.minPrice === 0 || p.priceCount <= 1) return sum;
+      // Average % above historical low
+      const productsWithHistory = products.filter((p) => p.minPrice > 0 && p.priceCount > 1);
+      const avgAboveLow =
+        productsWithHistory.length > 0
+          ? productsWithHistory.reduce((sum, p) => {
               return sum + ((p.currentPrice - p.minPrice) / p.minPrice) * 100;
-            }, 0) / products.filter((p) => p.minPrice > 0 && p.priceCount > 1).length
+            }, 0) / productsWithHistory.length
           : 0;
 
       const icon = CATEGORY_ICONS[key] || "\uD83D\uDCE6";
@@ -60,7 +62,7 @@ export default function TrendsPage() {
         atLowest,
         withDrops,
         dropPercent,
-        avgFromLow: isNaN(avgFromLow) ? 0 : avgFromLow,
+        avgAboveLow: isNaN(avgAboveLow) ? 0 : avgAboveLow,
       };
     })
     .filter(Boolean)
@@ -76,6 +78,15 @@ export default function TrendsPage() {
   const totalWithDrops = allProducts.filter(
     (p) => p.currentPrice < p.maxPrice && p.minPrice < p.maxPrice
   ).length;
+
+  // Overall avg above low
+  const productsWithHistory = allProducts.filter((p) => p.minPrice > 0 && p.priceCount > 1);
+  const overallAboveLow =
+    productsWithHistory.length > 0
+      ? productsWithHistory.reduce((sum, p) => {
+          return sum + ((p.currentPrice - p.minPrice) / p.minPrice) * 100;
+        }, 0) / productsWithHistory.length
+      : 0;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -110,13 +121,31 @@ export default function TrendsPage() {
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", marginBottom: "1rem" }}>
           {"Market Overview \u2014 " + month + " " + year}
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
           <StatBox label="Products Tracked" value={totalProducts.toLocaleString()} />
-          <StatBox label="Overall Avg Price" value={formatPrice(overallAvg)} />
+          <StatBox label="Avg Price" value={formatPrice(overallAvg)} />
           <StatBox label="At Historical Low" value={totalAtLowest.toLocaleString()} accent />
-          <StatBox label="With Price Drops" value={totalWithDrops.toLocaleString()} />
+          <StatBox label="Price Drops" value={totalWithDrops.toLocaleString()} />
+          <StatBox
+            label="Avg Above Low"
+            value={overallAboveLow.toFixed(1) + "%"}
+            accent={overallAboveLow < 5}
+          />
         </div>
       </div>
+
+      {/* Overall price trend chart */}
+      {priceIndex && priceIndex.overall.length > 1 && (
+        <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", marginBottom: "0.5rem" }}>
+            Overall Price Trend
+          </h2>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
+            {"Average price across all " + totalProducts.toLocaleString() + " tracked products, updated every 4 hours."}
+          </p>
+          <PriceIndexChart data={priceIndex.overall} />
+        </div>
+      )}
 
       {/* SEO content */}
       <div style={{ marginBottom: "2rem", fontSize: "0.9375rem", color: "var(--text-secondary)", lineHeight: 1.8 }}>
@@ -129,6 +158,16 @@ export default function TrendsPage() {
           totalAtLowest.toLocaleString() + " are currently sitting at the lowest price we\u2019ve ever recorded \u2014 " +
           "that\u2019s " + Math.round((totalAtLowest / totalProducts) * 100) + "% of all tracked products."}
         </p>
+        {overallAboveLow > 0 && (
+          <p style={{ marginBottom: "1rem" }}>
+            {"On average, products are currently " + overallAboveLow.toFixed(1) + "% above their historical low. " +
+            (overallAboveLow < 3
+              ? "This suggests it\u2019s a good time to buy \u2014 most products are near their cheapest recorded prices."
+              : overallAboveLow < 10
+              ? "There\u2019s still some room for prices to drop in many categories."
+              : "Prices are elevated in several categories \u2014 consider waiting for sales on big-ticket items.")}
+          </p>
+        )}
         {totalWithDrops > 0 && (
           <p style={{ marginBottom: "1rem" }}>
             {"We\u2019ve recorded price drops on " + totalWithDrops.toLocaleString() + " products since tracking began. " +
@@ -137,10 +176,6 @@ export default function TrendsPage() {
               : "Prices have been relatively stable overall, which is typical for electronics in this period.")}
           </p>
         )}
-        <p style={{ marginBottom: "1rem" }}>
-          {"Below you\u2019ll find a breakdown by category, showing average prices, how many products are at their lowest, " +
-          "and which categories are seeing the most movement. This data updates automatically as our scrapers collect new prices."}
-        </p>
       </div>
 
       {/* Category breakdown table */}
@@ -156,8 +191,8 @@ export default function TrendsPage() {
               <th style={thStyle}>Products</th>
               <th style={thStyle}>Avg Price</th>
               <th style={thStyle}>Median</th>
-              <th style={thStyle}>Cheapest</th>
               <th style={thStyle}>At Lowest</th>
+              <th style={thStyle}>Above Low</th>
               <th style={thStyle}>Activity</th>
             </tr>
           </thead>
@@ -175,13 +210,22 @@ export default function TrendsPage() {
                 <td style={tdStyle}>{cat.count}</td>
                 <td style={tdStyle}>{formatPrice(cat.avg)}</td>
                 <td style={tdStyle}>{formatPrice(cat.median)}</td>
-                <td style={{ ...tdStyle, color: "var(--accent)" }}>{formatPrice(cat.lowest)}</td>
                 <td style={tdStyle}>
                   {cat.atLowest > 0 ? (
                     <span style={{ color: "var(--accent)", fontWeight: 600 }}>{cat.atLowest}</span>
                   ) : (
                     <span style={{ color: "var(--text-secondary)" }}>0</span>
                   )}
+                </td>
+                <td style={tdStyle}>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: cat.avgAboveLow < 3 ? "var(--accent)" : cat.avgAboveLow < 10 ? "var(--text-primary)" : "var(--danger)",
+                    }}
+                  >
+                    {cat.avgAboveLow.toFixed(1) + "%"}
+                  </span>
                 </td>
                 <td style={tdStyle}>
                   <span
@@ -196,7 +240,7 @@ export default function TrendsPage() {
                       color: cat.dropPercent > 30 ? "var(--accent)" : "var(--text-secondary)",
                     }}
                   >
-                    {cat.dropPercent + "% moved"}
+                    {cat.dropPercent + "%"}
                   </span>
                 </td>
               </tr>
@@ -205,59 +249,24 @@ export default function TrendsPage() {
         </table>
       </div>
 
-      {/* Category detail cards */}
-      <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", marginBottom: "1rem" }}>
-        Category Highlights
-      </h2>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-        {(categoryStats as any[]).map((cat) => (
-          <Link
-            key={cat.key}
-            href={"/best/" + cat.key}
-            className="card"
-            style={{ padding: "1.25rem", textDecoration: "none" }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <span style={{ fontSize: "1.25rem" }}>{cat.icon}</span>
-              {cat.atLowest > 0 && (
-                <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", background: "var(--accent-glow)", padding: "0.125rem 0.375rem", borderRadius: 4 }}>
-                  {cat.atLowest + " at lowest"}
-                </span>
-              )}
-            </div>
-            <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: "var(--text-primary)", marginBottom: "0.25rem" }}>
-              {cat.label}
-            </p>
-            <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
-              {cat.count + " products \u00B7 Avg " + formatPrice(cat.avg)}
-            </p>
-            <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-              <span>{"Low: "}<strong style={{ color: "var(--accent)" }}>{formatPrice(cat.lowest)}</strong></span>
-              <span>{"High: "}<strong>{formatPrice(cat.highest)}</strong></span>
-            </div>
-          </Link>
-        ))}
-      </div>
-
       {/* Explanation */}
       <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1rem", marginBottom: "0.75rem" }}>
-          About the TrackAura Price Index
+          How We Calculate This
         </h2>
         <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.8 }}>
           <p style={{ marginBottom: "0.75rem" }}>
-            {"The TrackAura Price Index is an automated snapshot of electronics pricing in Canada. " +
-            "Unlike government inflation metrics, our index focuses specifically on consumer electronics and updates every 4 hours."}
+            {"The TrackAura Price Index is built from raw scraped prices \u2014 no estimates, no third-party feeds. " +
+            "We check every product at Canada Computers and Newegg Canada every 4 hours and record the actual listed price."}
           </p>
           <p style={{ marginBottom: "0.75rem" }}>
-            {"We calculate average and median prices per category, track how many products are at their historical lows, " +
-            "and measure price activity (what percentage of products have seen price changes). " +
-            "This gives shoppers and analysts a clear picture of where electronics prices stand right now."}
+            {"\u201CAvg Above Low\u201D shows how far current prices are from the cheapest we\u2019ve ever recorded for each product. " +
+            "A low percentage means most products are near their best prices. " +
+            "\u201CActivity\u201D shows what percentage of products have seen at least one price change."}
           </p>
           <p>
-            {"As our dataset grows over months and years, this page will evolve to include month-over-month trends, " +
-            "seasonal patterns, and predictive signals. Our goal is to become the definitive source for Canadian electronics pricing data."}
+            {"The overall trend chart aggregates the average price across all tracked products per day. " +
+            "As our dataset grows, this page will add month-over-month comparisons and seasonal pattern analysis."}
           </p>
         </div>
       </div>
