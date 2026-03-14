@@ -217,6 +217,7 @@ STRONG_IDENTIFIERS = {
         "b650", "b850", "x670", "x870", "z790", "z890",
         "b550", "b450", "a620", "b760", "h770", "b660",
         "b365m", "h81 m-atx",
+        "h610m", "h510m", "h410m", "h310m",
     ],
     "coolers": [
         "cpu cooler", "cpu liquid cooler", "aio cooler",
@@ -224,11 +225,13 @@ STRONG_IDENTIFIERS = {
         "noctua nh-", "hyper 212",
         "240mm radiator", "280mm radiator", "360mm radiator",
         "hyperflow", "kraken", "icue elite",
+        "liquid freezer", "arctic freezer",
     ],
     "cases": [
         "computer case", "pc case", "atx case", "mid tower",
         "mini itx case", "micro atx case", "full tower",
         "tempered glass case", "chassis",
+        "mid-tower", "atx mid-tower", "matx case", "m-atx case",
     ],
     "mice": [
         "gaming mouse", "wireless mouse", "mouse pad", "mousepad",
@@ -237,23 +240,53 @@ STRONG_IDENTIFIERS = {
     "keyboards": [
         "keycap", "key cap", "keycaps",
         "gaming keyboard", "mechanical keyboard", "wireless keyboard",
+        "numpad", "keypad",
     ],
     "monitors": [
         "computer monitor", "gaming monitor", "office monitor",
         "curved monitor", "ultrawide monitor", "portable monitor",
         "ips monitor", "oled monitor", "4k monitor",
+        # Cryptic monitor names from Newegg (e.g. "22IN LCD 16:9 1920X1080")
+        "1920x1080", "1920 x 1080", "2560x1440", "2560 x 1440",
+        "3840x2160", "3840 x 2160", "1080p monitor", "4k uhd",
+        "lcd ips", "lcd led", "wide lcd",
+        "predator x", "predator z",
+    ],
+    "power-supplies": [
+        "power supply", "psu",
+        # Wattage patterns that are almost always PSUs
+        "500w,", "550w,", "600w,", "650w,", "700w,", "750w,", "800w,",
+        "850w,", "1000w,", "1200w,", "1600w,", "1800w,",
+        "500w ", "550w ", "600w ", "650w ", "700w ", "750w ", "800w ",
+        "850w ", "1000w ", "1200w ", "1600w ", "1800w ", "2400w ", "2500w ",
+        "80 plus gold", "80 plus bronze", "80 plus platinum",
+        "80+ gold", "80+ bronze", "80+ platinum",
+        "sfx form factor", "atx form factor", "tfx form factor",
+    ],
+    "routers": [
+        "wifi router", "wireless router", "mesh router",
+        "wifi repeater", "wifi extender", "wifi modem",
+        "wireless repeater", "wireless extender",
+        "ap router", "ceiling ap", "access point",
+        "lte router", "lte cpe", "4g router", "5g router",
+        "range extender",
     ],
     "ssds": [
         "ssd", "solid state drive", "nvme drive",
         "with heatsink",
+        "solid state disk", "msata",
     ],
-    "hard-drives": ["barracuda", "ironwolf", "wd red", "wd blue", "wd black", "wd gold", "wd purple", "red plus", "red pro", "ultrastar"
+    "hard-drives": [
+        "barracuda", "ironwolf", "wd red", "wd blue", "wd black",
+        "wd gold", "wd purple", "red plus", "red pro", "ultrastar",
+        "exos",
     ],
     "tvs": [
         "smart tv", "oled tv", "qled tv", "led tv", "mini led tv",
         "4k uhd tv", "8k tv", "television",
         "nanocell", "bravia", "roku tv", "fire tv", "google tv",
         "webos", "tizen",
+        "crystal uhd", "d-led",
     ],
     "tablets": [
         "ipad", "ipad pro", "ipad air", "ipad mini",
@@ -269,6 +302,7 @@ STRONG_IDENTIFIERS = {
         "playstation 5", "ps5", "xbox series", "nintendo switch",
         "steam deck", "rog ally", "legion go",
         "dualsense", "xbox controller",
+        "8bitdo", "gaming chair",
     ],
     "smart-home": [
         "echo dot", "echo show", "google nest", "google home",
@@ -286,6 +320,23 @@ STRONG_IDENTIFIERS = {
         "managed switch", "unmanaged switch", "poe switch",
         "8-port switch", "16-port switch", "24-port switch", "48-port switch",
     ],
+    "external-storage": [
+        "external hard drive", "external ssd", "portable ssd",
+        "portable drive", "backup drive",
+        "adata sd6", "adata sd8",
+    ],
+    "cpus": [
+        "epyc", "xeon",
+    ],
+    "webcams": [
+        "webcam", "web cam",
+    ],
+    "speakers": [
+        "soundbar", "bluetooth speaker", "bookshelf speaker",
+    ],
+    "headphones": [
+        "in-ear monitor",
+    ],
 }
 
 # Categories checked in priority order.
@@ -296,6 +347,7 @@ CATEGORY_PRIORITY = [
     "tvs",            # Before monitors: TVs have "display" and "screen" keywords
     "motherboards",   # Motherboards contain CPU socket keywords
     "coolers",        # Coolers mention CPU brands
+    "power-supplies", # PSUs have distinctive wattage patterns - check before cases
     "cases",          # Cases mention ATX/tower keywords
     "mice",           # Before keyboards (shared CC page)
     "keyboards",      # Before keyboards
@@ -315,7 +367,6 @@ CATEGORY_PRIORITY = [
     "ssds",
     "hard-drives",
     "ram",
-    "power-supplies",
 ]
 
 
@@ -325,17 +376,20 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
 
     # Accessories that get miscategorized — send to "other"
     accessory_words = [
-        "cable", "adapter", "converter", "splitter", "extender", "extension",
-        "bracket", "mount", "stand", "holder", "riser", "hub",
+        "cable", "converter", "splitter",
+        "bracket", "mount", "riser",
         "cleaning", "cloth", "wipe", "tool kit", "screwdriver",
-        "earpad", "ear pad", "replacement pad", "cushion",
-        "sticker", "decal", "skin", "cover", "sleeve", "bag", "case for",
+        "earpad", "ear pad", "replacement pad",
+        "sticker", "decal", "skin", "cover", "sleeve",
         "anti-static", "thermal paste", "thermal pad", "heatsink for",
+        "dust filter", "fan guard", "fan grill", "finger guard",
+        "replacement battery", "pcb mount",
     ]
     is_accessory = any(w in name_lower for w in accessory_words)
     if is_accessory:
-        # Still allow some categories for accessories (keycaps -> keyboards, mouse pad -> mice)
-        for cat_key in ["keyboards", "mice"]:
+        # Before sending to "other", check ALL categories' strong identifiers
+        # This rescues products like "WiFi Extender Router" or "USB-C Adapter Hub"
+        for cat_key in CATEGORY_PRIORITY:
             strong = STRONG_IDENTIFIERS.get(cat_key, [])
             if any(s in name_lower for s in strong):
                 return cat_key
