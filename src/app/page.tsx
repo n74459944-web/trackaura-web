@@ -138,40 +138,35 @@ export default function HomePage() {
         >
           Browse Categories
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(categories.length, 4)}, 1fr)`,
-            gap: "1rem",
-          }}
-        >
+        <div className="grid-categories">
           {categories.map((cat) => (
             <Link
               key={cat.key}
               href={`/products?category=${cat.key}`}
               className="card"
               style={{
-                padding: "1.5rem",
+                padding: "1.25rem 0.75rem",
                 textDecoration: "none",
                 textAlign: "center",
               }}
             >
-              <span style={{ fontSize: "2rem", display: "block", marginBottom: "0.5rem" }}>
+              <span style={{ fontSize: "1.75rem", display: "block", marginBottom: "0.375rem" }}>
                 {cat.icon}
               </span>
               <p
                 style={{
                   fontFamily: "'Sora', sans-serif",
                   fontWeight: 600,
-                  fontSize: "1rem",
+                  fontSize: "0.8125rem",
                   color: "var(--text-primary)",
-                  marginBottom: "0.25rem",
+                  marginBottom: "0.125rem",
+                  lineHeight: 1.3,
                 }}
               >
                 {cat.label}
               </p>
-              <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-                {cat.count} {cat.count === 1 ? "product" : "products"}
+              <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
+                {cat.count.toLocaleString()}
               </p>
             </Link>
           ))}
@@ -201,13 +196,7 @@ export default function HomePage() {
             View all →
           </Link>
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: "1rem",
-          }}
-        >
+        <div className="grid-products">
           {featured.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -219,7 +208,7 @@ export default function HomePage() {
         <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.25rem", marginBottom: "1rem" }}>
           Buying Guides
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
+        <div className="grid-guides">
           {categories.map((cat) => (
             <Link
               key={"best-" + cat.key}
@@ -265,7 +254,7 @@ export default function HomePage() {
         >
           How TrackAura Works
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
+        <div className="grid-howitworks">
           {[
             {
               step: "1",
@@ -323,7 +312,7 @@ export default function HomePage() {
       <section style={{ maxWidth: 600, margin: "0 auto 4rem", padding: "0 1.5rem", textAlign: "center" }}>
         <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.7 }}>
           Built by a solo dev in Quebec who got tired of checking three different stores manually.
-          TrackAura is a side project \u2014 no VC money, no team, just a Python script and a lot of stubbornness.
+          TrackAura is a side project &mdash; no VC money, no team, just a Python script and a lot of stubbornness.
           {" "}
           <Link href="/about" style={{ color: "var(--accent)" }}>More about the project →</Link>
         </p>
