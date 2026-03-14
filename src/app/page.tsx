@@ -62,7 +62,7 @@ export default function HomePage() {
     categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
   }
   const categories = Object.entries(categoryCounts)
-    .filter(([key]) => key !== "other")
+    .filter(([key, count]) => key !== "other" && count >= 50)
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
       key,

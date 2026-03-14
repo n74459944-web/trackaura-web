@@ -33,7 +33,7 @@ export interface SiteStats {
   productsByCategory: Record<string, number>;
 }
 
-export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "other";
+export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "tvs" | "tablets" | "printers" | "gaming-consoles" | "smart-home" | "ups-power" | "network-switches" | "other";
 export type Retailer = "Canada Computers" | "Newegg Canada";
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -56,6 +56,13 @@ export const CATEGORY_LABELS: Record<string, string> = {
   webcams: "Webcams",
   speakers: "Speakers",
   "external-storage": "External Storage",
+  tvs: "TVs",
+  tablets: "Tablets",
+  printers: "Printers",
+  "gaming-consoles": "Gaming Consoles",
+  "smart-home": "Smart Home",
+  "ups-power": "UPS & Surge Protection",
+  "network-switches": "Network Switches",
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
@@ -78,6 +85,13 @@ export const CATEGORY_ICONS: Record<string, string> = {
   webcams: "📷",
   speakers: "🔊",
   "external-storage": "💿",
+  tvs: "📺",
+  tablets: "📱",
+  printers: "🖨️",
+  "gaming-consoles": "🎮",
+  "smart-home": "🏠",
+  "ups-power": "🔋",
+  "network-switches": "🔀",
 };
 
 export const RETAILER_COLORS: Record<string, string> = {

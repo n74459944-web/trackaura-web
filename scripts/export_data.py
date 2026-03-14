@@ -75,7 +75,16 @@ CATEGORY_BLOCKLIST = {
         "cpu cooler", "heatsink", "liquid cool",
         "water block", "waterblock", "water cooling block", "gpu block",
         "backplate", "gpu bracket", "gpu holder", "gpu support",
-        "anti-sag", "sag bracket",
+        "anti-sag", "sag bracket","core i3", "core i5", "core i7", "core i9",
+        "sandy bridge", "ivy bridge", "haswell", "skylake",
+        "dual-core", "quad-core", "6-core", "8-core",
+        "desktop processor", "socket am4", "socket lga",
+        "desktop processor", "dual-core", "quad-core",
+        "sandy bridge", "ivy bridge",
+        "core i3", "core i5", "core i7", "core i9",
+        "vga fan", "pin fan",
+        "80+ gold", "80+ bronze", "80+ platinum",
+        "full-modular", "semi-modular",
     ],
     "cpus": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -100,6 +109,7 @@ CATEGORY_BLOCKLIST = {
         "laptop", "notebook",
         "monitor arm", "monitor mount", "monitor stand", "monitor cable",
         "screen protector",
+        "television", "smart tv", "oled tv", "qled tv", "led tv",
     ],
     "motherboards": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -134,6 +144,40 @@ CATEGORY_BLOCKLIST = {
     "external-storage": [],
     "ssds": ["hard drive", "hdd", "barracuda", "ironwolf", "nas drive"],
     "hard-drives": ["ssd", "solid state", "nvme", "m.2", "external", "portable"
+    ],
+    "tvs": [
+        "laptop", "notebook", "monitor", "computer monitor", "gaming monitor",
+        "tv mount", "tv stand", "tv wall", "remote control",
+        "streaming", "tv box", "fire stick", "chromecast",
+    ],
+    "tablets": [
+        "laptop", "notebook", "desktop",
+        "tablet case", "tablet stand", "tablet mount", "screen protector",
+        "stylus", "keyboard for",
+        "drawing tablet", "graphic tablet", "pen tablet",
+    ],
+    "printers": [
+        "laptop", "notebook",
+        "ink cartridge", "toner cartridge", "printer paper", "photo paper",
+        "printer cable",
+    ],
+    "gaming-consoles": [
+        "laptop", "notebook", "desktop pc",
+        "controller skin", "console skin", "charging dock",
+        "headset", "gaming chair",
+    ],
+    "smart-home": [
+        "laptop", "notebook",
+        "smart watch", "smartwatch", "fitness tracker",
+    ],
+    "ups-power": [
+        "laptop", "notebook",
+        "power supply", "psu", "atx",
+    ],
+    "network-switches": [
+        "laptop", "notebook",
+        "nintendo switch", "game", "joy-con", "joycon",
+        "kvm switch",
     ],
 }
 
@@ -190,12 +234,51 @@ STRONG_IDENTIFIERS = {
     ],
     "hard-drives": ["barracuda", "ironwolf", "wd red", "wd blue", "wd black", "wd gold", "wd purple", "red plus", "red pro", "ultrastar"
     ],
+    "tvs": [
+        "smart tv", "oled tv", "qled tv", "led tv", "mini led tv",
+        "4k uhd tv", "8k tv", "television",
+        "nanocell", "bravia", "roku tv", "fire tv", "google tv",
+        "webos", "tizen",
+    ],
+    "tablets": [
+        "ipad", "ipad pro", "ipad air", "ipad mini",
+        "galaxy tab", "surface pro", "surface go",
+        "fire tablet", "kindle",
+    ],
+    "printers": [
+        "inkjet printer", "laser printer", "photo printer",
+        "all-in-one printer", "multifunction printer",
+        "laserjet", "pixma", "ecotank", "supertank",
+    ],
+    "gaming-consoles": [
+        "playstation 5", "ps5", "xbox series", "nintendo switch",
+        "steam deck", "rog ally", "legion go",
+        "dualsense", "xbox controller",
+    ],
+    "smart-home": [
+        "echo dot", "echo show", "google nest", "google home",
+        "smart plug", "smart bulb", "smart light",
+        "ring doorbell", "blink camera", "wyze cam",
+        "smart display", "smart thermostat",
+    ],
+    "ups-power": [
+        "ups ", "uninterruptible", "battery backup",
+        "surge protector", "power bar",
+        "cyberpower", "apc back-ups", "apc smart-ups",
+    ],
+    "network-switches": [
+        "ethernet switch", "network switch", "gigabit switch",
+        "managed switch", "unmanaged switch", "poe switch",
+        "8-port switch", "16-port switch", "24-port switch", "48-port switch",
+    ],
 }
 
 # Categories checked in priority order.
 # More specific categories FIRST so they match before generic ones.
 CATEGORY_PRIORITY = [
     "laptops",        # Check first: laptops contain CPU/GPU keywords
+    "tablets",        # Before monitors: tablets have "display" keywords
+    "tvs",            # Before monitors: TVs have "display" and "screen" keywords
     "motherboards",   # Motherboards contain CPU socket keywords
     "coolers",        # Coolers mention CPU brands
     "cases",          # Cases mention ATX/tower keywords
@@ -206,10 +289,16 @@ CATEGORY_PRIORITY = [
     "speakers",
     "webcams",
     "routers",
+    "network-switches",  # After routers: switches share networking keywords
+    "gaming-consoles",
+    "smart-home",
+    "printers",
+    "ups-power",
     "external-storage",
     "gpus",           # Late: many products mention GPU keywords
     "cpus",           # Late: many products mention CPU keywords
     "ssds",
+    "hard-drives",
     "ram",
     "power-supplies",
 ]
@@ -423,18 +512,57 @@ def export():
         else:
             seen_slugs[slug] = 1
 
-        # Prefer AI-assigned category, fall back to keyword rules
-        ai_category = row["source_category"] if row["source_category"] and row["source_category"] != "other" and row["source_category"] in keywords_map else ""
-        category = ai_category if ai_category else guess_category(row["name"], row["url"], keywords_map)
+        # Prefer source category from retailer, fall back to keyword rules
+        # source_category may be a config key ("tvs") or a label ("TVs") from older scrapes
+        source_cat = row["source_category"] or ""
+        
+        # Build label-to-key lookup if not already done
+        if not hasattr(export, '_label_to_key'):
+            export._label_to_key = {}
+            for k, v in keywords_map.items():
+                export._label_to_key[k] = k  # key -> key (already correct)
+            # Also map labels from categories.json
+            if os.path.isfile(CONFIG_PATH):
+                with open(CONFIG_PATH, "r", encoding="utf-8") as cf:
+                    cfg = json.load(cf)
+                for k, v in cfg["categories"].items():
+                    export._label_to_key[v["label"].lower()] = k
+        
+        # Resolve source_category to a config key
+        resolved_cat = ""
+        if source_cat:
+            sc_lower = source_cat.lower()
+            if source_cat in keywords_map:
+                # Already a valid config key (e.g., "tvs")
+                resolved_cat = source_cat
+            elif sc_lower in export._label_to_key:
+                # It's a label (e.g., "TVs" -> "tvs")
+                resolved_cat = export._label_to_key[sc_lower]
+        
+        if resolved_cat and resolved_cat != "other":
+            category = resolved_cat
+        else:
+            category = guess_category(row["name"], row["url"], keywords_map)
 
-        # Validate: blocklist overrides even AI-assigned categories
-        # (catches keycaps labeled as GPUs, prebuilts labeled as GPUs, etc.)
+        # Validate: blocklist overrides even retailer-assigned categories
+        # (catches accessories that landed on a wrong category page)
         if category != "other":
             name_lower = row["name"].lower()
             blocklist = CATEGORY_BLOCKLIST.get(category, [])
             if any(bw in name_lower for bw in blocklist):
-                # AI got it wrong — re-classify with keyword rules
-                category = guess_category(row["name"], row["url"], keywords_map)
+                # Wrong category — try all other categories with full blocklist checks
+                category = "other"
+                for cat_key in CATEGORY_PRIORITY:
+                    if cat_key == resolved_cat:
+                        continue
+                    keywords = keywords_map.get(cat_key, [])
+                    if not keywords:
+                        continue
+                    if any(kw in name_lower for kw in keywords):
+                        cat_blocklist = CATEGORY_BLOCKLIST.get(cat_key, [])
+                        if not any(bw in name_lower for bw in cat_blocklist):
+                            category = cat_key
+                            break
 
         product = {
             "id": row["id"],
