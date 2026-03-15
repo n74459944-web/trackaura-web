@@ -16,6 +16,14 @@ export interface Product {
   brand?: string;
   description?: string;
   specs?: Record<string, string>;
+  matchGroup?: number | null;
+  priceComparison?: {
+    id: number;
+    retailer: string;
+    price: number;
+    url: string;
+    slug: string;
+  }[];
 }
 
 export interface PricePoint {
