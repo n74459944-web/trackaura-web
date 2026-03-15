@@ -203,12 +203,21 @@ STRONG_IDENTIFIERS = {
         "laptop", "notebook", "chromebook", "ultrabook",
         "macbook", "thinkpad", "ideapad", "vivobook", "zenbook",
         "rog strix g14", "rog strix g15", "rog strix g16",
-        "rog zephyrus", "legion 5", "legion 7", "legion pro",
+        "rog zephyrus", "rog flow z13", "rog flow x13",
+        "legion 5", "legion 7", "legion pro",
         "omen transcend", "omen 16", "omen 17",
         "swift go", "swift x", "nitro v",
         "raider ge", "stealth 16", "stealth 14",
-        "dell latitude", "dell inspiron", "dell xps",
+        "dell latitude", "dell inspiron", "dell xps", "dell pro ",
         "hp pavilion", "hp probook", "hp elitebook",
+        "expertbook", "gram evo", "lg gram", "surface laptop",
+        "mobile workstation", "copilot+ pc",
+        "zbook", "dell pro max",
+        "thinkbook", "matebook", "yoga 7", "yoga 9",
+        "aspire go", "aspire 3", "aspire 5", "aspire 7",
+        "surface pro", "x1 fold",
+        "lenovo yoga", "2-in-1",
+        "hp elite mini", "elite mini",
     ],
     "motherboards": [
         "motherboard", "mainboard", "mobo",
@@ -226,6 +235,8 @@ STRONG_IDENTIFIERS = {
         "240mm radiator", "280mm radiator", "360mm radiator",
         "hyperflow", "kraken", "icue elite",
         "liquid freezer", "arctic freezer",
+        "galahad", "liquid / water cooling", "water cooling",
+        "420mm radiator", "hydroshift",
     ],
     "cases": [
         "computer case", "pc case", "atx case", "mid tower",
@@ -236,11 +247,16 @@ STRONG_IDENTIFIERS = {
     "mice": [
         "gaming mouse", "wireless mouse", "mouse pad", "mousepad",
         "desk mat", "mouse mat",
+        "gaming mice", "productivity mice", "ergonomic mice",
+        "wired mouse", "optical mouse", "ambidextrous mice",
+        "right-handed mice", "vertical mouse",
     ],
     "keyboards": [
         "keycap", "key cap", "keycaps",
         "gaming keyboard", "mechanical keyboard", "wireless keyboard",
         "numpad", "keypad",
+        "gaming keyboards", "wired keyboard", "membrane keyboard",
+        "keyboard combo", "keyboard and mouse combo",
     ],
     "monitors": [
         "computer monitor", "gaming monitor", "office monitor",
@@ -251,6 +267,12 @@ STRONG_IDENTIFIERS = {
         "3840x2160", "3840 x 2160", "1080p monitor", "4k uhd",
         "lcd ips", "lcd led", "wide lcd",
         "predator x", "predator z",
+        # Acer truncated model names
+        "gbmix ", "bmiix ", "bmiipx", "bmiiprx",
+        "wmiipx", "gbiipx", "gbiip",
+        "adaptivesync", "freesync monitor", "g-sync monitor",
+        "ultragear", "ultrawide", "ultrasharp",
+        "250nits", "300nits", "350nits", "400nits", "500nits",
     ],
     "power-supplies": [
         "power supply", "psu",
@@ -279,7 +301,7 @@ STRONG_IDENTIFIERS = {
     "hard-drives": [
         "barracuda", "ironwolf", "wd red", "wd blue", "wd black",
         "wd gold", "wd purple", "red plus", "red pro", "ultrastar",
-        "exos",
+        "exos", "skyhawk", "wd re ",
     ],
     "tvs": [
         "smart tv", "oled tv", "qled tv", "led tv", "mini led tv",
@@ -287,6 +309,8 @@ STRONG_IDENTIFIERS = {
         "nanocell", "bravia", "roku tv", "fire tv", "google tv",
         "webos", "tizen",
         "crystal uhd", "d-led",
+        "nano75", "nano76", "nano80", "nano81", "nano90",
+        "skyworth", "ud6300", "class (", "viewable)",
     ],
     "tablets": [
         "ipad", "ipad pro", "ipad air", "ipad mini",
@@ -314,11 +338,14 @@ STRONG_IDENTIFIERS = {
         "ups ", "uninterruptible", "battery backup",
         "surge protector", "power bar",
         "cyberpower", "apc back-ups", "apc smart-ups",
+        "apc smt", "apc smc", "apc srt",
     ],
     "network-switches": [
         "ethernet switch", "network switch", "gigabit switch",
         "managed switch", "unmanaged switch", "poe switch",
         "8-port switch", "16-port switch", "24-port switch", "48-port switch",
+        "8-port gigabit", "16-port gigabit", "24-port gigabit",
+        "plug and play switch",
     ],
     "external-storage": [
         "external hard drive", "external ssd", "portable ssd",
@@ -335,7 +362,8 @@ STRONG_IDENTIFIERS = {
         "soundbar", "bluetooth speaker", "bookshelf speaker",
     ],
     "headphones": [
-        "in-ear monitor",
+        "in-ear monitor", "iems", "earbuds", "earbud",
+        "jabra elite", "galaxy buds", "airpods",
     ],
 }
 
@@ -379,11 +407,26 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
         "cable", "converter", "splitter",
         "bracket", "mount", "riser",
         "cleaning", "cloth", "wipe", "tool kit", "screwdriver",
-        "earpad", "ear pad", "replacement pad",
+        "earpad", "ear pad", "replacement pad", "ear cushion",
         "sticker", "decal", "skin", "cover", "sleeve",
         "anti-static", "thermal paste", "thermal pad", "heatsink for",
         "dust filter", "fan guard", "fan grill", "finger guard",
         "replacement battery", "pcb mount",
+        "rj45 plug", "rj45 connector", "modular plug",
+        "not available for order", "quick view",
+        "molex", "6pin to", "8pin to", "4pin to",
+        "g1/4", "water cooling fitting", "water cooling block",
+        "usb hub", "usb splitter", "usb3.0 hub",
+        "expansion dock", "docking station",
+        "projector lamp", "projector bulb",
+        "replacement module", "mounting-kit", "mounting kit",
+        "adaptor cable", "adapter cable",
+        "poe injector", "media converter",
+        "snagless boots", "connector plugs",
+        "mini arcade", "micro player",
+        "desk fan", "mini fan",
+        "charger with", "battery charger",
+        "front panel hub", "front panel usb",
     ]
     is_accessory = any(w in name_lower for w in accessory_words)
     if is_accessory:
