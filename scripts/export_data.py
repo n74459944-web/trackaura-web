@@ -545,6 +545,7 @@ def export():
             p.description,
             p.specs,
             p.source_category,
+            p.match_group,
             pp_latest.price as current_price,
             pp_latest.timestamp as last_updated,
             pp_stats.min_price,
@@ -651,8 +652,44 @@ def export():
             "priceCount": row["price_count"],
             "firstSeen": row["first_seen"],
             "lastUpdated": row["last_updated"],
+            "matchGroup": row["match_group"],
         }
         products.append(product)
+
+    # --- Merge matched products (cross-retailer price comparison) ---
+    # For products in the same match_group, add a "priceComparison" array
+    # showing all retailers' prices for the same product.
+    match_groups = {}
+    for p in products:
+        mg = p.get("matchGroup")
+        if mg:
+            if mg not in match_groups:
+                match_groups[mg] = []
+            match_groups[mg].append({
+                "id": p["id"],
+                "retailer": p["retailer"],
+                "price": p["currentPrice"],
+                "url": p["url"],
+                "slug": p["slug"],
+            })
+
+    matched_count = 0
+    for p in products:
+        mg = p.get("matchGroup")
+        if mg and mg in match_groups and len(match_groups[mg]) > 1:
+            # Add comparison data from OTHER retailers only
+            p["priceComparison"] = [
+                r for r in match_groups[mg] if r["id"] != p["id"]
+            ]
+            matched_count += 1
+        else:
+            p["priceComparison"] = []
+
+    cross_retailer = sum(
+        1 for mg, items in match_groups.items()
+        if len(set(i["retailer"] for i in items)) > 1
+    )
+    print(f"Price comparison: {cross_retailer} match groups across retailers, {matched_count} products with comparisons")
 
     # Write products.json
     with open(os.path.join(OUTPUT_DIR, "products.json"), "w") as f:
