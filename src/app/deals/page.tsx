@@ -26,7 +26,7 @@ export default function DealsPage() {
       const bDiscount = (b.maxPrice - b.currentPrice) / b.maxPrice;
       return bDiscount - aDiscount;
     })
-    .slice(0, 500);
+    .slice(0, 50);
 
   return (
     <Suspense
