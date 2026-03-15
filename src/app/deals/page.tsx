@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Best Electronics Deals in Canada",
   description:
@@ -13,7 +15,17 @@ export const metadata: Metadata = {
 };
 
 export default function DealsPage() {
-  const products = getAllProducts().filter((p) => p.category !== "other");
+  const allProducts = getAllProducts().filter((p) => p.category !== "other");
+
+  // Only pass actual deals to the client (products with a price drop)
+  // This prevents serializing 18,000+ products into the HTML
+  const deals = allProducts
+    .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice)
+    .sort((a, b) => {
+      const aDiscount = (a.maxPrice - a.currentPrice) / a.maxPrice;
+      const bDiscount = (b.maxPrice - b.currentPrice) / b.maxPrice;
+      return bDiscount - aDiscount;
+    });
 
   return (
     <Suspense
@@ -23,7 +35,7 @@ export default function DealsPage() {
         </div>
       }
     >
-      <DealsClient initialProducts={products} />
+      <DealsClient initialProducts={deals} />
     </Suspense>
   );
 }
