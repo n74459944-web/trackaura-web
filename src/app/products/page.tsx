@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { getAllProducts } from "@/lib/data";
 import ProductsClient from "./ProductsClient";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "All Products",
@@ -10,8 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default function ProductsPage() {
-  const products = getAllProducts().filter((p) => p.category !== "other");
-
   return (
     <Suspense
       fallback={
@@ -20,7 +19,7 @@ export default function ProductsPage() {
         </div>
       }
     >
-      <ProductsClient initialProducts={products} />
+      <ProductsClient initialProducts={[]} />
     </Suspense>
   );
 }
