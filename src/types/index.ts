@@ -41,7 +41,7 @@ export interface SiteStats {
   productsByCategory: Record<string, number>;
 }
 
-export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "tvs" | "tablets" | "printers" | "gaming-consoles" | "smart-home" | "ups-power" | "network-switches" | "other";
+export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "tvs" | "tablets" | "printers" | "gaming-consoles" | "smart-home" | "ups-power" | "network-switches" | "case-fans" | "desktops" | "nas" | "other";
 export type Retailer = "Canada Computers" | "Newegg Canada";
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -58,7 +58,6 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "power-supplies": "Power Supplies",
   cases: "PC Cases",
   motherboards: "Motherboards",
-  other: "Other",
   coolers: "CPU Coolers",
   routers: "Routers",
   webcams: "Webcams",
@@ -71,6 +70,10 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "smart-home": "Smart Home",
   "ups-power": "UPS & Surge Protection",
   "network-switches": "Network Switches",
+  "case-fans": "Case Fans",
+  desktops: "Desktop PCs",
+  nas: "NAS",
+  other: "Other",
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
@@ -87,7 +90,6 @@ export const CATEGORY_ICONS: Record<string, string> = {
   "power-supplies": "🔌",
   cases: "🗄️",
   motherboards: "🔧",
-  other: "📦",
   coolers: "❄️",
   routers: "📡",
   webcams: "📷",
@@ -100,6 +102,10 @@ export const CATEGORY_ICONS: Record<string, string> = {
   "smart-home": "🏠",
   "ups-power": "🔋",
   "network-switches": "🔀",
+  "case-fans": "🌀",
+  desktops: "🖥️",
+  nas: "🗄️",
+  other: "📦",
 };
 
 export const RETAILER_COLORS: Record<string, string> = {

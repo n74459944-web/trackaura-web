@@ -10,38 +10,40 @@ export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
 
-  // Pick featured products: diverse categories, real savings, never "other"
+  // Pick featured products: diverse categories, consumer-priced, real savings
   const featured = (() => {
-    // Only products with real price drops, exclude "other", minimum $30
     const candidates = allProducts
       .filter((p) =>
         p.category !== "other" &&
         p.minPrice < p.maxPrice &&
         p.currentPrice < p.maxPrice &&
-        p.currentPrice >= 30
+        p.currentPrice >= 30 &&
+        p.currentPrice <= 3000 &&
+        p.priceCount >= 2
       )
       .map((p) => ({
         ...p,
         savings: p.maxPrice - p.currentPrice,
         dropPct: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100,
-      }));
+      }))
+      .filter((p) => p.dropPct >= 5 && p.dropPct <= 80);
 
-    // Group by category, pick the best deal per category (by absolute savings)
+    // Group by category, pick best deal per category (by % drop, not absolute $)
     const byCategory: Record<string, typeof candidates> = {};
     for (const p of candidates) {
       if (!byCategory[p.category]) byCategory[p.category] = [];
       byCategory[p.category].push(p);
     }
 
-    // Sort each category by absolute savings descending
+    // Sort each category by percentage drop descending
     for (const cat of Object.keys(byCategory)) {
-      byCategory[cat].sort((a, b) => b.savings - a.savings);
+      byCategory[cat].sort((a, b) => b.dropPct - a.dropPct);
     }
 
     // Round-robin: pick 1 from each category, then 2nd from each, etc.
     const result: typeof candidates = [];
     const catKeys = Object.keys(byCategory).sort(
-      (a, b) => (byCategory[b][0]?.savings || 0) - (byCategory[a][0]?.savings || 0)
+      (a, b) => (byCategory[b][0]?.dropPct || 0) - (byCategory[a][0]?.dropPct || 0)
     );
     let round = 0;
     while (result.length < 12 && round < 5) {
@@ -109,7 +111,7 @@ export default function HomePage() {
           }}
         >
           I scrape {stats.totalProducts.toLocaleString()}+ products from Canada Computers and Newegg
-          every 4 hours so you can see if that "sale" is actually a deal.
+          every 4 hours so you can see if that &quot;sale&quot; is actually a deal.
         </p>
 
         {/* Search */}
