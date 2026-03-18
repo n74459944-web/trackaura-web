@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -57,7 +58,22 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export default function PriceIndexChart({ data }: { data: DataPoint[] }) {
+interface PriceIndexChartProps {
+  data: DataPoint[];
+  chartId?: string;
+  color?: string;
+  height?: number;
+}
+
+export default function PriceIndexChart({
+  data,
+  chartId = "overall",
+  color = "#6c5ce7",
+  height = 300,
+}: PriceIndexChartProps) {
+  // Unique gradient ID so multiple charts on one page don't conflict
+  const gradientId = useMemo(() => "gradient-" + chartId, [chartId]);
+
   if (!data || data.length < 2) {
     return (
       <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
@@ -72,13 +88,13 @@ export default function PriceIndexChart({ data }: { data: DataPoint[] }) {
   const padding = (maxPrice - minPrice) * 0.1 || 10;
 
   return (
-    <div style={{ width: "100%", height: 300 }}>
+    <div style={{ width: "100%", height }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
           <defs>
-            <linearGradient id="indexGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6c5ce7" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#6c5ce7" stopOpacity={0.02} />
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
@@ -102,11 +118,11 @@ export default function PriceIndexChart({ data }: { data: DataPoint[] }) {
           <Area
             type="monotone"
             dataKey="avg"
-            stroke="#6c5ce7"
+            stroke={color}
             strokeWidth={2.5}
-            fill="url(#indexGradient)"
+            fill={"url(#" + gradientId + ")"}
             dot={false}
-            activeDot={{ r: 5, fill: "#6c5ce7", stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: color, stroke: "#fff", strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

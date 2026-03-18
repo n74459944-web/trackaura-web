@@ -4,12 +4,45 @@ import { getAllProducts, getPriceIndex } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import PriceIndexChart from "@/components/PriceIndexChart";
+import CategoryCharts from "@/components/CategoryCharts";
 
 export const metadata: Metadata = {
   title: "Canadian Electronics Price Trends — TrackAura Price Index",
   description:
     "Track how electronics prices are moving across Canada. Real-time price index across GPUs, CPUs, RAM, monitors, and more from Canadian retailers.",
   alternates: { canonical: "https://www.trackaura.com/trends" },
+};
+
+// Colors for category charts so they're visually distinct
+const CATEGORY_COLORS: Record<string, string> = {
+  gpus: "#e74c3c",
+  cpus: "#3498db",
+  ram: "#f39c12",
+  ssds: "#2ecc71",
+  motherboards: "#9b59b6",
+  monitors: "#1abc9c",
+  laptops: "#e67e22",
+  keyboards: "#00b894",
+  mice: "#fd79a8",
+  headphones: "#a29bfe",
+  cases: "#6c5ce7",
+  coolers: "#00cec9",
+  "power-supplies": "#fdcb6e",
+  routers: "#74b9ff",
+  "hard-drives": "#fab1a0",
+  "gaming-consoles": "#ff7675",
+  tvs: "#dfe6e9",
+  tablets: "#b2bec3",
+  speakers: "#ffeaa7",
+  "external-storage": "#55efc4",
+  printers: "#81ecec",
+  "smart-home": "#a0e7e5",
+  webcams: "#636e72",
+  "ups-power": "#d63031",
+  "network-switches": "#0984e3",
+  "case-fans": "#00b4d8",
+  desktops: "#e17055",
+  nas: "#78e08f",
 };
 
 export default function TrendsPage() {
@@ -39,7 +72,6 @@ export default function TrendsPage() {
       ).length;
       const dropPercent = products.length > 0 ? Math.round((withDrops / products.length) * 100) : 0;
 
-      // Average % above historical low
       const productsWithHistory = products.filter((p) => p.minPrice > 0 && p.priceCount > 1);
       const avgAboveLow =
         productsWithHistory.length > 0
@@ -79,7 +111,6 @@ export default function TrendsPage() {
     (p) => p.currentPrice < p.maxPrice && p.minPrice < p.maxPrice
   ).length;
 
-  // Overall avg above low
   const productsWithHistory = allProducts.filter((p) => p.minPrice > 0 && p.priceCount > 1);
   const overallAboveLow =
     productsWithHistory.length > 0
@@ -87,6 +118,45 @@ export default function TrendsPage() {
           return sum + ((p.currentPrice - p.minPrice) / p.minPrice) * 100;
         }, 0) / productsWithHistory.length
       : 0;
+
+  // Build category chart data from the price index JSON
+  const categoryChartData: {
+    key: string;
+    label: string;
+    icon: string;
+    color: string;
+    data: { date: string; avg: number; count: number }[];
+    latestAvg: number;
+    change: number | null;
+  }[] = [];
+
+  if (priceIndex && priceIndex.categories) {
+    for (const [key, data] of Object.entries(priceIndex.categories) as [string, any[]][]) {
+      if (!data || data.length < 2) continue;
+      const label = CATEGORY_LABELS[key] || key;
+      const icon = CATEGORY_ICONS[key] || "\uD83D\uDCE6";
+      const color = CATEGORY_COLORS[key] || "#6c5ce7";
+      const latestAvg = data[data.length - 1].avg;
+
+      // Calculate % change from first full day to latest
+      // Skip the first data point if it has very few items (partial day)
+      const stableData = data.filter((d: any) => d.count > 5);
+      let change: number | null = null;
+      if (stableData.length >= 2) {
+        const first = stableData[0].avg;
+        const last = stableData[stableData.length - 1].avg;
+        change = ((last - first) / first) * 100;
+      }
+
+      categoryChartData.push({ key, label, icon, color, data, latestAvg, change });
+    }
+    // Sort by product count (latest data point)
+    categoryChartData.sort((a, b) => {
+      const aCount = a.data[a.data.length - 1]?.count || 0;
+      const bCount = b.data[b.data.length - 1]?.count || 0;
+      return bCount - aCount;
+    });
+  }
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -143,7 +213,20 @@ export default function TrendsPage() {
           <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>
             {"Average price across all " + totalProducts.toLocaleString() + " tracked products, updated every 4 hours."}
           </p>
-          <PriceIndexChart data={priceIndex.overall} />
+          <PriceIndexChart data={priceIndex.overall} chartId="overall" />
+        </div>
+      )}
+
+      {/* Per-category price trend charts */}
+      {categoryChartData.length > 0 && (
+        <div style={{ marginBottom: "2rem" }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", marginBottom: "0.5rem" }}>
+            Price Trends by Category
+          </h2>
+          <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+            Click any category to see its price trend over time.
+          </p>
+          <CategoryCharts categories={categoryChartData} />
         </div>
       )}
 
@@ -266,7 +349,7 @@ export default function TrendsPage() {
           </p>
           <p>
             {"The overall trend chart aggregates the average price across all tracked products per day. " +
-            "As our dataset grows, this page will add month-over-month comparisons and seasonal pattern analysis."}
+            "Category charts break this down so you can see which product types are getting cheaper or more expensive over time."}
           </p>
         </div>
       </div>
