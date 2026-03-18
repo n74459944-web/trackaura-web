@@ -151,7 +151,7 @@ export default function HomePage() {
           >
             Browse Categories
           </h2>
-          <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>
+          <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
             {"All " + categories.length + " categories →"}
           </Link>
         </div>
