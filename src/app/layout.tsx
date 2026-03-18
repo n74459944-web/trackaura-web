@@ -67,6 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="impact-site-verification" content="c001a43a-bc75-4c79-91a3-7d18227c42e5" />
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-5ZYSMH5GPN"
