@@ -10,7 +10,7 @@
     "diff": -54.88,
     "pct": -61.0,
     "direction": "down",
-    "changedAt": "2026-03-18T07:53:44"
+    "changedAt": "2026-03-18T13:58:57"
   },
   {
     "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
@@ -23,7 +23,7 @@
     "diff": -169.99,
     "pct": -91.9,
     "direction": "down",
-    "changedAt": "2026-03-18T07:53:44"
+    "changedAt": "2026-03-18T13:58:57"
   },
   {
     "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, Black",
@@ -36,7 +36,7 @@
     "diff": -54.88,
     "pct": -61.0,
     "direction": "down",
-    "changedAt": "2026-03-18T07:53:44"
+    "changedAt": "2026-03-18T13:58:57"
   },
   {
     "name": "WESTERN DIGITAL",
@@ -49,7 +49,7 @@
     "diff": -250.0,
     "pct": -45.5,
     "direction": "down",
-    "changedAt": "2026-03-18T07:49:07"
+    "changedAt": "2026-03-18T13:54:21"
   },
   {
     "name": "Lenovo       {Product Condition Short}",
@@ -62,7 +62,33 @@
     "diff": -4930.0,
     "pct": -85.6,
     "direction": "down",
-    "changedAt": "2026-03-18T07:39:36"
+    "changedAt": "2026-03-18T13:44:13"
+  },
+  {
+    "name": "HP ProBook 4 Business Laptop 16\" Intel Core 5-120U 16GB 512GB Win11P(Open Box)",
+    "slug": "hp-probook-4-business-laptop-16-intel-core-5-120u-16gb-512gb-win11popen-box",
+    "url": "https://www.canadacomputers.com/en/business-laptops/280790/hp-probook-4-business-laptop-16-intel-core-5-120u-16gb-512gb-win11p-bx7y1ataba.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 949.05,
+    "newPrice": 759.05,
+    "diff": -190.0,
+    "pct": -20.0,
+    "direction": "down",
+    "changedAt": "2026-03-18T13:43:18"
+  },
+  {
+    "name": "Samsung 27\" Odyssey G5 Gaming IPS QHD 2560x1440 165Hz 1ms HDR10(Open Box)",
+    "slug": "samsung-27-odyssey-g5-gaming-ips-qhd-2560x1440-165hz-1ms-hdr10open-box",
+    "url": "https://www.canadacomputers.com/en/25-29-gaming-monitors/217121/samsung-27-odyssey-g5-gaming-ips-qhd-2560x1440-165hz-1ms-hdr10-ls27ag500pnxza.html",
+    "retailer": "Canada Computers",
+    "category": "monitors",
+    "oldPrice": 152.9,
+    "newPrice": 124.85,
+    "diff": -28.05,
+    "pct": -18.3,
+    "direction": "down",
+    "changedAt": "2026-03-18T13:34:20"
   },
   {
     "name": "HP ProBook 4 Business Laptop 16\" Intel Core 5-120U 16GB 512GB Win11P",
@@ -1272,31 +1298,5 @@
     "pct": 28.5,
     "direction": "up",
     "changedAt": "2026-03-16T23:49:10"
-  },
-  {
-    "name": "ARMOURY AMD Ryzen 7 9800X3D, RTX 5080, 64GB, 4TB SSD, Win11 Home",
-    "slug": "armoury-amd-ryzen-7-9800x3d-rtx-5080-64gb-4tb-ssd-win11-home",
-    "url": "https://www.canadacomputers.com/en/armoury-gaming-desktops/271582/armoury-amd-ryzen-7-9800x3d-rtx-5080-64gb-4tb-ssd-win11-home-rtaru00173.html",
-    "retailer": "Canada Computers",
-    "category": "gpus",
-    "oldPrice": 5999.0,
-    "newPrice": 5499.0,
-    "diff": -500.0,
-    "pct": -8.3,
-    "direction": "down",
-    "changedAt": "2026-03-16T23:48:11"
-  },
-  {
-    "name": "ARMOURY Ryzen 7 9800X3D RX 9070 XT 64GB RAM 4TB SSD W11P",
-    "slug": "armoury-ryzen-7-9800x3d-rx-9070-xt-64gb-ram-4tb-ssd-w11p",
-    "url": "https://www.canadacomputers.com/en/armoury-gaming-desktops/265647/armoury-ryzen-7-9800x3d-rx-9070-xt-64gb-ram-4tb-ssd-w11p-rtaru00275.html",
-    "retailer": "Canada Computers",
-    "category": "gpus",
-    "oldPrice": 4299.0,
-    "newPrice": 3899.0,
-    "diff": -400.0,
-    "pct": -9.3,
-    "direction": "down",
-    "changedAt": "2026-03-16T23:48:11"
   }
 ]
