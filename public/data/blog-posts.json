@@ -241,5 +241,31 @@
       "## Set a Price Alert",
       "Found a drive you like? Set a price alert on TrackAura and we\u2019ll email you when it drops to your target. SSD prices can shift $10\u201320 overnight when retailers run flash sales. Check our SSD buying guide for the full list of tracked drives, sorted by current price and deal strength."
     ]
+  },
+  {
+    "slug": "are-electronics-prices-going-up-canada-2026",
+    "title": "Are Electronics Prices Going Up in Canada? What Our Data Shows (March 2026)",
+    "description": "With tariff uncertainty and a weak Canadian dollar, are electronics prices actually rising? We checked our price tracking data across 21,000+ products to find out.",
+    "date": "2026-03-18",
+    "category": "Price Analysis",
+    "content": [
+      "Between the ongoing US-Canada trade tensions, a fluctuating Canadian dollar, and new GPU launches pushing prices sky-high, Canadian shoppers have every reason to wonder: are electronics prices actually going up? We track over 21,000 products across Canada Computers and Newegg every 4 hours. Here\u2019s what the data actually says.",
+      "## The Big Picture: Prices Are Mostly Stable",
+      "Looking at our Price Index across all categories since early March 2026, the average electronics price has been remarkably stable. After an initial settling period as our tracking database grew, prices have hovered in a narrow band. There\u2019s no broad upward trend \u2014 yet.",
+      "## GPUs Are the Obvious Exception",
+      "Graphics cards are the one category where prices are clearly elevated. The RTX 5070 launched at a Canadian MSRP of around $749 but most models are selling for $850 to $1,100+. The RTX 5080 is even worse, with prices well above MSRP. This isn\u2019t tariff-driven \u2014 it\u2019s supply and demand. NVIDIA\u2019s new cards are selling out faster than retailers can stock them.",
+      "## SSDs and RAM: Getting Cheaper",
+      "Storage and memory are bright spots. SSD prices have continued their multi-year downward trend, with 1TB NVMe drives available for under $100 CAD at both major retailers. DDR5 RAM has also dropped significantly, with 32GB kits now in the $100 to $140 range. Global NAND and DRAM supply is healthy, which keeps prices falling.",
+      "## The Tariff Situation",
+      "The US-Canada trade war has dominated headlines, but the direct impact on electronics prices has been limited so far. Most consumer electronics are CUSMA-compliant or manufactured in Asia, meaning they\u2019re not subject to the bilateral tariffs that hit steel, aluminum, and autos. That said, the weak Canadian dollar (driven partly by trade uncertainty) makes everything priced in USD more expensive for Canadians. A $500 USD component costs roughly $700 CAD today.",
+      "## The Exchange Rate Is the Real Tax",
+      "For Canadian electronics buyers, the CAD/USD exchange rate is a bigger factor than any tariff. When the dollar drops, retailer costs go up and those increases eventually get passed to consumers. We haven\u2019t seen major repricing yet, but if the dollar weakens further, expect gradual increases across the board.",
+      "## Categories to Watch",
+      "Based on our tracking data, here\u2019s a quick summary of where things stand:\n\n**Prices rising:** GPUs (supply-driven), laptops with new RTX 50-series chips\n**Prices stable:** Monitors, motherboards, keyboards, mice, routers\n**Prices falling:** SSDs, RAM, cases, power supplies, CPU coolers",
+      "## What Should You Do?",
+      "If you\u2019re buying SSDs, RAM, or peripherals, now is a fine time. Prices are low and stable. For GPUs, patience pays \u2014 wait 2 to 3 months for supply to catch up with demand. For everything else, check the price history on TrackAura before buying. If a product is within 10% of its tracked low, that\u2019s a solid buy.",
+      "## Track It Yourself",
+      "We update our Price Index page every 4 hours with fresh data. You can see overall trends and drill into individual categories to spot where prices are moving. Set price alerts on any product and we\u2019ll email you when it drops to your target. No guesswork, just data."
+    ]
   }
 ]
