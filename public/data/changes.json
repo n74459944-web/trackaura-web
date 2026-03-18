@@ -1,5 +1,70 @@
 [
   {
+    "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, White",
+    "slug": "armoury-a08-micro-atx-case-wood-front-panel-white",
+    "url": "",
+    "retailer": "Canada Computers",
+    "category": "cases",
+    "oldPrice": 89.99,
+    "newPrice": 35.11,
+    "diff": -54.88,
+    "pct": -61.0,
+    "direction": "down",
+    "changedAt": "2026-03-17T19:52:16"
+  },
+  {
+    "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
+    "slug": "corsair-nautilus-360-rs-argb-liquid-cpu-cooler",
+    "url": "",
+    "retailer": "Canada Computers",
+    "category": "cpus",
+    "oldPrice": 184.99,
+    "newPrice": 15.0,
+    "diff": -169.99,
+    "pct": -91.9,
+    "direction": "down",
+    "changedAt": "2026-03-17T19:52:16"
+  },
+  {
+    "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, Black",
+    "slug": "armoury-a08-micro-atx-case-wood-front-panel-black",
+    "url": "",
+    "retailer": "Canada Computers",
+    "category": "cases",
+    "oldPrice": 89.99,
+    "newPrice": 35.11,
+    "diff": -54.88,
+    "pct": -61.0,
+    "direction": "down",
+    "changedAt": "2026-03-17T19:52:16"
+  },
+  {
+    "name": "WESTERN DIGITAL",
+    "slug": "western-digital",
+    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
+    "retailer": "Canada Computers",
+    "category": "other",
+    "oldPrice": 549.99,
+    "newPrice": 299.99,
+    "diff": -250.0,
+    "pct": -45.5,
+    "direction": "down",
+    "changedAt": "2026-03-17T19:47:43"
+  },
+  {
+    "name": "Lenovo       {Product Condition Short}",
+    "slug": "lenovo-product-condition-short",
+    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 5759.0,
+    "newPrice": 829.0,
+    "diff": -4930.0,
+    "pct": -85.6,
+    "direction": "down",
+    "changedAt": "2026-03-17T19:36:48"
+  },
+  {
     "name": "ARMOURY Business PC i7-14700, 32GB RAM, 1TB SSD, Wi-Fi 6, Win11 Pro(Open Box)",
     "slug": "armoury-business-pc-i7-14700-32gb-ram-1tb-ssd-wi-fi-6-win11-proopen-box",
     "url": "https://www.canadacomputers.com/en/armoury-business-desktops/275627/armoury-business-pc-i7-14700-32gb-ram-1tb-ssd-wi-fi-6-win11-pro-rtaru00291.html",
@@ -26,45 +91,6 @@
     "changedAt": "2026-03-17T16:33:28"
   },
   {
-    "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, White",
-    "slug": "armoury-a08-micro-atx-case-wood-front-panel-white",
-    "url": "",
-    "retailer": "Canada Computers",
-    "category": "cases",
-    "oldPrice": 89.99,
-    "newPrice": 35.11,
-    "diff": -54.88,
-    "pct": -61.0,
-    "direction": "down",
-    "changedAt": "2026-03-17T16:29:59"
-  },
-  {
-    "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
-    "slug": "corsair-nautilus-360-rs-argb-liquid-cpu-cooler",
-    "url": "",
-    "retailer": "Canada Computers",
-    "category": "cpus",
-    "oldPrice": 184.99,
-    "newPrice": 15.0,
-    "diff": -169.99,
-    "pct": -91.9,
-    "direction": "down",
-    "changedAt": "2026-03-17T16:29:59"
-  },
-  {
-    "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, Black",
-    "slug": "armoury-a08-micro-atx-case-wood-front-panel-black",
-    "url": "",
-    "retailer": "Canada Computers",
-    "category": "cases",
-    "oldPrice": 89.99,
-    "newPrice": 35.11,
-    "diff": -54.88,
-    "pct": -61.0,
-    "direction": "down",
-    "changedAt": "2026-03-17T16:29:59"
-  },
-  {
     "name": "ASUS PRIME H810M-A-CSM INTEL ULTRA SERIE",
     "slug": "asus-prime-h810m-a-csm-intel-ultra-serie",
     "url": "https://www.canadacomputers.com/en/intel-motherboards/269111/asus-prime-h810m-a-csm-intel-ultra-serie-prime-h810m-a-csm.html",
@@ -89,19 +115,6 @@
     "pct": 36.8,
     "direction": "up",
     "changedAt": "2026-03-17T16:19:53"
-  },
-  {
-    "name": "Lenovo       {Product Condition Short}",
-    "slug": "lenovo-product-condition-short",
-    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
-    "retailer": "Canada Computers",
-    "category": "laptops",
-    "oldPrice": 5759.0,
-    "newPrice": 829.0,
-    "diff": -4930.0,
-    "pct": -85.6,
-    "direction": "down",
-    "changedAt": "2026-03-17T16:13:38"
   },
   {
     "name": "Lenovo Thinkbook 16 16\" AMD Ryzen 7 7735HS 32GB 1TB Windows 11 Pro(Open Box)",
@@ -438,19 +451,6 @@
     "newPrice": 174.7,
     "diff": -1.89,
     "pct": -1.1,
-    "direction": "down",
-    "changedAt": "2026-03-17T12:29:18"
-  },
-  {
-    "name": "WESTERN DIGITAL",
-    "slug": "western-digital",
-    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
-    "retailer": "Canada Computers",
-    "category": "other",
-    "oldPrice": 549.99,
-    "newPrice": 299.99,
-    "diff": -250.0,
-    "pct": -45.5,
     "direction": "down",
     "changedAt": "2026-03-17T12:29:18"
   },
