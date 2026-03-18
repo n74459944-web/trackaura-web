@@ -73,6 +73,10 @@ export default function HomePage() {
       icon: CATEGORY_ICONS[key] || "📦",
     }));
 
+  // Show top 8 categories on homepage, top 6 buying guides
+  const topCategories = categories.slice(0, 8);
+  const topGuides = categories.slice(0, 6);
+
   return (
     <div>
       {/* Hero section */}
@@ -128,20 +132,31 @@ export default function HomePage() {
         <StatsBar stats={{ ...stats, categories: stats.categories.filter((c: string) => c !== "other") }} />
       </section>
 
-      {/* Categories */}
+      {/* Categories — top 8 only */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
-        <h2
+        <div
           style={{
-            fontFamily: "'Sora', sans-serif",
-            fontWeight: 700,
-            fontSize: "1.25rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginBottom: "1rem",
           }}
         >
-          Browse Categories
-        </h2>
+          <h2
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontWeight: 700,
+              fontSize: "1.25rem",
+            }}
+          >
+            Browse Categories
+          </h2>
+          <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>
+            {"All " + categories.length + " categories →"}
+          </Link>
+        </div>
         <div className="grid-categories">
-          {categories.map((cat) => (
+          {topCategories.map((cat) => (
             <Link
               key={cat.key}
               href={`/products?category=${cat.key}`}
@@ -205,13 +220,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Buying Guides */}
+      {/* Buying Guides — top 6 only */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.25rem", marginBottom: "1rem" }}>
-          Buying Guides
-        </h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontWeight: 700,
+              fontSize: "1.25rem",
+            }}
+          >
+            Buying Guides
+          </h2>
+          <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>
+            {"All guides →"}
+          </Link>
+        </div>
         <div className="grid-guides">
-          {categories.map((cat) => (
+          {topGuides.map((cat) => (
             <Link
               key={"best-" + cat.key}
               href={"/best/" + cat.key}
