@@ -267,5 +267,28 @@
       "## Track It Yourself",
       "We update our Price Index page every 4 hours with fresh data. You can see overall trends and drill into individual categories to spot where prices are moving. Set price alerts on any product and we\u2019ll email you when it drops to your target. No guesswork, just data."
     ]
+  },
+  {
+   "slug": "cross-retailer-price-matching-canada",
+   "title": "We Matched 21,000 Products Across Canadian Retailers — Here's What We Found",
+   "description": "We built a product identity system to match the same items across Canada Computers and Newegg. 616 products are sold at both stores — and the price differences are bigger than you'd think.",
+   "date": "2026-03-19",
+   "category": "Price Analysis",
+   "content": [
+    "When you search for a GPU or motherboard in Canada, you'll often find it at both Canada Computers and Newegg. But is it actually the same product? And who has the better price? We built a system to answer both questions — and the results are eye-opening.",
+    "## The Problem: Same Product, Different Names",
+    "Canada Computers might list a graphics card as \"ASUS ROG Strix GeForce RTX 4070 Ti SUPER OC 16GB\" while Newegg calls it \"ASUS ROG-STRIX-RTX4070TIS-O16G-GAMING.\" To a human, those are obviously the same card. To a computer, they're completely different strings. This makes cross-retailer comparison surprisingly hard.",
+    "## How We Solved It",
+    "We built what we call a Product Identity Layer — a canonical database that assigns a single identity to each real-world product, regardless of how different retailers name it. We extract manufacturer model numbers from product listings using a combination of pattern matching and AI, then group products that share the same model number and brand. The result: one canonical entry for each real product, linked to every retailer listing that sells it.",
+    "## The Numbers",
+    "Out of 21,000+ products tracked across Canada Computers and Newegg Canada, we identified 616 products that are sold at both retailers. That's 616 direct price comparisons you can make right now on TrackAura — same product, two prices, you pick the cheaper one.",
+    "## What We Found About Prices",
+    "Neither retailer is consistently cheaper. In some categories, Canada Computers tends to have lower prices. In others, Newegg wins. And the differences aren't trivial — we regularly see $20 to $80 gaps on the exact same product, and on high-end GPUs and laptops the difference can exceed $100.",
+    "The takeaway is simple: always check both. A few seconds of comparison can save you real money. That's the whole reason TrackAura exists.",
+    "## Why This Matters Beyond Price Comparison",
+    "This product identity system is the foundation for everything we're building next. A reliable price index requires tracking the same products over time — not just averages that shift when new products get added to the database. Cross-retailer matching also makes price alerts smarter: if the GPU you're watching drops at Newegg but not Canada Computers, you'll know immediately.",
+    "## Check It Yourself",
+    "Every product page on TrackAura now shows cross-retailer pricing when available. If the same product exists at both stores, you'll see both prices side by side. Set a price alert and we'll email you when either retailer drops the price."
+   ]
   }
 ]

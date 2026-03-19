@@ -84,6 +84,9 @@ CATEGORY_BLOCKLIST = {
         "vga fan", "pin fan",
         "80+ gold", "80+ bronze", "80+ platinum",
         "full-modular", "semi-modular",
+        "panoramic case", "atx case", "mini-itx case", "sff case",
+        "turbo module", "ventilation add-on",
+        "alienware area", "gaming pc windows",
     ],
     "cpus": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
