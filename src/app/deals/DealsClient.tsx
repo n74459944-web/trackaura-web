@@ -27,24 +27,55 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
   }, [initialProducts]);
 
   const deals = useMemo(() => {
-    let products = allProducts.filter(
-      (p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice
-    );
+    let products = allProducts.filter((p) => {
+      // Basic: must have a price range
+      if (p.minPrice >= p.maxPrice || p.currentPrice >= p.maxPrice) return false;
+
+      // Sanity filter 1: skip products with implausibly low prices
+      // A $1-$10 "deal" on electronics is almost always a data error
+      if (p.currentPrice < 10) return false;
+
+      // Sanity filter 2: skip products where max price is wildly inflated
+      // If max is more than 5x the current price, the max was likely a data error
+      if (p.maxPrice > p.currentPrice * 5) return false;
+
+      // Sanity filter 3: need at least 3 price points for a reliable range
+      // This prevents brand-new products with 1-2 scrapes from showing fake "deals"
+      if (p.priceCount < 3) return false;
+
+      // Sanity filter 4: discount must be at least 10% to be worth showing
+      const discount = (p.maxPrice - p.currentPrice) / p.maxPrice;
+      if (discount < 0.1) return false;
+
+      return true;
+    });
+
     if (category !== "all") {
       products = products.filter((p) => p.category === category);
     }
+
     return products
       .map((p) => ({
         ...p,
-        discount: Math.round(((p.maxPrice - p.currentPrice) / p.maxPrice) * 100),
+        discount: Math.round(
+          ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100
+        ),
       }))
-      .sort((a, b) => b.discount - a.discount);
+      .sort((a, b) => b.discount - a.discount)
+      .slice(0, 100); // Cap at 100 deals to keep page fast
   }, [allProducts, category]);
 
   const categories = useMemo(() => {
     const counts: Record<string, number> = {};
     allProducts
-      .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice)
+      .filter((p) => {
+        if (p.minPrice >= p.maxPrice || p.currentPrice >= p.maxPrice) return false;
+        if (p.currentPrice < 10) return false;
+        if (p.maxPrice > p.currentPrice * 5) return false;
+        if (p.priceCount < 3) return false;
+        const discount = (p.maxPrice - p.currentPrice) / p.maxPrice;
+        return discount >= 0.1;
+      })
       .forEach((p) => {
         counts[p.category] = (counts[p.category] || 0) + 1;
       });
@@ -64,9 +95,15 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
         >
           Best <span className="gradient-text">Deals</span> Right Now
         </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", lineHeight: 1.6 }}>
-          Products currently priced below their tracked high. Sorted by biggest discount.
-          Prices update every 4 hours.
+        <p
+          style={{
+            color: "var(--text-secondary)",
+            fontSize: "0.875rem",
+            lineHeight: 1.6,
+          }}
+        >
+          Real price drops — at least 10% off with 3+ tracked data points.
+          No inflated "discounts" from pricing errors. Updated every 4 hours.
         </p>
       </div>
 
@@ -96,12 +133,24 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
       </div>
 
       {loading ? (
-        <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
+        <div
+          style={{
+            padding: "4rem",
+            textAlign: "center",
+            color: "var(--text-secondary)",
+          }}
+        >
           Loading deals...
         </div>
       ) : deals.length === 0 ? (
-        <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
-          No price drops detected yet. Check back as we collect more data!
+        <div
+          style={{
+            padding: "4rem",
+            textAlign: "center",
+            color: "var(--text-secondary)",
+          }}
+        >
+          No verified price drops right now. Check back as we collect more data!
         </div>
       ) : (
         <div

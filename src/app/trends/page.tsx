@@ -131,7 +131,9 @@ export default function TrendsPage() {
   }[] = [];
 
   if (priceIndex && priceIndex.categories) {
-    for (const [key, data] of Object.entries(priceIndex.categories) as [string, any[]][]) {
+    for (const [key, rawData] of Object.entries(priceIndex.categories) as [string, any][]) {
+      const data = rawData.trend || rawData;
+      if (!Array.isArray(data)) continue;
       if (!data || data.length < 2) continue;
       const label = CATEGORY_LABELS[key] || key;
       const icon = CATEGORY_ICONS[key] || "\uD83D\uDCE6";
