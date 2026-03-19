@@ -36,8 +36,8 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
       if (p.currentPrice < 10) return false;
 
       // Sanity filter 2: skip products where max price is wildly inflated
-      // If max is more than 5x the current price, the max was likely a data error
-      if (p.maxPrice > p.currentPrice * 5) return false;
+      // If max is more than 4x the current price, the max was likely a data error
+      if (p.maxPrice > p.currentPrice * 4) return false;
 
       // Sanity filter 3: need at least 3 price points for a reliable range
       // This prevents brand-new products with 1-2 scrapes from showing fake "deals"
@@ -71,7 +71,7 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
       .filter((p) => {
         if (p.minPrice >= p.maxPrice || p.currentPrice >= p.maxPrice) return false;
         if (p.currentPrice < 10) return false;
-        if (p.maxPrice > p.currentPrice * 5) return false;
+        if (p.maxPrice > p.currentPrice * 4) return false;
         if (p.priceCount < 3) return false;
         const discount = (p.maxPrice - p.currentPrice) / p.maxPrice;
         return discount >= 0.1;
