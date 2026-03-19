@@ -61,7 +61,6 @@ def slugify(name: str) -> str:
 # --- Category classification rules ---
 
 # Words that BLOCK a product from being in a category, even if keywords match.
-# For example, a laptop with "RTX 5060" should NOT be classified as a GPU.
 CATEGORY_BLOCKLIST = {
     "gpus": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -116,10 +115,10 @@ CATEGORY_BLOCKLIST = {
         "graphics card",
     ],
     "keyboards": [
-        "mouse", "mice",  # Canada Computers shares a keyboards-mice page
+        "mouse", "mice",
     ],
     "mice": [
-        "keyboard",  # Opposite direction
+        "keyboard",
     ],
     "coolers": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -163,18 +162,14 @@ CATEGORY_BLOCKLIST = {
     ],
     "gaming-consoles": [
         "laptop", "notebook", "desktop pc",
-        # Accessories
         "controller skin", "console skin",
         "headset", "gaming chair", "racing chair", "office chair",
         "controller holder", "cable guys",
         "performance grips", "kontrolfreek",
         "stick module", "component pack",
-        # VR / streaming kit
         "vive", "vr2", "pc adapter", "streaming kit",
-        # Kitchen / random junk from CC pages
         "cuisinart", "vacuum bag", "vacuum sealer", "vacuum rol",
         "waffle maker",
-        # Mini arcades / retro toys (not real consoles)
         "mini arcade", "micro player", "pocket player",
         "dreamgear", "my arcade", "atari portable",
         "joystick player",
@@ -186,7 +181,6 @@ CATEGORY_BLOCKLIST = {
     "ups-power": [
         "laptop", "notebook",
         "power supply", "psu", "atx",
-        # Gaming/office chairs that CC puts on UPS/surge pages
         "chair", "head cushion",
     ],
     "network-switches": [
@@ -197,7 +191,6 @@ CATEGORY_BLOCKLIST = {
 }
 
 # Strong identifiers that override weaker keyword matches.
-# If a product name contains one of these, it's DEFINITELY this category.
 STRONG_IDENTIFIERS = {
     "laptops": [
         "laptop", "notebook", "chromebook", "ultrabook",
@@ -262,12 +255,10 @@ STRONG_IDENTIFIERS = {
         "computer monitor", "gaming monitor", "office monitor",
         "curved monitor", "ultrawide monitor", "portable monitor",
         "ips monitor", "oled monitor", "4k monitor",
-        # Cryptic monitor names from Newegg (e.g. "22IN LCD 16:9 1920X1080")
         "1920x1080", "1920 x 1080", "2560x1440", "2560 x 1440",
         "3840x2160", "3840 x 2160", "1080p monitor", "4k uhd",
         "lcd ips", "lcd led", "wide lcd",
         "predator x", "predator z",
-        # Acer truncated model names
         "gbmix ", "bmiix ", "bmiipx", "bmiiprx",
         "wmiipx", "gbiipx", "gbiip",
         "adaptivesync", "freesync monitor", "g-sync monitor",
@@ -276,7 +267,6 @@ STRONG_IDENTIFIERS = {
     ],
     "power-supplies": [
         "power supply", "psu",
-        # Wattage patterns that are almost always PSUs
         "500w,", "550w,", "600w,", "650w,", "700w,", "750w,", "800w,",
         "850w,", "1000w,", "1200w,", "1600w,", "1800w,",
         "500w ", "550w ", "600w ", "650w ", "700w ", "750w ", "800w ",
@@ -368,30 +358,29 @@ STRONG_IDENTIFIERS = {
 }
 
 # Categories checked in priority order.
-# More specific categories FIRST so they match before generic ones.
 CATEGORY_PRIORITY = [
-    "laptops",        # Check first: laptops contain CPU/GPU keywords
-    "tablets",        # Before monitors: tablets have "display" keywords
-    "tvs",            # Before monitors: TVs have "display" and "screen" keywords
-    "motherboards",   # Motherboards contain CPU socket keywords
-    "coolers",        # Coolers mention CPU brands
-    "power-supplies", # PSUs have distinctive wattage patterns - check before cases
-    "cases",          # Cases mention ATX/tower keywords
-    "mice",           # Before keyboards (shared CC page)
-    "keyboards",      # Before keyboards
+    "laptops",
+    "tablets",
+    "tvs",
+    "motherboards",
+    "coolers",
+    "power-supplies",
+    "cases",
+    "mice",
+    "keyboards",
     "monitors",
     "headphones",
     "speakers",
     "webcams",
     "routers",
-    "network-switches",  # After routers: switches share networking keywords
+    "network-switches",
     "gaming-consoles",
     "smart-home",
     "printers",
     "ups-power",
     "external-storage",
-    "gpus",           # Late: many products mention GPU keywords
-    "cpus",           # Late: many products mention CPU keywords
+    "gpus",
+    "cpus",
     "ssds",
     "hard-drives",
     "ram",
@@ -430,8 +419,6 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
     ]
     is_accessory = any(w in name_lower for w in accessory_words)
     if is_accessory:
-        # Before sending to "other", check ALL categories' strong identifiers
-        # This rescues products like "WiFi Extender Router" or "USB-C Adapter Hub"
         for cat_key in CATEGORY_PRIORITY:
             strong = STRONG_IDENTIFIERS.get(cat_key, [])
             if any(s in name_lower for s in strong):
@@ -450,12 +437,10 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
         if not keywords:
             continue
 
-        # Check if any keyword matches
         has_keyword = any(kw in name_lower for kw in keywords)
         if not has_keyword:
             continue
 
-        # Check blocklist — if ANY blocklist word is present, skip this category
         blocklist = CATEGORY_BLOCKLIST.get(cat_key, [])
         is_blocked = any(bw in name_lower for bw in blocklist)
         if is_blocked:
@@ -466,19 +451,13 @@ def guess_category(name: str, url: str, keywords_map: dict) -> str:
     return "other"
 
 def make_short_name(name: str) -> str:
-    """Create a clean short product name for card displays.
-    
-    Strategy: Keep brand + model + one key spec (capacity/size).
-    Strip everything that's specs, marketing, or redundancy.
-    """
+    """Create a clean short product name for card displays."""
     short = name.strip()
 
-    # 1. Remove parenthesized part/model numbers anywhere
-    #    e.g., (MZ-V9P1T0B/AM), (BX8071512400), (Black)
+    # 1. Remove parenthesized part/model numbers
     short = re.sub(r'\s*\([A-Z0-9][A-Z0-9\-\/\.]{4,}\)', '', short)
 
-    # 2. Remove everything after these cut-off phrases
-    #    These indicate the start of marketing/spec dumps
+    # 2. Remove everything after cut-off phrases
     cut_phrases = [
         r',?\s*Seq\.?\s*Read\s+Speed',
         r',?\s*Up\s+to\s+[\d,]+\s*MB/s',
@@ -509,19 +488,15 @@ def make_short_name(name: str) -> str:
         short = re.split(pattern, short, flags=re.IGNORECASE)[0]
 
     # 3. Remove redundant repeated brand/model info after a dash
-    #    e.g., "Intel Core i5-12400 - Core i5 12th Gen Alder Lake 6-Core..."
-    #    Keep everything before the " - " if what follows repeats earlier info
     if ' - ' in short:
         parts = short.split(' - ', 1)
         before_words = set(parts[0].lower().split())
         after_words = set(parts[1].lower().split()[:5])
         overlap = before_words & after_words
-        # If 2+ words from before appear in after, it's redundant
         if len(overlap) >= 2:
             short = parts[0]
 
-    # 4. Remove spec dumps: long sequences of specs after the model
-    #    Pattern: number + Buttons, number + x Wheel, number + dpi, etc.
+    # 4. Remove spec dumps
     spec_patterns = [
         r'\s+\d+\s+Buttons\s+.*$',
         r'\s+\d+\s+x\s+Wheel\s+.*$',
@@ -539,7 +514,7 @@ def make_short_name(name: str) -> str:
     
     # 7. Remove trailing lone dash or incomplete words
     short = re.sub(r'\s+-\s*$', '', short).strip()
-    short = re.sub(r'\s+\w$', '', short).strip()  # trailing single char
+    short = re.sub(r'\s+\w$', '', short).strip()
 
     # 8. Cap at 70 chars with clean word break
     if len(short) > 70:
@@ -589,6 +564,7 @@ def export():
             p.specs,
             p.source_category,
             p.match_group,
+            p.canonical_id,
             pp_latest.price as current_price,
             pp_latest.timestamp as last_updated,
             pp_stats.min_price,
@@ -626,11 +602,6 @@ def export():
             seen_slugs[slug] = 1
 
         # --- CATEGORY CLASSIFICATION ---
-        # Source category from scraper is a HINT, not gospel truth.
-        # Retailers put random junk on category pages (gaming chairs on UPS pages, etc.)
-        # So we validate: the product name must match at least one keyword or 
-        # strong identifier for the category. If it doesn't, fall through to guess_category.
-        
         source_cat = row["source_category"] or ""
         
         # Build label-to-key lookup if not already done
@@ -655,24 +626,19 @@ def export():
         
         name_lower = row["name"].lower()
         
-        # Validate: does the product name actually belong in the source category?
         def name_matches_category(cat_key, name_lower):
             """Check if a product name has any keyword or strong identifier for a category."""
-            # Check strong identifiers first
             strong = STRONG_IDENTIFIERS.get(cat_key, [])
             if any(s in name_lower for s in strong):
                 return True
-            # Check regular keywords
             keywords = keywords_map.get(cat_key, [])
             if any(kw in name_lower for kw in keywords):
                 return True
             return False
         
         if resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
-            # Source category is valid AND the name confirms it — use it
             category = resolved_cat
         else:
-            # Source category missing, "other", or name doesn't match — classify from scratch
             category = guess_category(row["name"], row["url"], keywords_map)
             if resolved_cat and resolved_cat != "other" and category != resolved_cat:
                 reclassified += 1
@@ -696,43 +662,60 @@ def export():
             "firstSeen": row["first_seen"],
             "lastUpdated": row["last_updated"],
             "matchGroup": row["match_group"],
+            "canonicalId": row["canonical_id"],
         }
         products.append(product)
 
     # --- Merge matched products (cross-retailer price comparison) ---
-    # For products in the same match_group, add a "priceComparison" array
-    # showing all retailers' prices for the same product.
+    # Uses canonical_id (Product Identity Layer) as the primary matching key.
+    # Falls back to match_group for products not yet in the canonical system.
+    canonical_groups = {}
     match_groups = {}
+
     for p in products:
+        cid = p.get("canonicalId")
         mg = p.get("matchGroup")
-        if mg:
+        entry = {
+            "id": p["id"],
+            "retailer": p["retailer"],
+            "price": p["currentPrice"],
+            "url": p["url"],
+            "slug": p["slug"],
+        }
+        # Prefer canonical_id over match_group
+        if cid:
+            if cid not in canonical_groups:
+                canonical_groups[cid] = []
+            canonical_groups[cid].append(entry)
+        elif mg:
             if mg not in match_groups:
                 match_groups[mg] = []
-            match_groups[mg].append({
-                "id": p["id"],
-                "retailer": p["retailer"],
-                "price": p["currentPrice"],
-                "url": p["url"],
-                "slug": p["slug"],
-            })
+            match_groups[mg].append(entry)
 
     matched_count = 0
     for p in products:
+        cid = p.get("canonicalId")
         mg = p.get("matchGroup")
-        if mg and mg in match_groups and len(match_groups[mg]) > 1:
-            # Add comparison data from OTHER retailers only
-            p["priceComparison"] = [
-                r for r in match_groups[mg] if r["id"] != p["id"]
-            ]
-            matched_count += 1
-        else:
-            p["priceComparison"] = []
 
-    cross_retailer = sum(
-        1 for mg, items in match_groups.items()
+        comparisons = []
+        if cid and cid in canonical_groups and len(canonical_groups[cid]) > 1:
+            comparisons = [r for r in canonical_groups[cid] if r["id"] != p["id"]]
+        elif mg and mg in match_groups and len(match_groups[mg]) > 1:
+            comparisons = [r for r in match_groups[mg] if r["id"] != p["id"]]
+
+        p["priceComparison"] = comparisons
+        if comparisons:
+            matched_count += 1
+
+    canonical_cross = sum(
+        1 for items in canonical_groups.values()
         if len(set(i["retailer"] for i in items)) > 1
     )
-    print(f"Price comparison: {cross_retailer} match groups across retailers, {matched_count} products with comparisons")
+    legacy_cross = sum(
+        1 for items in match_groups.values()
+        if len(set(i["retailer"] for i in items)) > 1
+    )
+    print(f"Price comparison: {canonical_cross} canonical + {legacy_cross} legacy cross-retailer groups, {matched_count} products with comparisons")
 
     # Write products.json
     with open(os.path.join(OUTPUT_DIR, "products.json"), "w") as f:

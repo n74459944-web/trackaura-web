@@ -70,7 +70,7 @@ export default function RootLayout({
         <meta name="impact-site-verification" content="c001a43a-bc75-4c79-91a3-7d18227c42e5" />
         <script
           async
-          src="https://www.googletagmanager.com/gtag/js?id=G-5ZYSMH5GPN"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TDTJZ8L61H"
         />
         <script
           dangerouslySetInnerHTML={{
@@ -78,7 +78,7 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-5ZYSMH5GPN');
+              gtag('config', 'G-TDTJZ8L61H');
             `,
           }}
         />
