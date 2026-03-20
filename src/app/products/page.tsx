@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import ProductsClient from "./ProductsClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 14400; // 4 hours, matches scrape cycle
 
 export const metadata: Metadata = {
   title: "All Products",

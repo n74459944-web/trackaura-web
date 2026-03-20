@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 14400; // 4 hours, matches scrape cycle
 
 export const metadata: Metadata = {
   title: "Best Electronics Deals in Canada",
