@@ -10,7 +10,7 @@
     "diff": -54.88,
     "pct": -61.0,
     "direction": "down",
-    "changedAt": "2026-03-19T14:01:43"
+    "changedAt": "2026-03-19T20:05:34"
   },
   {
     "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
@@ -23,7 +23,7 @@
     "diff": -169.99,
     "pct": -91.9,
     "direction": "down",
-    "changedAt": "2026-03-19T14:01:43"
+    "changedAt": "2026-03-19T20:05:34"
   },
   {
     "name": "ARMOURY A08 Micro ATX Case, Wood Front Panel, Black",
@@ -36,7 +36,46 @@
     "diff": -54.88,
     "pct": -61.0,
     "direction": "down",
-    "changedAt": "2026-03-19T14:01:43"
+    "changedAt": "2026-03-19T20:05:34"
+  },
+  {
+    "name": "Skyworth E5500A - 40\"",
+    "slug": "skyworth-e5500a-40",
+    "url": "https://www.canadacomputers.com/en/30-45/265371/skyworth-e5500a-40-40e5500a.html",
+    "retailer": "Canada Computers",
+    "category": "other",
+    "oldPrice": 299.99,
+    "newPrice": 199.88,
+    "diff": -100.11,
+    "pct": -33.4,
+    "direction": "down",
+    "changedAt": "2026-03-19T20:02:10"
+  },
+  {
+    "name": "WESTERN DIGITAL",
+    "slug": "western-digital",
+    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
+    "retailer": "Canada Computers",
+    "category": "other",
+    "oldPrice": 549.99,
+    "newPrice": 299.99,
+    "diff": -250.0,
+    "pct": -45.5,
+    "direction": "down",
+    "changedAt": "2026-03-19T20:00:51"
+  },
+  {
+    "name": "Lenovo       {Product Condition Short}",
+    "slug": "lenovo-product-condition-short",
+    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 5759.0,
+    "newPrice": 829.0,
+    "diff": -4930.0,
+    "pct": -85.6,
+    "direction": "down",
+    "changedAt": "2026-03-19T19:51:12"
   },
   {
     "name": "Samsung Galaxy Tab A11+ 11\" 8 Core FHD+ 6GB 12 GB Wi-Fi 5 Android,Gray",
@@ -273,19 +312,6 @@
     "changedAt": "2026-03-19T13:48:32"
   },
   {
-    "name": "Lenovo       {Product Condition Short}",
-    "slug": "lenovo-product-condition-short",
-    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
-    "retailer": "Canada Computers",
-    "category": "laptops",
-    "oldPrice": 5759.0,
-    "newPrice": 829.0,
-    "diff": -4930.0,
-    "pct": -85.6,
-    "direction": "down",
-    "changedAt": "2026-03-19T13:47:58"
-  },
-  {
     "name": "AOC 16\" FHD 1920 x 1080 TFT IPS 60Hz USB-C 60Hz Portable Monitor",
     "slug": "aoc-16-fhd-1920-x-1080-tft-ips-60hz-usb-c-60hz-portable-monitor",
     "url": "https://www.canadacomputers.com/en/portable-monitors/283038/aoc-16-fhd-1920-x-1080-tft-ips-60hz-usb-c-60hz-portable-monitor-16t20.html",
@@ -323,19 +349,6 @@
     "pct": 0.3,
     "direction": "up",
     "changedAt": "2026-03-19T08:04:45"
-  },
-  {
-    "name": "WESTERN DIGITAL",
-    "slug": "western-digital",
-    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
-    "retailer": "Canada Computers",
-    "category": "other",
-    "oldPrice": 549.99,
-    "newPrice": 299.99,
-    "diff": -250.0,
-    "pct": -45.5,
-    "direction": "down",
-    "changedAt": "2026-03-19T08:03:05"
   },
   {
     "name": "ASUS PRIME H810M-A-CSM INTEL ULTRA SERIE",
@@ -1283,19 +1296,6 @@
     "newPrice": 19.99,
     "diff": -10.0,
     "pct": -33.3,
-    "direction": "down",
-    "changedAt": "2026-03-19T01:28:39"
-  },
-  {
-    "name": "JBL Tune 770NC ANC Over-Ear Bluetooth Headphones, Blue",
-    "slug": "jbl-tune-770nc-anc-over-ear-bluetooth-headphones-blue",
-    "url": "https://www.canadacomputers.com/en/over-ear-headphones/267552/jbl-tune-770nc-anc-over-ear-bluetooth-headphones-blue-jblt770ncbluam.html",
-    "retailer": "Canada Computers",
-    "category": "headphones",
-    "oldPrice": 189.99,
-    "newPrice": 99.99,
-    "diff": -90.0,
-    "pct": -47.4,
     "direction": "down",
     "changedAt": "2026-03-19T01:28:39"
   }
