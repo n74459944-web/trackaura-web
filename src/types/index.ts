@@ -17,6 +17,7 @@ export interface Product {
   description?: string;
   specs?: Record<string, string>;
   matchGroup?: number | null;
+  canonicalId?: number | null;
   priceComparison?: {
     id: number;
     retailer: string;

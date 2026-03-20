@@ -7,6 +7,7 @@ import SearchBar from "@/components/SearchBar";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/deals", label: "Deals" },
+  { href: "/compare", label: "Compare" },
   { href: "/trends", label: "Price Index" },
   { href: "/products", label: "Products" },
   { href: "/brands", label: "Brands" },
