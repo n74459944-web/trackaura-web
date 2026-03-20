@@ -77,6 +77,13 @@ export default function ComparePage() {
     // Skip "other" category
     if (representative.category === "other") continue;
 
+    // SANITY: skip if the cheaper price is less than 40% of the expensive one
+    // This catches false matches (open box vs new, different revisions, etc.)
+    if (minPrice < maxPrice * 0.4) continue;
+
+    // SANITY: skip if either price is under $10 (data errors)
+    if (minPrice < 10) continue;
+
     comparisons.push({
       canonicalId: Number(cidStr),
       name: representative.name,
@@ -116,6 +123,56 @@ export default function ComparePage() {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <style>{`
+        .compare-card {
+          display: grid;
+          grid-template-columns: 48px 1fr;
+          gap: 0.75rem;
+          padding: 1rem;
+          align-items: start;
+        }
+        .compare-card-noimg {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+          padding: 1rem;
+        }
+        .compare-prices {
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+          margin-top: 0.5rem;
+          flex-wrap: wrap;
+        }
+        .compare-price-box {
+          text-decoration: none;
+          text-align: center;
+          padding: 0.375rem 0.625rem;
+          border-radius: 6px;
+          min-width: 80px;
+          flex-shrink: 0;
+        }
+        .compare-savings {
+          text-align: center;
+          flex-shrink: 0;
+          min-width: 45px;
+        }
+        @media (min-width: 640px) {
+          .compare-card {
+            grid-template-columns: 48px 1fr auto;
+            align-items: center;
+          }
+          .compare-card-noimg {
+            grid-template-columns: 1fr auto;
+            align-items: center;
+          }
+          .compare-prices {
+            margin-top: 0;
+            flex-wrap: nowrap;
+          }
+        }
+      `}</style>
+
       <nav
         style={{
           display: "flex",
@@ -133,34 +190,37 @@ export default function ComparePage() {
         style={{
           fontFamily: "'Sora', sans-serif",
           fontWeight: 800,
-          fontSize: "1.75rem",
+          fontSize: "clamp(1.25rem, 4vw, 1.75rem)",
           marginBottom: "0.5rem",
         }}
       >
         {"🔀 Compare Prices: "}
-        <span className="gradient-text">Canada Computers vs Newegg</span>
+        <span className="gradient-text">CC vs Newegg</span>
       </h1>
       <p
         style={{
           color: "var(--text-secondary)",
-          fontSize: "0.9375rem",
+          fontSize: "0.875rem",
           lineHeight: 1.7,
           marginBottom: "2rem",
         }}
       >
-        {totalComparisons.toLocaleString() + " products sold at both retailers with different prices. " +
-          "Average savings: " + avgSavings.toFixed(2) + " CAD by picking the cheaper store."}
+        {totalComparisons.toLocaleString() +
+          " products sold at both retailers with different prices. " +
+          "Save an average of $" +
+          avgSavings.toFixed(0) +
+          " by picking the cheaper store."}
       </p>
 
       {/* Stats cards */}
       <div
         className="card"
         style={{
-          padding: "1.25rem 1.5rem",
+          padding: "1rem 1.25rem",
           marginBottom: "2rem",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: "1rem",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "0.75rem",
         }}
       >
         <div style={{ textAlign: "center" }}>
@@ -168,13 +228,13 @@ export default function ComparePage() {
             style={{
               fontFamily: "'Sora', sans-serif",
               fontWeight: 700,
-              fontSize: "1.25rem",
+              fontSize: "1.125rem",
               color: "var(--accent)",
             }}
           >
             {totalComparisons}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
             Products Compared
           </p>
         </div>
@@ -183,13 +243,13 @@ export default function ComparePage() {
             style={{
               fontFamily: "'Sora', sans-serif",
               fontWeight: 700,
-              fontSize: "1.25rem",
+              fontSize: "1.125rem",
               color: "var(--text-primary)",
             }}
           >
             {"$" + avgSavings.toFixed(0)}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
             Avg Savings
           </p>
         </div>
@@ -198,13 +258,13 @@ export default function ComparePage() {
             style={{
               fontFamily: "'Sora', sans-serif",
               fontWeight: 700,
-              fontSize: "1.25rem",
+              fontSize: "1.125rem",
               color: "var(--text-primary)",
             }}
           >
             {"$" + maxSavings.toFixed(0)}
           </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
             Biggest Savings
           </p>
         </div>
@@ -213,14 +273,14 @@ export default function ComparePage() {
             style={{
               fontFamily: "'Sora', sans-serif",
               fontWeight: 700,
-              fontSize: "1.25rem",
+              fontSize: "1.125rem",
             }}
           >
             <span style={{ color: RETAILER_COLORS["Canada Computers"] }}>{ccWins}</span>
             {" vs "}
             <span style={{ color: RETAILER_COLORS["Newegg Canada"] }}>{neWins}</span>
           </p>
-          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+          <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)" }}>
             CC vs Newegg Wins
           </p>
         </div>
@@ -240,7 +300,7 @@ export default function ComparePage() {
             key={key}
             href={"#cat-" + key}
             className="filter-pill"
-            style={{ textDecoration: "none" }}
+            style={{ textDecoration: "none", fontSize: "0.75rem" }}
           >
             {(CATEGORY_ICONS[key] || "📦") +
               " " +
@@ -264,8 +324,8 @@ export default function ComparePage() {
               style={{
                 fontFamily: "'Sora', sans-serif",
                 fontWeight: 700,
-                fontSize: "1.125rem",
-                marginBottom: "1rem",
+                fontSize: "1rem",
+                marginBottom: "0.75rem",
                 display: "flex",
                 alignItems: "center",
                 gap: "0.5rem",
@@ -284,20 +344,11 @@ export default function ComparePage() {
               </span>
             </h2>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               {catComparisons.map((comp) => (
                 <div
                   key={comp.canonicalId}
-                  className="card"
-                  style={{
-                    padding: "1rem 1.25rem",
-                    display: "grid",
-                    gridTemplateColumns: comp.imageUrl
-                      ? "48px 1fr auto"
-                      : "1fr auto",
-                    gap: "1rem",
-                    alignItems: "center",
-                  }}
+                  className={"card " + (comp.imageUrl ? "compare-card" : "compare-card-noimg")}
                 >
                   {comp.imageUrl && (
                     <img
@@ -311,106 +362,101 @@ export default function ComparePage() {
                       }}
                     />
                   )}
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <Link
                       href={"/product/" + comp.listings[0].slug}
                       style={{
                         color: "var(--text-primary)",
                         textDecoration: "none",
                         fontWeight: 600,
-                        fontSize: "0.875rem",
+                        fontSize: "0.8125rem",
                         lineHeight: 1.4,
+                        display: "block",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {comp.shortName}
                     </Link>
                     <p
                       style={{
-                        fontSize: "0.75rem",
+                        fontSize: "0.6875rem",
                         color: "var(--text-secondary)",
-                        marginTop: "0.25rem",
+                        marginTop: "0.125rem",
                       }}
                     >
                       {comp.brand}
                       {comp.brand ? " · " : ""}
                       {CATEGORY_LABELS[comp.category] || comp.category}
                     </p>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "1rem",
-                      alignItems: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {comp.listings.map((listing, i) => (
-                      <a
-                        key={listing.retailer}
-                        href={listing.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          textDecoration: "none",
-                          textAlign: "center",
-                          padding: "0.375rem 0.75rem",
-                          borderRadius: 6,
-                          background:
-                            i === 0
-                              ? "var(--accent-glow)"
-                              : "rgba(255,255,255,0.03)",
-                          border:
-                            i === 0
-                              ? "1px solid var(--accent)"
-                              : "1px solid var(--border)",
-                          minWidth: 90,
-                        }}
-                      >
-                        <p
+                    {/* On mobile, prices show below the name */}
+                    <div className="compare-prices" style={{ display: "flex" }}>
+                      {comp.listings.map((listing, i) => (
+                        <a
+                          key={listing.retailer}
+                          href={listing.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="compare-price-box"
                           style={{
-                            fontFamily: "'Sora', sans-serif",
-                            fontWeight: 700,
-                            fontSize: "0.9375rem",
-                            color:
-                              i === 0 ? "var(--accent)" : "var(--text-primary)",
-                          }}
-                        >
-                          {"$" + listing.price.toFixed(2)}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: "0.625rem",
-                            color:
+                            textDecoration: "none",
+                            background:
                               i === 0
-                                ? "var(--accent)"
-                                : "var(--text-secondary)",
-                            fontWeight: 500,
+                                ? "var(--accent-glow)"
+                                : "rgba(255,255,255,0.03)",
+                            border:
+                              i === 0
+                                ? "1px solid var(--accent)"
+                                : "1px solid var(--border)",
                           }}
                         >
-                          {listing.retailer === "Canada Computers"
-                            ? "CC"
-                            : "Newegg"}
+                          <p
+                            style={{
+                              fontFamily: "'Sora', sans-serif",
+                              fontWeight: 700,
+                              fontSize: "0.875rem",
+                              color:
+                                i === 0 ? "var(--accent)" : "var(--text-primary)",
+                            }}
+                          >
+                            {"$" + listing.price.toFixed(2)}
+                          </p>
+                          <p
+                            style={{
+                              fontSize: "0.5625rem",
+                              color:
+                                i === 0
+                                  ? "var(--accent)"
+                                  : "var(--text-secondary)",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {listing.retailer === "Canada Computers"
+                              ? "Canada Computers"
+                              : "Newegg"}
+                          </p>
+                        </a>
+                      ))}
+                      <div className="compare-savings">
+                        <p
+                          style={{
+                            fontWeight: 700,
+                            fontSize: "0.75rem",
+                            color: "var(--accent)",
+                          }}
+                        >
+                          {"-$" + comp.savings.toFixed(0)}
                         </p>
-                      </a>
-                    ))}
-                    <div style={{ textAlign: "center", minWidth: 50 }}>
-                      <p
-                        style={{
-                          fontWeight: 700,
-                          fontSize: "0.8125rem",
-                          color: "var(--accent)",
-                        }}
-                      >
-                        {"-$" + comp.savings.toFixed(0)}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.625rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        {"save " + comp.savingsPct.toFixed(0) + "%"}
-                      </p>
+                        <p
+                          style={{
+                            fontSize: "0.5625rem",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {"save " + comp.savingsPct.toFixed(0) + "%"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -447,21 +493,20 @@ export default function ComparePage() {
           }}
         >
           <p style={{ marginBottom: "0.75rem" }}>
-            {"TrackAura uses a Product Identity Layer to match the exact same product across different retailers. " +
-              "When Canada Computers calls a GPU \"ASUS ROG Strix RTX 4070 Ti SUPER OC 16GB\" and Newegg lists it as " +
-              "\"ASUS ROG-STRIX-RTX4070TIS-O16G-GAMING\", we know it's the same card and can compare prices directly."}
+            {"TrackAura matches the exact same product across different retailers using manufacturer model numbers. " +
+              "When Canada Computers and Newegg list the same GPU under different names, we identify it as one product and compare prices directly."}
           </p>
           <p style={{ marginBottom: "0.75rem" }}>
             {"We currently match " +
               totalComparisons.toLocaleString() +
               " products across Canada Computers and Newegg Canada. " +
-              "On average, you can save $" +
+              "On average, you save $" +
               avgSavings.toFixed(0) +
-              " by checking both stores before buying. " +
-              "Neither retailer is always cheaper \u2014 it depends on the product."}
+              " by checking both stores. " +
+              "Neither retailer is always cheaper \u2014 it depends on the product and category."}
           </p>
           <p>
-            {"Prices update every 4 hours. Set a price alert on any product and we'll email you when the price drops at either retailer."}
+            {"Prices update every 4 hours. Set a price alert on any product and we\u2019ll email you when the price drops at either retailer."}
           </p>
         </div>
       </div>
