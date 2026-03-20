@@ -1,14 +1,16 @@
 import { SiteStats } from "@/types";
 
 export default function StatsBar({ stats }: { stats: SiteStats }) {
-  // Calculate how often prices update (every 4 hours = 6x/day)
-  const updatesPerDay = "6x / Day";
+  // Count visible categories: exclude "other" and categories with fewer than 5 products
+  const visibleCategories = Object.entries(stats.productsByCategory || {})
+    .filter(([key, count]) => key !== "other" && count >= 5)
+    .length;
 
   const items = [
     { label: "Products Tracked", value: stats.totalProducts.toLocaleString() },
     { label: "Price Points", value: stats.totalPricePoints.toLocaleString() },
-    { label: "Categories", value: stats.categories.length.toString() },
-    { label: "Price Updates", value: updatesPerDay },
+    { label: "Categories", value: visibleCategories.toString() },
+    { label: "Price Updates", value: "Every 4 Hrs" },
   ];
 
   return (

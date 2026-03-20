@@ -29,7 +29,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl, lastModified: today, changeFrequency: "daily", priority: 1.0 },
     { url: baseUrl + "/products", lastModified: today, changeFrequency: "daily", priority: 0.9 },
     { url: baseUrl + "/deals", lastModified: today, changeFrequency: "daily", priority: 0.9 },
+    { url: baseUrl + "/compare", lastModified: today, changeFrequency: "daily", priority: 0.9 },
     { url: baseUrl + "/changes", lastModified: today, changeFrequency: "daily", priority: 0.85 },
+    { url: baseUrl + "/categories", lastModified: today, changeFrequency: "weekly", priority: 0.8 },
     { url: baseUrl + "/about", lastModified: today, changeFrequency: "monthly", priority: 0.6 },
     { url: baseUrl + "/how-it-works", lastModified: today, changeFrequency: "monthly", priority: 0.6 },
     { url: baseUrl + "/privacy", lastModified: today, changeFrequency: "monthly", priority: 0.3 },
@@ -79,14 +81,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  // Blog posts
-  const blogPages: MetadataRoute.Sitemap = [
+  // Blog posts — all slugs from blog-posts.json
+  const blogSlugs = [
     "when-to-buy-gpu-canada",
     "canada-computers-vs-newegg-prices",
     "how-to-save-money-pc-build-canada",
     "rtx-5070-canada-price-tracking",
     "is-now-good-time-buy-electronics-canada",
-  ].map((slug) => ({
+    "best-budget-gaming-monitor-canada-2026",
+    "ddr5-vs-ddr4-ram-prices-canada",
+    "how-to-use-price-alerts-trackaura",
+    "gaming-pc-build-cost-canada-2026",
+    "best-ssd-deals-canada-2026",
+    "are-electronics-prices-going-up-canada-2026",
+    "cross-retailer-price-matching-canada",
+  ];
+  const blogPages: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
     url: baseUrl + "/blog/" + slug,
     lastModified: today,
     changeFrequency: "monthly" as const,

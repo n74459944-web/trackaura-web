@@ -239,13 +239,17 @@ STRONG_IDENTIFIERS = {
         "mini itx case", "micro atx case", "full tower",
         "tempered glass case", "chassis",
         "mid-tower", "atx mid-tower", "matx case", "m-atx case",
+        "meshify", "define 7", "6500d", "6500x", "cg530", "cg330",
+        "cc560", "y70", "2000d rgb", "7000x rgb",
+        "mid tower", "full tower", "mini-itx",
+        "panoramic case",
     ],
     "mice": [
         "gaming mouse", "wireless mouse", "mouse pad", "mousepad",
         "desk mat", "mouse mat",
         "gaming mice", "productivity mice", "ergonomic mice",
         "wired mouse", "optical mouse", "ambidextrous mice",
-        "right-handed mice", "vertical mouse",
+        "right-handed mice", "vertical mouse", "deskpad", "desk pad", "desk mat",
     ],
     "keyboards": [
         "keycap", "key cap", "keycaps",
@@ -284,7 +288,7 @@ STRONG_IDENTIFIERS = {
         "wireless repeater", "wireless extender",
         "ap router", "ceiling ap", "access point",
         "lte router", "lte cpe", "4g router", "5g router",
-        "range extender",
+        "range extender", "amplifi", "dream machine", "cloud gateway", "ucg-ultra",
     ],
     "ssds": [
         "ssd", "solid state drive", "nvme drive",
@@ -338,7 +342,7 @@ STRONG_IDENTIFIERS = {
         "managed switch", "unmanaged switch", "poe switch",
         "8-port switch", "16-port switch", "24-port switch", "48-port switch",
         "8-port gigabit", "16-port gigabit", "24-port gigabit",
-        "plug and play switch",
+        "plug and play switch", "trendnet", "poe+ switch", "gigabit poe",
     ],
     "external-storage": [
         "external hard drive", "external ssd", "portable ssd",
@@ -357,6 +361,14 @@ STRONG_IDENTIFIERS = {
     "headphones": [
         "in-ear monitor", "iems", "earbuds", "earbud",
         "jabra elite", "galaxy buds", "airpods",
+    ],
+    "case-fans": [
+    "120mm pwm", "140mm pwm", "120mm fan", "140mm fan",
+    "argb light wings", "aspect 12", "aspect 14",
+    "thicc fp12", "thicc q60",
+    "f120p", "f120q", "f140p",
+    "aer rgb", "sl infinity",
+    "pwm fan", "case fan",
     ],
 }
 
@@ -551,6 +563,10 @@ def export():
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    # Load canonical categories for fast lookup
+    canonical_categories = {}
+    for row in conn.execute("SELECT id, category FROM canonical_products WHERE category != '' AND category != 'other'"):
+        canonical_categories[row[0]] = row[1]
 
     # --- Export products with latest prices ---
     products = []
@@ -645,6 +661,15 @@ def export():
             category = guess_category(row["name"], row["url"], keywords_map)
             if resolved_cat and resolved_cat != "other" and category != resolved_cat:
                 reclassified += 1
+
+        # CANONICAL OVERRIDE: if this product has a canonical category, use it.
+        # The canonical category was assigned by AI (Haiku) and is more reliable
+        # than keyword matching. This scales to 100K+ products without manual keywords.
+        canonical_cat = row["canonical_id"] and conn.execute(
+            "SELECT category FROM canonical_products WHERE id = ?", (row["canonical_id"],)
+        ).fetchone()
+        if canonical_cat and canonical_cat[0] and canonical_cat[0] != "other":
+            category = canonical_cat[0]
 
         product = {
             "id": row["id"],
