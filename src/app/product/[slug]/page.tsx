@@ -20,18 +20,6 @@ export const revalidate = 14400; // 4 hours, matches scrape cycle
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-// ---- Improved product matching ----
-
-// Common filler words to ignore when matching
-const STOP_WORDS = new Set([
-  "the", "and", "for", "with", "from", "that", "this", "your",
-  "desktop", "laptop", "gaming", "computer", "processor", "graphics",
-  "card", "memory", "module", "internal", "external", "solid", "state",
-  "drive", "compatible", "support", "series", "edition", "version",
-  "black", "white", "red", "blue", "green", "grey", "gray", "silver",
-  "gold", "pink", "brown", "orange", "purple",
-]);
-
 // Known brand names to prioritize in matching
 const BRANDS = [
   "samsung", "intel", "amd", "nvidia", "asus", "msi", "gigabyte",
@@ -71,101 +59,11 @@ const RELATED_CATEGORIES: Record<string, string[]> = {
 
 function extractBrand(name: string): string | null {
   const lower = name.toLowerCase();
-  // Check multi-word brands first (longer match takes priority)
   const sorted = [...BRANDS].sort((a, b) => b.length - a.length);
   for (const brand of sorted) {
     if (lower.includes(brand)) return brand;
   }
   return null;
-}
-
-function extractKeyTokens(name: string): string[] {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s.-]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
-}
-
-// Extract model-like tokens: alphanumeric patterns (e.g., "9100", "RX9070", "DDR5", "i5-12400")
-function extractModelTokens(name: string): string[] {
-  const matches = name.match(/[a-zA-Z]*\d+[a-zA-Z0-9\-.]*/g) || [];
-  return matches
-    .map((m) => m.toLowerCase())
-    .filter((m) => m.length >= 2);
-}
-
-function computeMatchScore(source: Product, candidate: Product): number {
-  // Must be same category
-  if (candidate.category !== source.category) return 0;
-  // Block laptop vs non-laptop matches (they share GPU/CPU keywords but aren't comparable)
-  const sourceIsLaptop = source.name.toLowerCase().includes("laptop") || source.name.toLowerCase().includes("notebook");
-  const candidateIsLaptop = candidate.name.toLowerCase().includes("laptop") || candidate.name.toLowerCase().includes("notebook");
-  if (sourceIsLaptop !== candidateIsLaptop) return 0;
-
-  // Must be different retailer
-  if (candidate.retailer === source.retailer) return 0;
-
-  // Must not be the same product
-  if (candidate.id === source.id) return 0;
-
-  const sourceBrand = extractBrand(source.name);
-  const candidateBrand = extractBrand(candidate.name);
-
-  // Brand must match if both have one
-  if (sourceBrand && candidateBrand && sourceBrand !== candidateBrand) return 0;
-
-  // Brand match bonus
-  let score = 0;
-  if (sourceBrand && candidateBrand && sourceBrand === candidateBrand) {
-    score += 15;
-  }
-
-  // Model number matching (most important signal)
-  const sourceModels = extractModelTokens(source.name);
-  const candidateModels = extractModelTokens(candidate.name);
-  let modelMatches = 0;
-  for (const m of sourceModels) {
-    if (candidateModels.some((cm) => cm === m || cm.includes(m) || m.includes(cm))) {
-      modelMatches++;
-    }
-  }
-  score += modelMatches * 10;
-
-  // General keyword overlap
-  const sourceTokens = extractKeyTokens(source.name);
-  const candidateTokens = new Set(extractKeyTokens(candidate.name));
-  let wordMatches = 0;
-  for (const token of sourceTokens) {
-    if (candidateTokens.has(token)) wordMatches++;
-  }
-
-  // Percentage of source keywords matched
-  const overlapRatio = sourceTokens.length > 0 ? wordMatches / sourceTokens.length : 0;
-  score += overlapRatio * 20;
-
-  // Penalize large price differences (likely different products)
-  const priceDiff = Math.abs(source.currentPrice - candidate.currentPrice);
-  const avgPrice = (source.currentPrice + candidate.currentPrice) / 2;
-  if (avgPrice > 0) {
-    const priceRatio = priceDiff / avgPrice;
-    if (priceRatio > 0.5) score -= 10; // >50% price difference is suspicious
-    if (priceRatio > 1.0) score -= 20; // >100% price difference is very suspicious
-  }
-
-  return score;
-}
-
-function findSimilarProducts(product: Product, allProducts: Product[]): Product[] {
-  const MINIMUM_SCORE = 25; // Must have brand + at least one model match
-
-  const scored = allProducts
-    .map((p) => ({ product: p, score: computeMatchScore(product, p) }))
-    .filter((s) => s.score >= MINIMUM_SCORE)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-
-  return scored.map((s) => s.product);
 }
 
 // ---- Page ----
@@ -205,8 +103,87 @@ export default async function ProductPage({ params }: PageProps) {
     ? Math.round(((product.maxPrice - product.currentPrice) / product.maxPrice) * 100)
     : 0;
 
+  // Cross-retailer comparison: use canonical data (already in product.priceComparison)
+  // Only load all products if we need fuzzy matching OR related products
+  const hasCanonicalMatch = product.priceComparison && product.priceComparison.length > 0;
+
   const allProducts = getAllProducts();
-  const similar = findSimilarProducts(product, allProducts);
+
+  // If canonical match exists, pass empty similar array (PriceCompare will use priceComparison)
+  // If no canonical match, find similar products from other retailers as fallback
+  const similar = hasCanonicalMatch ? [] : (() => {
+    const STOP_WORDS = new Set([
+      "the", "and", "for", "with", "from", "that", "this", "your",
+      "desktop", "laptop", "gaming", "computer", "processor", "graphics",
+      "card", "memory", "module", "internal", "external", "solid", "state",
+      "drive", "compatible", "support", "series", "edition", "version",
+      "black", "white", "red", "blue", "green", "grey", "gray", "silver",
+      "gold", "pink", "brown", "orange", "purple",
+    ]);
+
+    function extractKeyTokens(name: string): string[] {
+      return name.toLowerCase().replace(/[^a-z0-9\s.-]/g, " ").split(/\s+/)
+        .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+    }
+
+    function extractModelTokens(name: string): string[] {
+      const matches = name.match(/[a-zA-Z]*\d+[a-zA-Z0-9\-.]*/g) || [];
+      return matches.map((m) => m.toLowerCase()).filter((m) => m.length >= 2);
+    }
+
+    function computeMatchScore(source: Product, candidate: Product): number {
+      if (candidate.category !== source.category) return 0;
+      const sourceIsLaptop = source.name.toLowerCase().includes("laptop") || source.name.toLowerCase().includes("notebook");
+      const candidateIsLaptop = candidate.name.toLowerCase().includes("laptop") || candidate.name.toLowerCase().includes("notebook");
+      if (sourceIsLaptop !== candidateIsLaptop) return 0;
+      if (candidate.retailer === source.retailer) return 0;
+      if (candidate.id === source.id) return 0;
+
+      const sourceBrand = extractBrand(source.name);
+      const candidateBrand = extractBrand(candidate.name);
+      if (sourceBrand && candidateBrand && sourceBrand !== candidateBrand) return 0;
+
+      let score = 0;
+      if (sourceBrand && candidateBrand && sourceBrand === candidateBrand) score += 15;
+
+      const sourceModels = extractModelTokens(source.name);
+      const candidateModels = extractModelTokens(candidate.name);
+      let modelMatches = 0;
+      for (const m of sourceModels) {
+        if (candidateModels.some((cm) => cm === m || cm.includes(m) || m.includes(cm))) modelMatches++;
+      }
+      score += modelMatches * 10;
+
+      const sourceTokens = extractKeyTokens(source.name);
+      const candidateTokens = new Set(extractKeyTokens(candidate.name));
+      let wordMatches = 0;
+      for (const token of sourceTokens) {
+        if (candidateTokens.has(token)) wordMatches++;
+      }
+      const overlapRatio = sourceTokens.length > 0 ? wordMatches / sourceTokens.length : 0;
+      score += overlapRatio * 20;
+
+      const priceDiff = Math.abs(source.currentPrice - candidate.currentPrice);
+      const avgPrice = (source.currentPrice + candidate.currentPrice) / 2;
+      if (avgPrice > 0) {
+        const priceRatio = priceDiff / avgPrice;
+        if (priceRatio > 0.5) score -= 10;
+        if (priceRatio > 1.0) score -= 20;
+      }
+
+      return score;
+    }
+
+    // Only search within same category for efficiency
+    const sameCat = allProducts.filter((p) => p.category === product.category && p.retailer !== product.retailer);
+    return sameCat
+      .map((p) => ({ product: p, score: computeMatchScore(product, p) }))
+      .filter((s) => s.score >= 25)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((s) => s.product);
+  })();
+
   // Related products: same category, prefer same brand and similar price
   const related = (() => {
     const sameCat = allProducts.filter(
@@ -247,7 +224,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   const retailerUrl = getRetailerAffiliateUrl(product);
 
- // Extract brand for structured data
+  // Extract brand for structured data
   const productBrand = extractBrand(product.name);
 
   const structuredData = [
