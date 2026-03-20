@@ -82,6 +82,49 @@ export default function Footer() {
         </div>
       </div>
 
+      {/* PriceTrail cross-link */}
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "2rem auto 0",
+          padding: "1rem 1.25rem",
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "var(--card-bg, rgba(255,255,255,0.03))",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+        }}
+      >
+        <div>
+          <p style={{ fontSize: "0.875rem", fontWeight: 600, fontFamily: "'Sora', sans-serif" }}>
+            E-commerce seller?
+          </p>
+          <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            Monitor competitor prices automatically — daily checks, email alerts, from $19/mo.
+          </p>
+        </div>
+        <a
+          href="https://www.pricetrail.app?ref=trackaura"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: "var(--accent)",
+            textDecoration: "none",
+            padding: "0.5rem 1rem",
+            borderRadius: 6,
+            border: "1px solid var(--accent)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Try PriceTrail →
+        </a>
+      </div>
+
       <div
         style={{
           maxWidth: 1200,
