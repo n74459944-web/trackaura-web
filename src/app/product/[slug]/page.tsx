@@ -308,6 +308,33 @@ export default async function ProductPage({ params }: PageProps) {
               </p>
             )}
 
+            {/* Deal quality indicator based on price vs average */}
+            {!isAtLowest && product.priceCount >= 5 && (() => {
+              const avg = (product.minPrice + product.maxPrice) / 2;
+              const pctFromAvg = ((product.currentPrice - avg) / avg) * 100;
+              if (pctFromAvg < -15) return (
+                <p style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600, marginBottom: "0.75rem" }}>
+                  {"🟢 Great price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
+                </p>
+              );
+              if (pctFromAvg < -5) return (
+                <p style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600, marginBottom: "0.75rem" }}>
+                  {"🟢 Good price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
+                </p>
+              );
+              if (pctFromAvg > 15) return (
+                <p style={{ fontSize: "0.8125rem", color: "var(--danger)", fontWeight: 600, marginBottom: "0.75rem" }}>
+                  {"🔴 Above average — consider waiting"}
+                </p>
+              );
+              if (pctFromAvg > 5) return (
+                <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600, marginBottom: "0.75rem" }}>
+                  {"🟡 Fair price — close to average"}
+                </p>
+              );
+              return null;
+            })()}
+
             {hasRange && (
               <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem", flexWrap: "wrap" }}>
                 <span>Low: <strong style={{ color: "var(--accent)" }}>{formatPrice(product.minPrice)}</strong></span>
