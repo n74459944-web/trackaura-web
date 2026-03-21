@@ -99,6 +99,10 @@ export default function ComparePage() {
 
     // SANITY: skip if either price is under $10 (data errors)
     if (minPrice < 10) continue;
+    // SANITY: skip if one listing is Open Box and the other isn't
+    const hasOpenBox = products.some((p) => /open.?box/i.test(p.name));
+    const hasNew = products.some((p) => !/open.?box/i.test(p.name));
+    if (hasOpenBox && hasNew) continue;
 
     comparisons.push({
       canonicalId: Number(cidStr),

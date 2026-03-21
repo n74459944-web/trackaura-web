@@ -235,6 +235,8 @@ export default async function ProductPage({ params }: PageProps) {
       url: "https://www.trackaura.com/product/" + product.slug,
       description: "Price tracking for " + product.name + " at " + product.retailer,
       ...(productBrand ? { brand: { "@type": "Brand", name: productBrand.charAt(0).toUpperCase() + productBrand.slice(1) } } : {}),
+      ...(product.mpn ? { mpn: product.mpn } : {}),
+      ...(product.upc ? { gtin12: product.upc } : {}),
       offers: {
         "@type": "Offer",
         price: product.currentPrice,
