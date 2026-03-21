@@ -145,11 +145,11 @@ export default function HomePage() {
         </p>
 
         {/* Search */}
-        <div className="animate-in animate-delay-2" style={{ maxWidth: 560, margin: "0 auto" }}>
+        <div className="animate-in animate-delay-2" style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 100 }}>
           <SearchBar large />
         </div>
 
-        <p className="animate-in animate-delay-3" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "1rem", position: "relative", zIndex: 1 }}>
+        <p className="animate-in animate-delay-3" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "1rem" }}>
           {recentDrops > 0
             ? `${recentDrops} price drops in the last 24 hours. `
             : "Prices updated every 4 hours. "}
