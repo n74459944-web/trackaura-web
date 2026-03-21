@@ -132,11 +132,16 @@ export default function HomePage() {
         <div className="animate-in animate-delay-2" style={{ maxWidth: 560, margin: "0 auto" }}>
           <SearchBar large />
         </div>
+
+        <p className="animate-in animate-delay-3" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "1rem" }}>
+          {"Canadian shoppers save an average of $139 by comparing prices on TrackAura. "}
+          <Link href="/compare" style={{ color: "var(--accent)" }}>See comparisons →</Link>
+        </p>
       </section>
 
       {/* Stats */}
       <section
-        className="animate-in animate-delay-3"
+        className="animate-in animate-delay-4"
         style={{ maxWidth: 700, margin: "0 auto 3rem", padding: "0 1.5rem" }}
       >
         <StatsBar stats={{ ...stats, categories: stats.categories.filter((c: string) => c !== "other") }} />
