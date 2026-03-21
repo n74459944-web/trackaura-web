@@ -94,6 +94,12 @@ export default function SearchBar({ large }: SearchBarProps) {
             transition: "border-color 0.15s",
           }}
           onFocus={() => results.length > 0 && setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && query.trim().length >= 2) {
+              setIsOpen(false);
+              window.location.href = "/search?q=" + encodeURIComponent(query.trim());
+            }
+          }}
         />
       </div>
 
