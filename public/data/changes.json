@@ -10,7 +10,72 @@
     "diff": -169.99,
     "pct": -91.9,
     "direction": "down",
-    "changedAt": "2026-03-21T08:18:22"
+    "changedAt": "2026-03-21T12:56:03"
+  },
+  {
+    "name": "Lenovo       {Product Condition Short}",
+    "slug": "lenovo-product-condition-short",
+    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 5759.0,
+    "newPrice": 829.0,
+    "diff": -4930.0,
+    "pct": -85.6,
+    "direction": "down",
+    "changedAt": "2026-03-21T12:41:39"
+  },
+  {
+    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless GamingMouse MoonlightWhite(Open Box)",
+    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhiteopen-box",
+    "url": "https://www.canadacomputers.com/en/gaming-mice/273937/asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite-p713-rog-harpe-ace-aim-lab-edition-wht.html",
+    "retailer": "Canada Computers",
+    "category": "mice",
+    "oldPrice": 101.99,
+    "newPrice": 84.99,
+    "diff": -17.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-21T12:37:59"
+  },
+  {
+    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless Gaming Mouse(Open Box)",
+    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouseopen-box",
+    "url": "https://www.canadacomputers.com/en/gaming-mice/240656/asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse-p713-rog-harpe-ace-aim-lab-edition-blk.html",
+    "retailer": "Canada Computers",
+    "category": "mice",
+    "oldPrice": 101.99,
+    "newPrice": 84.99,
+    "diff": -17.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-21T12:37:59"
+  },
+  {
+    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless Gaming Mouse",
+    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse",
+    "url": "https://www.canadacomputers.com/en/gaming-mice/238142/asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse-p713-rog-harpe-ace-aim-lab-edition-blk.html",
+    "retailer": "Canada Computers",
+    "category": "mice",
+    "oldPrice": 119.99,
+    "newPrice": 99.99,
+    "diff": -20.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-21T12:37:59"
+  },
+  {
+    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless GamingMouse MoonlightWhite",
+    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite",
+    "url": "https://www.canadacomputers.com/en/gaming-mice/254038/asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite-p713-rog-harpe-ace-aim-lab-edition-wht.html",
+    "retailer": "Canada Computers",
+    "category": "mice",
+    "oldPrice": 119.99,
+    "newPrice": 99.99,
+    "diff": -20.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-21T12:37:59"
   },
   {
     "name": "WACOM INTUOS M BLUETOOTH BLACK",
@@ -349,19 +414,6 @@
     "pct": -16.7,
     "direction": "down",
     "changedAt": "2026-03-21T08:10:11"
-  },
-  {
-    "name": "Lenovo       {Product Condition Short}",
-    "slug": "lenovo-product-condition-short",
-    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
-    "retailer": "Canada Computers",
-    "category": "laptops",
-    "oldPrice": 5759.0,
-    "newPrice": 829.0,
-    "diff": -4930.0,
-    "pct": -85.6,
-    "direction": "down",
-    "changedAt": "2026-03-21T08:04:14"
   },
   {
     "name": "HP ProDesk Mini i5-8400T 16GB 256GB Wi-Fi Win11Pro (Renewed)",
@@ -1244,58 +1296,6 @@
     "newPrice": 195.49,
     "diff": -34.0,
     "pct": -14.8,
-    "direction": "down",
-    "changedAt": "2026-03-21T01:56:09"
-  },
-  {
-    "name": "RAZER Ornata\u00a0V3 X - Low Profile Gaming Keyboard(Open Box)",
-    "slug": "razer-ornata-v3-x-low-profile-gaming-keyboardopen-box",
-    "url": "https://www.canadacomputers.com/en/gaming-keyboards/233617/razer-ornata-v3-x-low-profile-gaming-keyboard-rz03-04470200-r3u1.html",
-    "retailer": "Canada Computers",
-    "category": "keyboards",
-    "oldPrice": 40.79,
-    "newPrice": 33.99,
-    "diff": -6.8,
-    "pct": -16.7,
-    "direction": "down",
-    "changedAt": "2026-03-21T01:56:09"
-  },
-  {
-    "name": "RAZER BlackWidow V3 TKL- Mechanical Gaming Keyboard(Open Box)",
-    "slug": "razer-blackwidow-v3-tkl-mechanical-gaming-keyboardopen-box",
-    "url": "https://www.canadacomputers.com/en/gaming-keyboards/205463/razer-blackwidow-v3-tkl-mechanical-gaming-keyboard-rz03-03490200-r3u1.html",
-    "retailer": "Canada Computers",
-    "category": "keyboards",
-    "oldPrice": 93.49,
-    "newPrice": 67.99,
-    "diff": -25.5,
-    "pct": -27.3,
-    "direction": "down",
-    "changedAt": "2026-03-21T01:56:09"
-  },
-  {
-    "name": "RAZER Huntsman Mini - 60% Optical Gaming Keyboard(Open Box)",
-    "slug": "razer-huntsman-mini-60-optical-gaming-keyboardopen-box",
-    "url": "https://www.canadacomputers.com/en/gaming-keyboards/202357/razer-huntsman-mini-60-optical-gaming-keyboard-rz03-03390500-r3u1.html",
-    "retailer": "Canada Computers",
-    "category": "keyboards",
-    "oldPrice": 93.49,
-    "newPrice": 67.99,
-    "diff": -25.5,
-    "pct": -27.3,
-    "direction": "down",
-    "changedAt": "2026-03-21T01:56:09"
-  },
-  {
-    "name": "RAZER BlackWidow V4 Mini HyperSpeed Wireless Gaming Keyboard",
-    "slug": "razer-blackwidow-v4-mini-hyperspeed-wireless-gaming-keyboard",
-    "url": "https://www.canadacomputers.com/en/gaming-keyboards/264727/razer-blackwidow-v4-mini-hyperspeed-wireless-gaming-keyboard-rz03-05150200-r3u1.html",
-    "retailer": "Canada Computers",
-    "category": "keyboards",
-    "oldPrice": 139.99,
-    "newPrice": 79.99,
-    "diff": -60.0,
-    "pct": -42.9,
     "direction": "down",
     "changedAt": "2026-03-21T01:56:09"
   }
