@@ -46,9 +46,7 @@ export default function AboutPage() {
         }}
       >
         <p style={{ marginBottom: "1.25rem" }}>
-          TrackAura is a free price tracking platform built for Canadian shoppers. We monitor electronics prices across major Canadian retailers —
-           including Canada Computers and Newegg Canada — so you can see exactly how prices change over time and buy at the right moment.
-           Right now, we're tracking 14,799+ products across 18 categories, with 111,000+ price points collected so far. Our scrapers run every 4 hours, 24/7, so the data is always fresh
+          {"TrackAura is a free price tracking platform built for Canadian shoppers. We monitor electronics prices across major Canadian retailers \u2014 including Canada Computers and Newegg Canada \u2014 so you can see exactly how prices change over time and buy at the right moment."}
         </p>
 
         <p style={{ marginBottom: "1.25rem" }}>

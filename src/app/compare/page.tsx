@@ -76,6 +76,20 @@ export default function ComparePage() {
 
     // Skip "other" category
     if (representative.category === "other") continue;
+    // SANITY: skip if products are in different categories (bad canonical match)
+    const productCategories = new Set(products.map((p) => p.category));
+    if (productCategories.size > 1) {
+      // Products matched canonically but categorized differently — likely a bad match
+      // Only allow if categories are closely related (e.g. both are storage)
+      const cats = [...productCategories];
+      const RELATED_CATS: Record<string, string[]> = {
+        "ssds": ["external-storage", "hard-drives"],
+        "external-storage": ["ssds", "hard-drives"],
+        "hard-drives": ["ssds", "external-storage"],
+      };
+      const areRelated = cats.length === 2 && RELATED_CATS[cats[0]]?.includes(cats[1]);
+      if (!areRelated) continue;
+    }
 
     // SANITY: skip if the cheaper price is less than 40% of the expensive one
     // This catches false matches (open box vs new, different revisions, etc.)
