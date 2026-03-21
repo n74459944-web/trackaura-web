@@ -12,6 +12,15 @@ export default function HomePage() {
 
   // Pick featured products: diverse categories, consumer-priced, real savings
   const featured = (() => {
+    const ENTERPRISE_KEYWORDS = [
+      "server", "enterprise", "hpe ", "proliant", "rack mount",
+      "ecc reg", "registered", "refurbished", "open box",
+      "replacement", "spare", "oem", "bulk pack",
+    ];
+    const isEnterprise = (name: string) => {
+      const lower = name.toLowerCase();
+      return ENTERPRISE_KEYWORDS.some((kw) => lower.includes(kw));
+    };
     const candidates = allProducts
       .filter((p) =>
         p.category !== "other" &&
@@ -19,7 +28,8 @@ export default function HomePage() {
         p.currentPrice < p.maxPrice &&
         p.currentPrice >= 30 &&
         p.currentPrice <= 3000 &&
-        p.priceCount >= 2
+        p.priceCount >= 3 &&
+        !isEnterprise(p.name)
       )
       .map((p) => ({
         ...p,
@@ -239,7 +249,7 @@ export default function HomePage() {
           >
             Buying Guides
           </h2>
-          <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>
+          <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
             {"All guides →"}
           </Link>
         </div>
