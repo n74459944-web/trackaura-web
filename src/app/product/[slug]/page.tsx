@@ -15,6 +15,7 @@ import ProductInfo from "@/components/ProductInfo";
 import PriceAlert from "@/components/PriceAlert";
 import PriceCompare from "@/components/PriceCompare";
 import RelatedProducts from "@/components/RelatedProducts";
+import ProductLineage from "@/components/ProductLineage";
 
 export const revalidate = 14400; // 4 hours, matches scrape cycle
 
@@ -366,7 +367,7 @@ export default async function ProductPage({ params }: PageProps) {
       </div>
 
       <PriceCompare product={product} similar={similar} />
-
+      <ProductLineage product={product} allProducts={allProducts} />
       <RelatedProducts products={related} />
 
       {/* Link to buying guide */}

@@ -1,0 +1,120 @@
+{
+  "gpu": [
+    {
+      "line": "GeForce RTX xx90",
+      "generations": [
+        { "name": "RTX 3090", "search": "rtx 3090", "year": 2020 },
+        { "name": "RTX 3090 Ti", "search": "rtx 3090 ti", "year": 2022 },
+        { "name": "RTX 4090", "search": "rtx 4090", "year": 2022 },
+        { "name": "RTX 5090", "search": "rtx 5090", "year": 2025 }
+      ]
+    },
+    {
+      "line": "GeForce RTX xx80",
+      "generations": [
+        { "name": "RTX 3080", "search": "rtx 3080", "year": 2020 },
+        { "name": "RTX 4080", "search": "rtx 4080", "year": 2022 },
+        { "name": "RTX 4080 SUPER", "search": "rtx 4080 super", "year": 2024 },
+        { "name": "RTX 5080", "search": "rtx 5080", "year": 2025 }
+      ]
+    },
+    {
+      "line": "GeForce RTX xx70 Ti",
+      "generations": [
+        { "name": "RTX 3070 Ti", "search": "rtx 3070 ti", "year": 2021 },
+        { "name": "RTX 4070 Ti", "search": "rtx 4070 ti", "year": 2023 },
+        { "name": "RTX 4070 Ti SUPER", "search": "rtx 4070 ti super", "year": 2024 },
+        { "name": "RTX 5070 Ti", "search": "rtx 5070 ti", "year": 2025 }
+      ]
+    },
+    {
+      "line": "GeForce RTX xx70",
+      "generations": [
+        { "name": "RTX 3070", "search": "rtx 3070", "year": 2020 },
+        { "name": "RTX 4070", "search": "rtx 4070", "year": 2023 },
+        { "name": "RTX 4070 SUPER", "search": "rtx 4070 super", "year": 2024 },
+        { "name": "RTX 5070", "search": "rtx 5070", "year": 2025 }
+      ]
+    },
+    {
+      "line": "GeForce RTX xx60 Ti",
+      "generations": [
+        { "name": "RTX 3060 Ti", "search": "rtx 3060 ti", "year": 2020 },
+        { "name": "RTX 4060 Ti", "search": "rtx 4060 ti", "year": 2023 },
+        { "name": "RTX 5060 Ti", "search": "rtx 5060 ti", "year": 2025 }
+      ]
+    },
+    {
+      "line": "GeForce RTX xx60",
+      "generations": [
+        { "name": "RTX 3060", "search": "rtx 3060", "year": 2021 },
+        { "name": "RTX 4060", "search": "rtx 4060", "year": 2023 },
+        { "name": "RTX 5060", "search": "rtx 5060", "year": 2025 }
+      ]
+    },
+    {
+      "line": "Radeon RX 9x70 XT",
+      "generations": [
+        { "name": "RX 7900 XT", "search": "rx 7900 xt", "year": 2022 },
+        { "name": "RX 9070 XT", "search": "rx 9070 xt", "year": 2025 }
+      ]
+    },
+    {
+      "line": "Radeon RX 9x70",
+      "generations": [
+        { "name": "RX 7800 XT", "search": "rx 7800 xt", "year": 2023 },
+        { "name": "RX 9070", "search": "rx 9070", "year": 2025 }
+      ]
+    }
+  ],
+  "cpu": [
+    {
+      "line": "Ryzen 9 x900X",
+      "generations": [
+        { "name": "Ryzen 9 5900X", "search": "ryzen 9 5900x", "year": 2020 },
+        { "name": "Ryzen 9 7900X", "search": "ryzen 9 7900x", "year": 2022 },
+        { "name": "Ryzen 9 9900X", "search": "ryzen 9 9900x", "year": 2024 }
+      ]
+    },
+    {
+      "line": "Ryzen 7 x700X",
+      "generations": [
+        { "name": "Ryzen 7 5700X", "search": "ryzen 7 5700x", "year": 2022 },
+        { "name": "Ryzen 7 7700X", "search": "ryzen 7 7700x", "year": 2022 },
+        { "name": "Ryzen 7 9700X", "search": "ryzen 7 9700x", "year": 2024 }
+      ]
+    },
+    {
+      "line": "Ryzen 5 x600X",
+      "generations": [
+        { "name": "Ryzen 5 5600X", "search": "ryzen 5 5600x", "year": 2020 },
+        { "name": "Ryzen 5 7600X", "search": "ryzen 5 7600x", "year": 2022 },
+        { "name": "Ryzen 5 9600X", "search": "ryzen 5 9600x", "year": 2024 }
+      ]
+    },
+    {
+      "line": "Core i9 (14th-15th gen)",
+      "generations": [
+        { "name": "Core i9-13900K", "search": "i9-13900k", "year": 2022 },
+        { "name": "Core i9-14900K", "search": "i9-14900k", "year": 2023 },
+        { "name": "Core Ultra 9 285K", "search": "ultra 9 285k", "year": 2024 }
+      ]
+    },
+    {
+      "line": "Core i7 (14th-15th gen)",
+      "generations": [
+        { "name": "Core i7-13700K", "search": "i7-13700k", "year": 2022 },
+        { "name": "Core i7-14700K", "search": "i7-14700k", "year": 2023 },
+        { "name": "Core Ultra 7 265K", "search": "ultra 7 265k", "year": 2024 }
+      ]
+    },
+    {
+      "line": "Core i5 (14th-15th gen)",
+      "generations": [
+        { "name": "Core i5-13600K", "search": "i5-13600k", "year": 2022 },
+        { "name": "Core i5-14600K", "search": "i5-14600k", "year": 2023 },
+        { "name": "Core Ultra 5 245K", "search": "ultra 5 245k", "year": 2024 }
+      ]
+    }
+  ]
+}
