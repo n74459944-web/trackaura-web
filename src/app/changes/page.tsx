@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 import ChangesClient from "./ChangesClient";
 
+export const revalidate = 14400; // 4 hours, matches scrape cycle
+
 export const metadata: Metadata = {
   title: "Recent Price Changes - Canadian Electronics",
   description: "Track real-time price drops and increases on electronics across Canadian retailers. See which GPUs, headphones, SSDs, and more just changed price.",

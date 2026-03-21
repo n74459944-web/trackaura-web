@@ -6,6 +6,8 @@ import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import PriceIndexChart from "@/components/PriceIndexChart";
 import CategoryCharts from "@/components/CategoryCharts";
 
+export const revalidate = 14400; // 4 hours, matches scrape cycle
+
 export const metadata: Metadata = {
   title: "Canadian Electronics Price Trends — TrackAura Price Index",
   description:

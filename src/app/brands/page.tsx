@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getAllProducts } from "@/lib/data";
 
+export const revalidate = 14400; // 4 hours, matches scrape cycle
+
 export const metadata: Metadata = {
   title: "All Brands - Canadian Electronics Price Tracker",
   description: "Browse all electronics brands tracked by TrackAura. Compare prices across Canadian retailers for ASUS, Corsair, Logitech, Samsung, and more.",
