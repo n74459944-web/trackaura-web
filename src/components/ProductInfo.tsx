@@ -108,6 +108,25 @@ export default function ProductInfo({ product }: { product: Product }) {
               </div>
             </div>
           )}
+          {/* Product identifiers */}
+          {(product.mpn || product.upc) && (
+            <div style={{ marginTop: hasSpecs ? "0.75rem" : 0 }}>
+              <div style={{
+                display: "flex",
+                gap: "1rem",
+                flexWrap: "wrap",
+                fontSize: "0.75rem",
+                color: "var(--text-secondary)",
+              }}>
+                {product.mpn && (
+                  <span>MPN: <strong style={{ color: "var(--text-primary)" }}>{product.mpn}</strong></span>
+                )}
+                {product.upc && (
+                  <span>UPC: <strong style={{ color: "var(--text-primary)" }}>{product.upc}</strong></span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -665,11 +665,18 @@ def export():
         # CANONICAL OVERRIDE: if this product has a canonical category, use it.
         # The canonical category was assigned by AI (Haiku) and is more reliable
         # than keyword matching. This scales to 100K+ products without manual keywords.
-        canonical_cat = row["canonical_id"] and conn.execute(
-            "SELECT category FROM canonical_products WHERE id = ?", (row["canonical_id"],)
+        canonical_row = row["canonical_id"] and conn.execute(
+            "SELECT category, upc, ean, model_number FROM canonical_products WHERE id = ?", (row["canonical_id"],)
         ).fetchone()
-        if canonical_cat and canonical_cat[0] and canonical_cat[0] != "other":
-            category = canonical_cat[0]
+        canonical_cat = None
+        canonical_upc = ""
+        canonical_mpn = ""
+        if canonical_row:
+            canonical_cat = canonical_row[0]
+            canonical_upc = canonical_row[1] or canonical_row[2] or ""
+            canonical_mpn = canonical_row[3] or ""
+        if canonical_cat and canonical_cat != "other":
+            category = canonical_cat
 
         product = {
             "id": row["id"],
@@ -691,6 +698,8 @@ def export():
             "lastUpdated": row["last_updated"],
             "matchGroup": row["match_group"],
             "canonicalId": row["canonical_id"],
+            "upc": canonical_upc,
+            "mpn": canonical_mpn,
         }
         products.append(product)
 

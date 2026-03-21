@@ -18,6 +18,8 @@ export interface Product {
   specs?: Record<string, string>;
   matchGroup?: number | null;
   canonicalId?: number | null;
+  upc?: string;
+  mpn?: string;
   priceComparison?: {
     id: number;
     retailer: string;
