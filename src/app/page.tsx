@@ -5,10 +5,26 @@ import SearchBar from "@/components/SearchBar";
 import StatsBar from "@/components/StatsBar";
 import ProductCard from "@/components/ProductCard";
 import EmailSignup from "@/components/EmailSignup";
+import fs from "fs";
+import path from "path";
 
 export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
+  // Count recent price drops from changes.json
+  const recentDrops = (() => {
+    try {
+      const changesPath = path.join(process.cwd(), "public", "data", "changes.json");
+      const raw = fs.readFileSync(changesPath, "utf-8");
+      const changes = JSON.parse(raw) as { direction: string; changedAt: string }[];
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      return changes.filter(
+        (c) => c.direction === "down" && new Date(c.changedAt).getTime() > oneDayAgo
+      ).length;
+    } catch {
+      return 0;
+    }
+  })();
 
   // Pick featured products: diverse categories, consumer-priced, real savings
   const featured = (() => {
@@ -134,7 +150,10 @@ export default function HomePage() {
         </div>
 
         <p className="animate-in animate-delay-3" style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "1rem" }}>
-          {"Canadian shoppers save an average of $139 by comparing prices on TrackAura. "}
+          {recentDrops > 0
+            ? `${recentDrops} price drops in the last 24 hours. `
+            : "Prices updated every 4 hours. "}
+          {"Canadian shoppers save an average of $139 by comparing. "}
           <Link href="/compare" style={{ color: "var(--accent)" }}>See comparisons →</Link>
         </p>
       </section>
