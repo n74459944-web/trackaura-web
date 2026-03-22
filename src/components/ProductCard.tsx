@@ -38,7 +38,14 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const retailerUrl = getRetailerAffiliateUrl(product);
   const isAffiliate = product.retailer === "Newegg Canada";
-  const shortName = product.shortName || product.name;
+  const rawName = product.shortName || product.name;
+  const shortName = rawName
+    .replace(/^\*+/, "")
+    .replace(/^\((?:SI|Upgrade|OB)\)\s*/i, "")
+    .replace(/\s+features?\s+a\s+.*/i, "")
+    .replace(/\s+is\s+a?\s+\d+W\s+.*/i, "")
+    .replace(/\s+is\s+(?:designed|built|made|compatible).*/i, "")
+    .trim();
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
