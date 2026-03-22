@@ -16,11 +16,25 @@ export function getAllProducts(): Product[] {
 }
 
 export function getProductBySlug(slug: string): Product | undefined {
+  // Fast path: individual file
+  const fastPath = path.join(DATA_DIR, "products", `${slug}.json`);
+  if (fs.existsSync(fastPath)) {
+    const raw = fs.readFileSync(fastPath, "utf-8");
+    return JSON.parse(raw) as Product;
+  }
+  // Fallback: full scan
   const products = getAllProducts();
   return products.find((p) => p.slug === slug);
 }
 
 export function getProductsByCategory(category: string): Product[] {
+  // Fast path: category index file
+  const fastPath = path.join(DATA_DIR, "products", "_categories", `${category}.json`);
+  if (fs.existsSync(fastPath)) {
+    const raw = fs.readFileSync(fastPath, "utf-8");
+    return JSON.parse(raw) as Product[];
+  }
+  // Fallback: full scan
   return getAllProducts().filter((p) => p.category === category);
 }
 
