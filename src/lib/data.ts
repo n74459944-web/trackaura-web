@@ -4,11 +4,15 @@ import path from "path";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
+let _productCache: Product[] | null = null;
+
 export function getAllProducts(): Product[] {
+  if (_productCache) return _productCache;
   const filePath = path.join(DATA_DIR, "products.json");
   if (!fs.existsSync(filePath)) return [];
   const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw) as Product[];
+  _productCache = JSON.parse(raw) as Product[];
+  return _productCache;
 }
 
 export function getProductBySlug(slug: string): Product | undefined {

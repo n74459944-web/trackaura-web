@@ -107,7 +107,6 @@ export default async function ProductPage({ params }: PageProps) {
   // Cross-retailer comparison: use canonical data (already in product.priceComparison)
   // Only load all products if we need fuzzy matching OR related products
   const hasCanonicalMatch = product.priceComparison && product.priceComparison.length > 0;
-
   const allProducts = getAllProducts();
 
   // If canonical match exists, pass empty similar array (PriceCompare will use priceComparison)
