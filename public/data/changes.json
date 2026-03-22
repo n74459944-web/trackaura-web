@@ -1,5 +1,57 @@
 [
   {
+    "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
+    "slug": "corsair-nautilus-360-rs-argb-liquid-cpu-cooler",
+    "url": "",
+    "retailer": "Canada Computers",
+    "category": "cpus",
+    "oldPrice": 184.99,
+    "newPrice": 15.0,
+    "diff": -169.99,
+    "pct": -91.9,
+    "direction": "down",
+    "changedAt": "2026-03-22T04:27:26"
+  },
+  {
+    "name": "MSI A13 240mm Liquid Cooler Black",
+    "slug": "msi-a13-240mm-liquid-cooler-black",
+    "url": "https://www.canadacomputers.com/en/aio-cpu-liquid-coolers/266390/msi-a13-240mm-liquid-cooler-black-mag-coreliquid-a13-240.html",
+    "retailer": "Canada Computers",
+    "category": "cpus",
+    "oldPrice": 99.99,
+    "newPrice": 129.99,
+    "diff": 30.0,
+    "pct": 30.0,
+    "direction": "up",
+    "changedAt": "2026-03-22T04:19:22"
+  },
+  {
+    "name": "Lenovo       {Product Condition Short}",
+    "slug": "lenovo-product-condition-short",
+    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 5759.0,
+    "newPrice": 829.0,
+    "diff": -4930.0,
+    "pct": -85.6,
+    "direction": "down",
+    "changedAt": "2026-03-22T04:12:38"
+  },
+  {
+    "name": "Samsung 49\" Odyssey OLED G9 5120 x 1440 240Hz 1800R Curved Monitor(Open Box)",
+    "slug": "samsung-49-odyssey-oled-g9-5120-x-1440-240hz-1800r-curved-monitoropen-box",
+    "url": "https://www.canadacomputers.com/en/46-over-gaming-monitors/243197/samsung-49-odyssey-oled-g9-5120-x-1440-240hz-1800r-curved-monitor-ls49cg954snxza.html",
+    "retailer": "Canada Computers",
+    "category": "monitors",
+    "oldPrice": 1869.15,
+    "newPrice": 1168.65,
+    "diff": -700.5,
+    "pct": -37.5,
+    "direction": "down",
+    "changedAt": "2026-03-22T04:01:31"
+  },
+  {
     "name": "Lenovo ThinkCentre M75q Gen 2, AMD Ryzen 5 Pro 5650GE, 16GB, 256GB(Open Box)",
     "slug": "lenovo-thinkcentre-m75q-gen-2-amd-ryzen-5-pro-5650ge-16gb-256gbopen-box",
     "url": "https://www.canadacomputers.com/en/business-desktops-mini-pcs/287107/lenovo-thinkcentre-m75q-gen-2-amd-ryzen-5-pro-5650ge-16gb-256gb-11jn0089us.html",
@@ -11,19 +63,6 @@
     "pct": -5.6,
     "direction": "down",
     "changedAt": "2026-03-21T23:48:22"
-  },
-  {
-    "name": "CORSAIR NAUTILUS 360 RS ARGB Liquid CPU Cooler",
-    "slug": "corsair-nautilus-360-rs-argb-liquid-cpu-cooler",
-    "url": "",
-    "retailer": "Canada Computers",
-    "category": "cpus",
-    "oldPrice": 184.99,
-    "newPrice": 15.0,
-    "diff": -169.99,
-    "pct": -91.9,
-    "direction": "down",
-    "changedAt": "2026-03-21T23:45:17"
   },
   {
     "name": "WESTERN DIGITAL",
@@ -871,19 +910,6 @@
     "changedAt": "2026-03-21T23:32:37"
   },
   {
-    "name": "Lenovo       {Product Condition Short}",
-    "slug": "lenovo-product-condition-short",
-    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
-    "retailer": "Canada Computers",
-    "category": "laptops",
-    "oldPrice": 5759.0,
-    "newPrice": 829.0,
-    "diff": -4930.0,
-    "pct": -85.6,
-    "direction": "down",
-    "changedAt": "2026-03-21T23:30:34"
-  },
-  {
     "name": "TP-Link (TL-WR841N) N300 Wireless N Router | SOHO(Open Box)",
     "slug": "tp-link-tl-wr841n-n300-wireless-n-router-sohoopen-box",
     "url": "https://www.canadacomputers.com/en/wireless-wi-fi-routers/205339/tp-link-tl-wr841n-n300-wireless-n-router-soho-tl-wr841n.html",
@@ -1269,32 +1295,6 @@
     "oldPrice": 101.99,
     "newPrice": 84.99,
     "diff": -17.0,
-    "pct": -16.7,
-    "direction": "down",
-    "changedAt": "2026-03-21T12:37:59"
-  },
-  {
-    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless Gaming Mouse",
-    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse",
-    "url": "https://www.canadacomputers.com/en/gaming-mice/238142/asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse-p713-rog-harpe-ace-aim-lab-edition-blk.html",
-    "retailer": "Canada Computers",
-    "category": "mice",
-    "oldPrice": 119.99,
-    "newPrice": 99.99,
-    "diff": -20.0,
-    "pct": -16.7,
-    "direction": "down",
-    "changedAt": "2026-03-21T12:37:59"
-  },
-  {
-    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless GamingMouse MoonlightWhite",
-    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite",
-    "url": "https://www.canadacomputers.com/en/gaming-mice/254038/asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite-p713-rog-harpe-ace-aim-lab-edition-wht.html",
-    "retailer": "Canada Computers",
-    "category": "mice",
-    "oldPrice": 119.99,
-    "newPrice": 99.99,
-    "diff": -20.0,
     "pct": -16.7,
     "direction": "down",
     "changedAt": "2026-03-21T12:37:59"
