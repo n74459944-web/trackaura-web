@@ -57,14 +57,18 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       {product.imageUrl && (
-        <div style={{ width: "100%", height: 140, background: "#fff", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ width: "100%", height: 140, background: product.imageUrl ? "#fff" : "var(--bg-primary)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        {product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={shortName}
             style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
             loading="lazy"
           />
-        </div>
+        ) : (
+          <span style={{ fontSize: "2.5rem", opacity: 0.3 }}>📦</span>
+        )}
+      </div>
       )}
 
       <Link href={"/product/" + product.slug} title={product.name} style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", color: "var(--text-primary)", textDecoration: "none", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
