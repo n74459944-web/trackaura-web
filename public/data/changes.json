@@ -10,7 +10,33 @@
     "diff": -169.99,
     "pct": -91.9,
     "direction": "down",
-    "changedAt": "2026-03-22T04:27:26"
+    "changedAt": "2026-03-22T10:28:08"
+  },
+  {
+    "name": "WESTERN DIGITAL",
+    "slug": "western-digital",
+    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
+    "retailer": "Canada Computers",
+    "category": "other",
+    "oldPrice": 549.99,
+    "newPrice": 299.99,
+    "diff": -250.0,
+    "pct": -45.5,
+    "direction": "down",
+    "changedAt": "2026-03-22T10:23:29"
+  },
+  {
+    "name": "Lenovo       {Product Condition Short}",
+    "slug": "lenovo-product-condition-short",
+    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
+    "retailer": "Canada Computers",
+    "category": "laptops",
+    "oldPrice": 5759.0,
+    "newPrice": 829.0,
+    "diff": -4930.0,
+    "pct": -85.6,
+    "direction": "down",
+    "changedAt": "2026-03-22T10:14:18"
   },
   {
     "name": "MSI A13 240mm Liquid Cooler Black",
@@ -24,19 +50,6 @@
     "pct": 30.0,
     "direction": "up",
     "changedAt": "2026-03-22T04:19:22"
-  },
-  {
-    "name": "Lenovo       {Product Condition Short}",
-    "slug": "lenovo-product-condition-short",
-    "url": "https://www.canadacomputers.com/en/chromebooks/244067/lenovo-product-condition-short-82w4000bus.html",
-    "retailer": "Canada Computers",
-    "category": "laptops",
-    "oldPrice": 5759.0,
-    "newPrice": 829.0,
-    "diff": -4930.0,
-    "pct": -85.6,
-    "direction": "down",
-    "changedAt": "2026-03-22T04:12:38"
   },
   {
     "name": "Samsung 49\" Odyssey OLED G9 5120 x 1440 240Hz 1800R Curved Monitor(Open Box)",
@@ -63,19 +76,6 @@
     "pct": -5.6,
     "direction": "down",
     "changedAt": "2026-03-21T23:48:22"
-  },
-  {
-    "name": "WESTERN DIGITAL",
-    "slug": "western-digital",
-    "url": "https://www.canadacomputers.com/en/external-hard-drives/278403/western-digital-wdbr9s0060bbk-wesn.html",
-    "retailer": "Canada Computers",
-    "category": "other",
-    "oldPrice": 549.99,
-    "newPrice": 299.99,
-    "diff": -250.0,
-    "pct": -45.5,
-    "direction": "down",
-    "changedAt": "2026-03-21T23:40:41"
   },
   {
     "name": "ASUS RT-BE50 BE3600 Dual Band Wi-Fi 7 Router(Open Box)",
