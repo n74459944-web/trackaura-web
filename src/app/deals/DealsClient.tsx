@@ -42,6 +42,9 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
       // Sanity filter 3: need at least 3 price points for a reliable range
       // This prevents brand-new products with 1-2 scrapes from showing fake "deals"
       if (p.priceCount < 3) return false;
+      // Skip bad product names
+      if (p.name.length < 15) return false;
+      if (p.name.includes("{") || p.name.includes("}")) return false;
 
       // Sanity filter 4: discount must be at least 10% to be worth showing
       const discount = (p.maxPrice - p.currentPrice) / p.maxPrice;
