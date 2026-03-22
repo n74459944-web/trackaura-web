@@ -21,11 +21,12 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
   const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
   const [category, setCategory] = useState(initialCategory);
   const [retailer, setRetailer] = useState(initialRetailer);
-  const [sort, setSort] = useState<SortKey>("biggest-drop");
+  const [sort, setSort] = useState<SortKey>("at-lowest");
   const [loading, setLoading] = useState(initialProducts.length === 0);
   const [page, setPage] = useState(1);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fallback: if server didn't provide products, fetch client-side
@@ -54,6 +55,18 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
 
   const filtered = useMemo(() => {
     let result = allProducts;
+    // Filter out bad data
+    result = result.filter((p) => {
+      // Skip products with very short names (bad scrape data)
+      if (p.name.length < 15) return false;
+      // Skip template variables in names
+      if (p.name.includes("{") || p.name.includes("}")) return false;
+      // Skip products where high price is 10x+ the low (data errors inflating discounts)
+      if (p.maxPrice > p.minPrice * 10 && p.minPrice > 0) return false;
+      // Skip suspiciously cheap products (likely errors)
+      if (p.currentPrice < 5) return false;
+      return true;
+    });
 
     // Search filter
     if (searchQuery.trim()) {
@@ -181,8 +194,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           alignItems: "center",
         }}
       >
-        {/* Category pills */}
-        <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
+        {/* Category pills — show top 10 + expandable */}
+        <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", alignItems: "center" }}>
           <button
             className={`filter-pill ${category === "all" ? "active" : ""}`}
             onClick={() => setCategory("all")}
@@ -190,7 +203,13 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
             All
           </button>
           {Object.entries(CATEGORY_LABELS)
-            .filter(([key]) => key !== "other")
+            .filter(([key]) => key !== "other" && allProducts.some((p) => p.category === key))
+            .sort((a, b) => {
+              const aCount = allProducts.filter((p) => p.category === a[0]).length;
+              const bCount = allProducts.filter((p) => p.category === b[0]).length;
+              return bCount - aCount;
+            })
+            .slice(0, showAllCategories ? 999 : 10)
             .map(([key, label]) => (
               <button
                 key={key}
@@ -200,6 +219,15 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 {label}
               </button>
             ))}
+          {!showAllCategories && (
+            <button
+              className="filter-pill"
+              onClick={() => setShowAllCategories(true)}
+              style={{ fontStyle: "italic" }}
+            >
+              More ▾
+            </button>
+          )}
         </div>
 
         {/* Divider */}
