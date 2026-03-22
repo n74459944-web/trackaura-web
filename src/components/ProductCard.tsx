@@ -41,10 +41,12 @@ export default function ProductCard({ product }: { product: Product }) {
   const rawName = product.shortName || product.name;
   const shortName = rawName
     .replace(/^\*+/, "")
-    .replace(/^\((?:SI|Upgrade|OB)\)\s*/i, "")
+    .replace(/^\((?:SI|Upgrade|OB|Refurbished)\)\s*/i, "")
     .replace(/\s+features?\s+a\s+.*/i, "")
-    .replace(/\s+is\s+a?\s+\d+W\s+.*/i, "")
-    .replace(/\s+is\s+(?:designed|built|made|compatible).*/i, "")
+    .replace(/\s+is\s+a\s+.*/i, "")
+    .replace(/\s+is\s+\d+W\s+.*/i, "")
+    .replace(/\s+is\s+(?:designed|built|made|compatible|compliant).*/i, "")
+    .replace(/\s+is\s+(?:a\s+)?(?:power|the|an)\s+.*/i, "")
     .trim();
 
   return (
