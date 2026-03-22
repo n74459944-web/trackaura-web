@@ -10,7 +10,7 @@
     "diff": -169.99,
     "pct": -91.9,
     "direction": "down",
-    "changedAt": "2026-03-22T10:28:08"
+    "changedAt": "2026-03-22T15:10:30"
   },
   {
     "name": "WESTERN DIGITAL",
@@ -23,7 +23,46 @@
     "diff": -250.0,
     "pct": -45.5,
     "direction": "down",
-    "changedAt": "2026-03-22T10:23:29"
+    "changedAt": "2026-03-22T15:05:51"
+  },
+  {
+    "name": "THERMALTAKE ASTRIA 200 CPU Cooler(Open Box)",
+    "slug": "thermaltake-astria-200-cpu-cooleropen-box",
+    "url": "https://www.canadacomputers.com/en/cpu-air-coolers/277441/thermaltake-astria-200-cpu-cooler-cl-p119-al12sw-a.html",
+    "retailer": "Canada Computers",
+    "category": "cpus",
+    "oldPrice": 44.99,
+    "newPrice": 37.49,
+    "diff": -7.5,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-22T15:01:51"
+  },
+  {
+    "name": "THERMALTAKE CPU Air Cooler White(Open Box)",
+    "slug": "thermaltake-cpu-air-cooler-whiteopen-box",
+    "url": "https://www.canadacomputers.com/en/cpu-air-coolers/282601/thermaltake-cpu-air-cooler-white-cl-p145-al12sw-a.html",
+    "retailer": "Canada Computers",
+    "category": "cpus",
+    "oldPrice": 53.99,
+    "newPrice": 44.99,
+    "diff": -9.0,
+    "pct": -16.7,
+    "direction": "down",
+    "changedAt": "2026-03-22T15:01:51"
+  },
+  {
+    "name": "ASUS ROG Strix Z790-F Gaming WiFi 6E LGA 1700(Intel\u00ae 13th&12th Gen)ATX(Open Box)",
+    "slug": "asus-rog-strix-z790-f-gaming-wifi-6e-lga-1700intel-13th12th-genatxopen-box",
+    "url": "https://www.canadacomputers.com/en/intel-motherboards/243070/asus-rog-strix-z790-f-gaming-wifi-6e-lga-1700-intel-13th-12th-gen-atx-rog-strix-z790-f-gaming-wifi.html",
+    "retailer": "Canada Computers",
+    "category": "motherboards",
+    "oldPrice": 284.89,
+    "newPrice": 224.91,
+    "diff": -59.98,
+    "pct": -21.1,
+    "direction": "down",
+    "changedAt": "2026-03-22T15:00:51"
   },
   {
     "name": "Lenovo       {Product Condition Short}",
@@ -36,7 +75,7 @@
     "diff": -4930.0,
     "pct": -85.6,
     "direction": "down",
-    "changedAt": "2026-03-22T10:14:18"
+    "changedAt": "2026-03-22T14:56:02"
   },
   {
     "name": "MSI A13 240mm Liquid Cooler Black",
@@ -1259,44 +1298,5 @@
     "pct": 0.1,
     "direction": "up",
     "changedAt": "2026-03-21T18:37:34"
-  },
-  {
-    "name": "Samsung M5 32\" FHD 1920x1080 VA 60Hz 4ms (GTG) Smart Monitor(Open Box)",
-    "slug": "samsung-m5-32-fhd-1920x1080-va-60hz-4ms-gtg-smart-monitoropen-box",
-    "url": "https://www.canadacomputers.com/en/30-45-home-office-monitors/265414/samsung-m5-32-fhd-1920x1080-va-60hz-4ms-gtg-smart-monitor-ls32dm501enxza.html",
-    "retailer": "Canada Computers",
-    "category": "monitors",
-    "oldPrice": 152.9,
-    "newPrice": 178.4,
-    "diff": 25.5,
-    "pct": 16.7,
-    "direction": "up",
-    "changedAt": "2026-03-21T18:37:34"
-  },
-  {
-    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless GamingMouse MoonlightWhite(Open Box)",
-    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhiteopen-box",
-    "url": "https://www.canadacomputers.com/en/gaming-mice/273937/asus-rog-harpe-ace-aim-lab-edition-wireless-gamingmouse-moonlightwhite-p713-rog-harpe-ace-aim-lab-edition-wht.html",
-    "retailer": "Canada Computers",
-    "category": "mice",
-    "oldPrice": 101.99,
-    "newPrice": 84.99,
-    "diff": -17.0,
-    "pct": -16.7,
-    "direction": "down",
-    "changedAt": "2026-03-21T12:37:59"
-  },
-  {
-    "name": "Asus ROG Harpe Ace Aim Lab Edition Wireless Gaming Mouse(Open Box)",
-    "slug": "asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouseopen-box",
-    "url": "https://www.canadacomputers.com/en/gaming-mice/240656/asus-rog-harpe-ace-aim-lab-edition-wireless-gaming-mouse-p713-rog-harpe-ace-aim-lab-edition-blk.html",
-    "retailer": "Canada Computers",
-    "category": "mice",
-    "oldPrice": 101.99,
-    "newPrice": 84.99,
-    "diff": -17.0,
-    "pct": -16.7,
-    "direction": "down",
-    "changedAt": "2026-03-21T12:37:59"
   }
 ]
