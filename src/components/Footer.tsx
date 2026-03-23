@@ -49,11 +49,11 @@ export default function Footer() {
               Categories
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <Link href="/products?category=gpus" className="accent-link" style={{ fontSize: "0.875rem" }}>Graphics Cards</Link>
-              <Link href="/products?category=cpus" className="accent-link" style={{ fontSize: "0.875rem" }}>CPUs</Link>
-              <Link href="/products?category=ram" className="accent-link" style={{ fontSize: "0.875rem" }}>RAM</Link>
-              <Link href="/products?category=monitors" className="accent-link" style={{ fontSize: "0.875rem" }}>Monitors</Link>
-              <Link href="/products?category=laptops" className="accent-link" style={{ fontSize: "0.875rem" }}>Laptops</Link>
+              <Link href="/category/gpus" className="accent-link" style={{ fontSize: "0.875rem" }}>Graphics Cards</Link>
+              <Link href="/category/cpus" className="accent-link" style={{ fontSize: "0.875rem" }}>CPUs</Link>
+              <Link href="/category/ram" className="accent-link" style={{ fontSize: "0.875rem" }}>RAM</Link>
+              <Link href="/category/monitors" className="accent-link" style={{ fontSize: "0.875rem" }}>Monitors</Link>
+              <Link href="/category/laptops" className="accent-link" style={{ fontSize: "0.875rem" }}>Laptops</Link>
               <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>All Products</Link>
             </div>
           </div>

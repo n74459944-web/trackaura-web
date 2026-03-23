@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getAllProducts } from "@/lib/data";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 
-export const revalidate = 14400; // 4 hours, matches scrape cycle
+export const revalidate = 14400;
 
 export const metadata: Metadata = {
   title: "All Categories — TrackAura Canadian Electronics Price Tracker",
@@ -15,20 +15,24 @@ export const metadata: Metadata = {
 export default function CategoriesPage() {
   const allProducts = getAllProducts();
 
-  // Build category data from actual products
   const categoryCounts: Record<string, number> = {};
+  const categoryAtLowest: Record<string, number> = {};
   for (const p of allProducts) {
     categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+    if (p.currentPrice <= p.minPrice && p.priceCount > 1) {
+      categoryAtLowest[p.category] = (categoryAtLowest[p.category] || 0) + 1;
+    }
   }
 
   const categories = Object.entries(categoryCounts)
-    .filter(([key, count]) => key !== "other" && count >= 5)
+    .filter(([key, count]) => key !== "other" && count >= 50)
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
       key,
       label: CATEGORY_LABELS[key] || key,
-      icon: CATEGORY_ICONS[key] || "\uD83D\uDCE6",
+      icon: CATEGORY_ICONS[key] || "📦",
       count,
+      atLowest: categoryAtLowest[key] || 0,
     }));
 
   const totalProducts = allProducts.length;
@@ -93,7 +97,7 @@ export default function CategoriesPage() {
           totalProducts.toLocaleString() +
           " products across " +
           categories.length +
-          " categories from Canada Computers and Newegg Canada. Click any category to browse products or check our buying guide for deals and recommendations."}
+          " categories from Canada Computers, Newegg Canada, and Vuugo. Click any category to browse products, filter by brand, or check our buying guide for deals."}
       </p>
 
       {/* Category grid */}
@@ -116,7 +120,6 @@ export default function CategoriesPage() {
               gap: "0.75rem",
             }}
           >
-            {/* Category header */}
             <div
               style={{
                 display: "flex",
@@ -144,11 +147,15 @@ export default function CategoriesPage() {
                   }}
                 >
                   {cat.count.toLocaleString() + " products tracked"}
+                  {cat.atLowest > 0 && (
+                    <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+                      {" · " + cat.atLowest + " at lowest"}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Links */}
             <div
               style={{
                 display: "flex",
@@ -157,7 +164,7 @@ export default function CategoriesPage() {
               }}
             >
               <Link
-                href={"/products?category=" + cat.key}
+                href={"/category/" + cat.key}
                 className="accent-link"
                 style={{ textDecoration: "none" }}
               >
@@ -198,7 +205,7 @@ export default function CategoriesPage() {
         </h2>
         <p style={{ marginBottom: "1rem" }}>
           {
-            "TrackAura monitors prices from Canada Computers and Newegg Canada every 4 hours. Each category page shows live prices, price history charts, and highlights products currently at their lowest tracked price."
+            "TrackAura monitors prices from Canada Computers, Newegg Canada, and Vuugo every 4 hours. Each category page shows live prices, price history charts, and highlights products currently at their lowest tracked price."
           }
         </p>
         <p style={{ marginBottom: "1rem" }}>
@@ -225,7 +232,7 @@ export default function CategoriesPage() {
           className="btn-primary"
           style={{ textDecoration: "none", display: "inline-block" }}
         >
-          View Today's Best Deals
+          View Today&apos;s Best Deals
         </Link>
       </div>
     </div>

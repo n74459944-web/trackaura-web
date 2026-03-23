@@ -1,7 +1,8 @@
 import { AMAZON_AFFILIATE_TAG } from "@/types";
 
-export const RAKUTEN_AFFILIATE_ID = "jlyoivMwGNs";
-export const NEWEGG_MERCHANT_ID = "1786142";
+// Rakuten Advertising — Newegg Canada program
+export const RAKUTEN_MID = "44583";
+export const RAKUTEN_SID = "4674140";
 
 export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
@@ -62,15 +63,19 @@ export function getAmazonSearchUrl(productName: string): string {
   return `https://www.amazon.ca/s?k=${query}&tag=${AMAZON_AFFILIATE_TAG}`;
 }
 
+/**
+ * Build a Rakuten deeplink for Newegg Canada.
+ * Format: https://click.linksynergy.com/deeplink?id=SID&mid=MID&murl=ENCODED_PRODUCT_URL
+ */
 export function getNeweggAffiliateUrl(productUrl: string): string {
-  // Rakuten affiliate terminated — link directly for now
-  return productUrl;
+  const encoded = encodeURIComponent(productUrl);
+  return `https://click.linksynergy.com/deeplink?id=${RAKUTEN_SID}&mid=${RAKUTEN_MID}&murl=${encoded}`;
 }
 
 export function getRetailerAffiliateUrl(product: { url: string; retailer: string }): string {
   if (product.retailer === "Newegg Canada") {
     return getNeweggAffiliateUrl(product.url);
   }
-  // Canada Computers — no affiliate yet, link directly
+  // Canada Computers + Vuugo — no affiliate yet, link directly
   return product.url;
 }

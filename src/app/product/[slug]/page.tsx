@@ -256,7 +256,7 @@ export default async function ProductPage({ params }: PageProps) {
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "https://www.trackaura.com" },
         { "@type": "ListItem", position: 2, name: "Products", item: "https://www.trackaura.com/products" },
-        { "@type": "ListItem", position: 3, name: CATEGORY_LABELS[product.category] || product.category, item: "https://www.trackaura.com/products?category=" + product.category },
+        { "@type": "ListItem", position: 3, name: CATEGORY_LABELS[product.category] || product.category, item: "https://www.trackaura.com//category/${product.category}" + product.category },
         { "@type": "ListItem", position: 4, name: product.name },
       ],
     },
@@ -271,7 +271,7 @@ export default async function ProductPage({ params }: PageProps) {
         <span style={{ color: "var(--text-secondary)" }}>/</span>
         <Link href="/products" className="accent-link">Products</Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
-        <Link href={"/products?category=" + product.category} className="accent-link">
+        <Link href={"/category/${product.category}" + product.category} className="accent-link">
           {CATEGORY_LABELS[product.category] || product.category}
         </Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
@@ -394,7 +394,7 @@ export default async function ProductPage({ params }: PageProps) {
             {(RELATED_CATEGORIES[product.category] || []).map((cat) => (
               <Link
                 key={cat}
-                href={"/products?category=" + cat}
+                href={"/category/${product.category}" + cat}
                 className="filter-pill"
                 style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.375rem" }}
               >

@@ -113,7 +113,7 @@ export default async function BrandPage({ params }: PageProps) {
       {/* Categories this brand is in */}
       <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", marginBottom: "2rem" }}>
         {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
-          <Link key={cat} href={"/products?category=" + cat} className="filter-pill" style={{ textDecoration: "none" }}>
+          <Link key={cat} href={"/category/" + cat} className="filter-pill" style={{ textDecoration: "none" }}>
             {(CATEGORY_LABELS[cat] || cat) + " (" + count + ")"}
           </Link>
         ))}

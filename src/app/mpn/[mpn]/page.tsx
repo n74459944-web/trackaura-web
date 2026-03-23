@@ -106,7 +106,7 @@ export default async function MpnPage({ params }: PageProps) {
         {primary && (
           <>
             <span style={{ color: "var(--text-secondary)" }}>/</span>
-            <Link href={"/products?category=" + primary.category} className="accent-link">
+            <Link href={"/category/" + primary.category} className="accent-link">
               {CATEGORY_LABELS[primary.category] || primary.category}
             </Link>
           </>

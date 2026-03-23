@@ -399,7 +399,7 @@ export default async function BestCategoryPage({ params }: PageProps) {
       </div>
 
       <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-        <Link href={"/products?category=" + category} className="btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
+        <Link href={"/category/" + category} className="btn-primary" style={{ textDecoration: "none", display: "inline-block" }}>
           {"View All " + allProducts.length.toLocaleString() + " " + label}
         </Link>
       </div>
