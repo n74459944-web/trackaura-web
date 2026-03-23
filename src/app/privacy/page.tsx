@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 
+
+export const revalidate = 14400;
 export const metadata: Metadata = {
   title: "Privacy Policy — TrackAura",
   description: "TrackAura's privacy policy. Learn how we collect, use, and protect your data.",
@@ -121,3 +123,4 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </div>
   );
 }
+

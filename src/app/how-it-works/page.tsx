@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getStats } from "@/lib/data";
 
+
+export const revalidate = 14400;
 export const metadata: Metadata = {
   title: "How TrackAura Works — Price Tracking for Canadian Electronics",
   description:
@@ -267,3 +269,4 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
     </div>
   );
 }
+

@@ -3,6 +3,8 @@ import Link from "next/link";
 import fs from "fs";
 import path from "path";
 
+
+export const revalidate = 14400;
 interface BlogPost {
   slug: string;
   title: string;
@@ -72,3 +74,4 @@ export default function BlogPage() {
     </div>
   );
 }
+

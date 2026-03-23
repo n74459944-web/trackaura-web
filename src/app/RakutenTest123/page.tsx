@@ -10,3 +10,4 @@ export default function RakutenTest123() {
     </div>
   );
 }
+

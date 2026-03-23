@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 
+
+export const revalidate = 14400;
 export const metadata: Metadata = {
   title: "Terms of Use — TrackAura",
   description: "Terms of use for TrackAura.com, a Canadian electronics price tracking platform.",

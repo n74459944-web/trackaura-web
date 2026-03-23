@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getStats } from "@/lib/data";
 
+
+export const revalidate = 14400;
 export const metadata: Metadata = {
   title: "About TrackAura — Canadian Electronics Price Tracker",
   description:
@@ -168,3 +170,4 @@ export default function AboutPage() {
     </div>
   );
 }
+

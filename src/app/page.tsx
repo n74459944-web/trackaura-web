@@ -8,6 +8,8 @@ import EmailSignup from "@/components/EmailSignup";
 import fs from "fs";
 import path from "path";
 
+
+export const revalidate = 14400;
 export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
@@ -410,3 +412,4 @@ export default function HomePage() {
     </div>
   );
 }
+
