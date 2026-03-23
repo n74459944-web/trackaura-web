@@ -5,16 +5,12 @@ import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/deals", label: "Deals" },
-  { href: "/compare", label: "Compare" },
-  { href: "/trends", label: "Price Index" },
-  { href: "/products", label: "Products" },
-  { href: "/brands", label: "Brands" },
-  { href: "/changes", label: "Price Changes" },
-  { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/deals", label: "Deals", accent: true },
+  { href: "/compare", label: "Compare", accent: false },
+  { href: "/products", label: "Products", accent: false },
+  { href: "/trends", label: "Price Index", accent: false },
+  { href: "/blog", label: "Blog", accent: false },
+  { href: "/about", label: "About", accent: false },
 ];
 
 export default function Header() {
@@ -86,7 +82,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="desktop-nav">
-          {NAV_LINKS.slice(0, 8).map((link) => (
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -94,8 +90,8 @@ export default function Header() {
                 padding: "0.375rem 0.625rem",
                 borderRadius: 6,
                 fontSize: "0.8125rem",
-                fontWeight: link.label === "Deals" ? 600 : 500,
-                color: link.label === "Deals" ? "var(--accent)" : "var(--text-secondary)",
+                fontWeight: link.accent ? 600 : 500,
+                color: link.accent ? "var(--accent)" : "var(--text-secondary)",
                 textDecoration: "none",
                 transition: "color 0.15s",
                 fontFamily: "'DM Sans', sans-serif",
@@ -179,8 +175,8 @@ export default function Header() {
                 display: "block",
                 padding: "0.625rem 0",
                 fontSize: "0.9375rem",
-                fontWeight: link.label === "Deals" ? 600 : 500,
-                color: link.label === "Deals" ? "var(--accent)" : "var(--text-secondary)",
+                fontWeight: link.accent ? 600 : 500,
+                color: link.accent ? "var(--accent)" : "var(--text-secondary)",
                 textDecoration: "none",
                 borderBottom: "1px solid var(--border)",
                 fontFamily: "'DM Sans', sans-serif",
@@ -189,6 +185,38 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          {/* Extra mobile-only links */}
+          <Link
+            href="/brands"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "block",
+              padding: "0.625rem 0",
+              fontSize: "0.9375rem",
+              fontWeight: 500,
+              color: "var(--text-secondary)",
+              textDecoration: "none",
+              borderBottom: "1px solid var(--border)",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            Brands
+          </Link>
+          <Link
+            href="/changes"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "block",
+              padding: "0.625rem 0",
+              fontSize: "0.9375rem",
+              fontWeight: 500,
+              color: "var(--text-secondary)",
+              textDecoration: "none",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            Price Changes
+          </Link>
         </div>
       )}
 

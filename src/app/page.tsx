@@ -11,6 +11,7 @@ import path from "path";
 export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
+
   // Count recent price drops from changes.json
   const recentDrops = (() => {
     try {
@@ -27,16 +28,23 @@ export default function HomePage() {
   })();
 
   // Pick featured products: diverse categories, consumer-priced, real savings
+  // Filters out data glitches, junk items, and accessories
   const featured = (() => {
-    const ENTERPRISE_KEYWORDS = [
+    const SKIP_KEYWORDS = [
       "server", "enterprise", "hpe ", "proliant", "rack mount",
       "ecc reg", "registered", "refurbished", "open box",
       "replacement", "spare", "oem", "bulk pack",
+      "keycap", "key cap", "wrist rest", "cable", "adapter",
+      "dongle", "converter", "extension", "splitter",
     ];
-    const isEnterprise = (name: string) => {
+    const shouldSkip = (name: string) => {
       const lower = name.toLowerCase();
-      return ENTERPRISE_KEYWORDS.some((kw) => lower.includes(kw));
+      return SKIP_KEYWORDS.some((kw) => lower.includes(kw));
     };
+
+    // Require a real product name (not just a brand name)
+    const hasRealName = (name: string) => name.trim().split(/\s+/).length >= 3;
+
     const candidates = allProducts
       .filter((p) =>
         p.category !== "other" &&
@@ -45,28 +53,30 @@ export default function HomePage() {
         p.currentPrice >= 30 &&
         p.currentPrice <= 3000 &&
         p.priceCount >= 3 &&
-        !isEnterprise(p.name)
+        !shouldSkip(p.name) &&
+        hasRealName(p.name)
       )
       .map((p) => ({
         ...p,
         savings: p.maxPrice - p.currentPrice,
         dropPct: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100,
       }))
-      .filter((p) => p.dropPct >= 5 && p.dropPct <= 80);
+      // Tighter bounds: skip anything over 70% drop (likely data glitches)
+      // and under 10% drop (not interesting enough for featured)
+      .filter((p) => p.dropPct >= 10 && p.dropPct <= 70);
 
-    // Group by category, pick best deal per category (by % drop, not absolute $)
+    // Group by category, pick best deal per category
     const byCategory: Record<string, typeof candidates> = {};
     for (const p of candidates) {
       if (!byCategory[p.category]) byCategory[p.category] = [];
       byCategory[p.category].push(p);
     }
 
-    // Sort each category by percentage drop descending
     for (const cat of Object.keys(byCategory)) {
       byCategory[cat].sort((a, b) => b.dropPct - a.dropPct);
     }
 
-    // Round-robin: pick 1 from each category, then 2nd from each, etc.
+    // Round-robin: 1 from each category, then 2nd from each, etc.
     const result: typeof candidates = [];
     const catKeys = Object.keys(byCategory).sort(
       (a, b) => (byCategory[b][0]?.dropPct || 0) - (byCategory[a][0]?.dropPct || 0)
@@ -99,7 +109,6 @@ export default function HomePage() {
       icon: CATEGORY_ICONS[key] || "📦",
     }));
 
-  // Show top 8 categories on homepage, top 6 buying guides
   const topCategories = categories.slice(0, 8);
   const topGuides = categories.slice(0, 6);
 
@@ -136,12 +145,12 @@ export default function HomePage() {
             color: "var(--text-secondary)",
             fontSize: "1.0625rem",
             lineHeight: 1.6,
-            maxWidth: 520,
+            maxWidth: 560,
             margin: "0 auto 2rem",
           }}
         >
-          I scrape {stats.totalProducts.toLocaleString()}+ products from Canada Computers and Newegg
-          every 4 hours so you can see if that &quot;sale&quot; is actually a deal.
+          We track {stats.totalProducts.toLocaleString()}+ products across 3 Canadian
+          retailers every 4 hours so you can see if that &quot;sale&quot; is actually a deal.
         </p>
 
         {/* Search */}
@@ -153,20 +162,32 @@ export default function HomePage() {
           {recentDrops > 0
             ? `${recentDrops} price drops in the last 24 hours. `
             : "Prices updated every 4 hours. "}
-          {"Canadian shoppers save an average of $139 by comparing. "}
-          <Link href="/compare" style={{ color: "var(--accent)" }}>See comparisons →</Link>
+          {"Compare the same product across stores. "}
+          <Link href="/compare" style={{ color: "var(--accent)" }}>See comparisons &rarr;</Link>
         </p>
       </section>
 
       {/* Stats */}
       <section
         className="animate-in animate-delay-4"
-        style={{ maxWidth: 700, margin: "0 auto 3rem", padding: "0 1.5rem" }}
+        style={{ maxWidth: 700, margin: "0 auto 1.5rem", padding: "0 1.5rem" }}
       >
         <StatsBar stats={{ ...stats, categories: stats.categories.filter((c: string) => c !== "other") }} />
       </section>
 
-      {/* Categories — top 8 only */}
+      {/* Retailer ticker */}
+      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+        <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", letterSpacing: "0.02em" }}>
+          Tracking prices from{" "}
+          <span style={{ color: "var(--cc-color, #e63946)", fontWeight: 600 }}>Canada Computers</span>
+          {" · "}
+          <span style={{ color: "var(--newegg-color, #f5a623)", fontWeight: 600 }}>Newegg Canada</span>
+          {" · "}
+          <span style={{ color: "var(--accent)", fontWeight: 600 }}>Vuugo</span>
+        </p>
+      </div>
+
+      {/* Categories */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <div
           style={{
@@ -186,7 +207,7 @@ export default function HomePage() {
             Browse Categories
           </h2>
           <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
-            {"All " + categories.length + " categories →"}
+            {"All " + categories.length + " categories \u2192"}
           </Link>
         </div>
         <div className="grid-categories">
@@ -241,10 +262,10 @@ export default function HomePage() {
               fontSize: "1.25rem",
             }}
           >
-            Featured Products
+            Today&apos;s Best Deals
           </h2>
-          <Link href="/products" className="accent-link" style={{ fontSize: "0.875rem" }}>
-            View all →
+          <Link href="/deals" className="accent-link" style={{ fontSize: "0.875rem" }}>
+            All deals &rarr;
           </Link>
         </div>
         <div className="grid-products">
@@ -254,7 +275,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Buying Guides — top 6 only */}
+      {/* Buying Guides */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <div
           style={{
@@ -274,7 +295,7 @@ export default function HomePage() {
             Buying Guides
           </h2>
           <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
-            {"All guides →"}
+            {"All guides \u2192"}
           </Link>
         </div>
         <div className="grid-guides">
@@ -328,7 +349,7 @@ export default function HomePage() {
             {
               step: "1",
               title: "Prices Get Logged",
-              desc: "Every 4 hours, a scraper on my PC grabs prices from Canada Computers and Newegg.",
+              desc: "Every 4 hours, our system checks prices across Canada Computers, Newegg, and Vuugo.",
             },
             {
               step: "2",
@@ -338,7 +359,7 @@ export default function HomePage() {
             {
               step: "3",
               title: "You Buy Smarter",
-              desc: "Set a price alert. When the price hits your number, you get an email.",
+              desc: "Compare the same product across stores, or set a price alert and get emailed when it drops.",
             },
           ].map((item) => (
             <div key={item.step}>
@@ -377,13 +398,13 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
       {/* Built by */}
       <section style={{ maxWidth: 600, margin: "0 auto 4rem", padding: "0 1.5rem", textAlign: "center" }}>
         <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", lineHeight: 1.7 }}>
-          Built by a solo dev in Quebec who got tired of checking three different stores manually.
-          TrackAura is a side project &mdash; no VC money, no team, just a Python script and a lot of stubbornness.
+          Built in Quebec. TrackAura is an independent price tracker &mdash; not affiliated with any retailer.
           {" "}
-          <Link href="/about" style={{ color: "var(--accent)" }}>More about the project →</Link>
+          <Link href="/about" style={{ color: "var(--accent)" }}>Learn more &rarr;</Link>
         </p>
       </section>
     </div>
