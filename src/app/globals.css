@@ -199,6 +199,11 @@ h1, h2, h3, h4, h5, h6 {
   background: #cf2f3d;
 }
 
+.badge-vuugo {
+  background: rgba(0, 229, 160, 0.1);
+  color: #00e5a0;
+}
+
 /* Pill filter */
 .filter-pill {
   padding: 0.375rem 0.875rem;

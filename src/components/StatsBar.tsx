@@ -60,26 +60,6 @@ export default function StatsBar({ stats }: { stats: SiteStats }) {
         ))}
       </div>
 
-      {/* Retailer logos strip */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: "0.5rem",
-          marginTop: "1rem",
-          fontSize: "0.75rem",
-          color: "var(--text-secondary)",
-        }}
-      >
-        <span>Tracking prices from</span>
-        <span style={{ fontWeight: 700, color: "var(--cc-color)" }}>Canada Computers</span>
-        <span style={{ color: "var(--border)" }}>•</span>
-        <span style={{ fontWeight: 700, color: "var(--newegg-color)" }}>Newegg Canada</span>
-        <span style={{ color: "var(--border)" }}>•</span>
-        <span style={{ fontWeight: 700, color: "#ff9900" }}>Amazon.ca</span>
-      </div>
-
       <style>{`
         .stats-grid {
           grid-template-columns: repeat(4, 1fr);
