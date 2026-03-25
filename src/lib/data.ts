@@ -75,8 +75,11 @@ export interface PriceIndexDay {
 
 export interface PriceIndex {
   generated: string;
+  basketSize?: number;
+  basketDate?: string;
+  overallPctChange?: number;
   overall: PriceIndexDay[];
-  categories: Record<string, PriceIndexDay[]>;
+  categories: Record<string, { trend: PriceIndexDay[]; pctChange: number } | PriceIndexDay[]>;
 }
 
 export function getPriceIndex(): PriceIndex | null {
