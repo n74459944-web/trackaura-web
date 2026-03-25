@@ -2,12 +2,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getStats } from "@/lib/data";
 
-
 export const revalidate = 14400;
 export const metadata: Metadata = {
   title: "About TrackAura — Canadian Electronics Price Tracker",
   description:
-    "TrackAura tracks thousands of electronics prices across Canadian retailers every 4 hours. Learn about our mission, how we work, and why we built this.",
+    "TrackAura tracks thousands of electronics prices across Canadian retailers daily. Learn about our mission, how we work, and why we built this.",
   alternates: { canonical: "https://www.trackaura.com/about" },
 };
 
@@ -48,7 +47,7 @@ export default function AboutPage() {
         }}
       >
         <p style={{ marginBottom: "1.25rem" }}>
-          {"TrackAura is a free price tracking platform built for Canadian shoppers. We monitor electronics prices across major Canadian retailers \u2014 including Canada Computers and Newegg Canada \u2014 so you can see exactly how prices change over time and buy at the right moment."}
+          {"TrackAura is a free price tracking platform built for Canadian shoppers. We monitor electronics prices across major Canadian retailers \u2014 including Canada Computers, Newegg Canada, and Vuugo \u2014 so you can see exactly how prices change over time and buy at the right moment."}
         </p>
 
         <p style={{ marginBottom: "1.25rem" }}>
@@ -58,13 +57,13 @@ export default function AboutPage() {
           </strong>
           {" across "}
           <strong style={{ color: "var(--text-primary)" }}>
-            {stats.categories.length} categories
+            {stats.categories.filter((c: string) => c !== "other").length} categories
           </strong>
           {", with "}
           <strong style={{ color: "var(--text-primary)" }}>
             {stats.totalPricePoints.toLocaleString()} price points
           </strong>
-          {" collected so far. Our scrapers run every 4 hours, 24/7, so the data is always fresh."}
+          {" collected so far. Our scrapers run daily so the data is always fresh."}
         </p>
 
         <h2
@@ -101,13 +100,16 @@ export default function AboutPage() {
             marginTop: "2rem",
           }}
         >
-          How We Make Money
+          The Price Index
         </h2>
 
         <p style={{ marginBottom: "1.25rem" }}>
-          {"TrackAura is free to use. We earn a small commission when you click through to Amazon.ca using our comparison links and make a purchase. " +
-          "This doesn\u2019t affect the prices you see \u2014 it\u2019s how we keep the site running without ads or subscriptions. " +
-          "We\u2019re also working with other retailers to offer the same service."}
+          {"We\u2019re building an independent Canadian electronics price index from raw scraped data \u2014 not estimates or third-party feeds. " +
+          "Our "}
+          <Link href="/trends" className="accent-link">Price Index page</Link>
+          {" tracks how prices are moving across every category we monitor, " +
+          "so you can see whether electronics are getting cheaper or more expensive over time. " +
+          "No one else is doing this for Canada at the consumer level."}
         </p>
 
         <h2
@@ -120,14 +122,13 @@ export default function AboutPage() {
             marginTop: "2rem",
           }}
         >
-          What We Track
+          How We Make Money
         </h2>
 
         <p style={{ marginBottom: "1.25rem" }}>
-          {"We cover the categories that matter most to Canadian tech shoppers: " +
-          "graphics cards, CPUs, RAM, SSDs, monitors, laptops, keyboards, mice, " +
-          "motherboards, power supplies, PC cases, CPU coolers, routers, webcams, " +
-          "speakers, and external storage. We\u2019re always adding more."}
+          {"TrackAura is free to use. We earn a small commission when you click through to Amazon.ca using our comparison links and make a purchase. " +
+          "This doesn\u2019t affect the prices you see \u2014 it\u2019s how we keep the site running without ads or subscriptions. " +
+          "We\u2019re also working with other retailers to offer the same service."}
         </p>
 
         <h2
@@ -170,4 +171,3 @@ export default function AboutPage() {
     </div>
   );
 }
-

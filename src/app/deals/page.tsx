@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
 
-export const revalidate = 14400; // 4 hours, matches scrape cycle
+export const revalidate = 14400;
 
 export const metadata: Metadata = {
   title: "Best Electronics Deals in Canada",
@@ -14,19 +14,53 @@ export const metadata: Metadata = {
   },
 };
 
+// Normalize a product name for deduplication (strip color/variant suffixes)
+function normalizeForDedup(name: string): string {
+  return name
+    .replace(/\s*[-–]\s*(black|white|blue|pink|red|green|grey|gray|silver|purple|beige|navy|orange|cream)\s*$/i, "")
+    .replace(/\s*,\s*(black|white|blue|pink|red|green|grey|gray|silver|purple|beige|navy|orange|cream)\s*$/i, "")
+    .replace(/\(open\s*box\)/i, "")
+    .trim()
+    .toLowerCase();
+}
+
 export default function DealsPage() {
   const allProducts = getAllProducts().filter((p) => p.category !== "other");
 
-  // Only pass actual deals to the client (products with a price drop)
-  // This prevents serializing 18,000+ products into the HTML
   const deals = allProducts
-    .filter((p) => p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice)
+    .filter((p) => {
+      // Must have a real price drop
+      if (!(p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice)) return false;
+
+      // Filter out data errors: max/min ratio > 5x is suspicious
+      if (p.maxPrice > p.minPrice * 5) return false;
+
+      // Filter out tiny drops (less than 2% AND less than $2)
+      const dropPct = (p.maxPrice - p.currentPrice) / p.maxPrice;
+      const dropAbs = p.maxPrice - p.currentPrice;
+      if (dropPct < 0.02 && dropAbs < 2) return false;
+
+      // Must have enough price history to be meaningful
+      if ((p.priceCount || 0) < 2) return false;
+
+      return true;
+    })
     .sort((a, b) => {
       const aDiscount = (a.maxPrice - a.currentPrice) / a.maxPrice;
       const bDiscount = (b.maxPrice - b.currentPrice) / b.maxPrice;
       return bDiscount - aDiscount;
-    })
-    .slice(0, 50);
+    });
+
+  // Deduplicate color variants — keep the cheapest version
+  const seen = new Set<string>();
+  const deduped = deals.filter((p) => {
+    const key = normalizeForDedup(p.name);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const top50 = deduped.slice(0, 50);
 
   return (
     <Suspense
@@ -36,7 +70,7 @@ export default function DealsPage() {
         </div>
       }
     >
-      <DealsClient initialProducts={deals} />
+      <DealsClient initialProducts={top50} />
     </Suspense>
   );
 }

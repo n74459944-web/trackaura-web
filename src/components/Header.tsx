@@ -6,9 +6,9 @@ import SearchBar from "@/components/SearchBar";
 
 const NAV_LINKS = [
   { href: "/deals", label: "Deals", accent: true },
-  { href: "/compare", label: "Compare", accent: false },
-  { href: "/products", label: "Products", accent: false },
   { href: "/trends", label: "Price Index", accent: false },
+  { href: "/products", label: "Products", accent: false },
+  { href: "/brands", label: "Brands", accent: false },
   { href: "/blog", label: "Blog", accent: false },
   { href: "/about", label: "About", accent: false },
 ];
@@ -185,23 +185,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          {/* Extra mobile-only links */}
-          <Link
-            href="/brands"
-            onClick={() => setMenuOpen(false)}
-            style={{
-              display: "block",
-              padding: "0.625rem 0",
-              fontSize: "0.9375rem",
-              fontWeight: 500,
-              color: "var(--text-secondary)",
-              textDecoration: "none",
-              borderBottom: "1px solid var(--border)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            Brands
-          </Link>
           <Link
             href="/changes"
             onClick={() => setMenuOpen(false)}

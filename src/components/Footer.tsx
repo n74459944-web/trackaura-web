@@ -39,7 +39,7 @@ export default function Footer() {
             }}
           >
             Canadian electronics price tracking across 3 retailers.
-            Compare prices and never overpay. Updated every 4 hours.
+            Compare prices and never overpay. Updated daily.
           </p>
         </div>
 

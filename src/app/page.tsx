@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { getAllProducts, getStats } from "@/lib/data";
+import { getAllProducts, getStats, getPriceIndex } from "@/lib/data";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import SearchBar from "@/components/SearchBar";
-import StatsBar from "@/components/StatsBar";
 import ProductCard from "@/components/ProductCard";
 import EmailSignup from "@/components/EmailSignup";
 import fs from "fs";
@@ -24,39 +23,39 @@ interface PriceChange {
   changedAt: string;
 }
 
-function getRecentDrops(): { count24h: number; feed: PriceChange[] } {
+function getRecentDrops(): { feed: PriceChange[] } {
   try {
     const changesPath = path.join(process.cwd(), "public", "data", "changes.json");
     const raw = fs.readFileSync(changesPath, "utf-8");
     const all = JSON.parse(raw) as PriceChange[];
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const drops = all.filter((c) => c.direction === "down");
-    const count24h = drops.filter((c) => new Date(c.changedAt).getTime() > oneDayAgo).length;
-    // Recent feed: last 8 drops regardless of time
-    const feed = drops
+    const drops = all
+      .filter((c) => {
+        if (c.direction !== "down") return false;
+        // Filter out junk drops: must be at least 2% AND $2
+        const pct = c.oldPrice > 0 ? Math.abs((c.newPrice - c.oldPrice) / c.oldPrice) * 100 : 0;
+        const dollars = Math.abs(c.oldPrice - c.newPrice);
+        return pct >= 2 && dollars >= 2;
+      })
       .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime())
-      .slice(0, 8);
-    return { count24h, feed };
+      .slice(0, 6);
+    return { feed: drops };
   } catch {
-    return { count24h: 0, feed: [] };
+    return { feed: [] };
   }
 }
 
 export default function HomePage() {
   const stats = getStats();
   const allProducts = getAllProducts();
-  const { count24h: recentDrops, feed: dropFeed } = getRecentDrops();
+  const { feed: dropFeed } = getRecentDrops();
+  const priceIndex = getPriceIndex();
 
   // ── Category data ──
   const categoryCounts: Record<string, number> = {};
-  const categoryDeals: Record<string, number> = {};
   const categoryAtLowest: Record<string, number> = {};
 
   for (const p of allProducts) {
     categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
-    if (p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice && p.priceCount >= 3) {
-      categoryDeals[p.category] = (categoryDeals[p.category] || 0) + 1;
-    }
     if (p.currentPrice <= p.minPrice && p.priceCount > 1) {
       categoryAtLowest[p.category] = (categoryAtLowest[p.category] || 0) + 1;
     }
@@ -69,15 +68,13 @@ export default function HomePage() {
       key,
       label: CATEGORY_LABELS[key] || key,
       count,
-      deals: categoryDeals[key] || 0,
       atLowest: categoryAtLowest[key] || 0,
       icon: CATEGORY_ICONS[key] || "📦",
     }));
 
   const topCategories = categories.slice(0, 12);
-  const topGuides = categories.slice(0, 6);
 
-  // ── Featured deals: diverse categories, consumer-priced, real savings ──
+  // ── Featured deals ──
   const featured = (() => {
     const SKIP_KEYWORDS = [
       "server", "enterprise", "hpe ", "proliant", "rack mount",
@@ -100,6 +97,7 @@ export default function HomePage() {
         p.currentPrice >= 30 &&
         p.currentPrice <= 3000 &&
         p.priceCount >= 3 &&
+        p.maxPrice <= p.minPrice * 5 && // Filter out data errors
         !shouldSkip(p.name) &&
         hasRealName(p.name)
       )
@@ -110,7 +108,6 @@ export default function HomePage() {
       }))
       .filter((p) => p.dropPct >= 10 && p.dropPct <= 70);
 
-    // Round-robin across categories for diversity
     const byCategory: Record<string, typeof candidates> = {};
     for (const p of candidates) {
       if (!byCategory[p.category]) byCategory[p.category] = [];
@@ -136,23 +133,19 @@ export default function HomePage() {
     return result;
   })();
 
-  // ── Pulse stats ──
-  const totalAtLowest = allProducts.filter(
-    (p) => p.currentPrice <= p.minPrice && p.priceCount > 1
-  ).length;
-  const retailerCount = stats.retailers.length;
+  // ── Price Index one-liner ──
+  const indexChange = priceIndex?.overallPctChange ?? null;
+  const indexDays = priceIndex?.overall?.length ?? 0;
 
   return (
     <div>
       {/* ── Hero ── */}
       <section
         style={{
-          padding: "4rem 1.5rem 3rem",
-          maxWidth: 800,
+          padding: "3.5rem 1.5rem 2rem",
+          maxWidth: 680,
           margin: "0 auto",
           textAlign: "center",
-          position: "relative",
-          zIndex: 10,
         }}
       >
         <h1
@@ -160,55 +153,38 @@ export default function HomePage() {
           style={{
             fontFamily: "'Sora', sans-serif",
             fontWeight: 800,
-            fontSize: "2.5rem",
+            fontSize: "2.25rem",
             lineHeight: 1.15,
-            marginBottom: "1rem",
+            marginBottom: "0.75rem",
           }}
         >
           The Canadian
           <br />
-          <span className="gradient-text">Electronics Price Encyclopedia</span>
+          <span className="gradient-text">Price Encyclopedia</span>
         </h1>
         <p
           className="animate-in animate-delay-1"
           style={{
             color: "var(--text-secondary)",
-            fontSize: "1.0625rem",
+            fontSize: "1rem",
             lineHeight: 1.6,
-            maxWidth: 580,
-            margin: "0 auto 2rem",
+            maxWidth: 480,
+            margin: "0 auto 1.75rem",
           }}
         >
-          {`${stats.totalProducts.toLocaleString()} products across ${categories.length} categories from ${retailerCount} retailers. Price history updated every 4 hours so you can see if that "sale" is actually a deal.`}
+          {stats.totalProducts.toLocaleString() + " electronics products tracked daily across Canadian retailers."}
         </p>
 
-        {/* Search */}
         <div
           className="animate-in animate-delay-2"
-          style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 100 }}
+          style={{ maxWidth: 520, margin: "0 auto", position: "relative", zIndex: 100 }}
         >
           <SearchBar large />
         </div>
-
-        <p
-          className="animate-in animate-delay-3"
-          style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "1rem" }}
-        >
-          {recentDrops > 0 ? `${recentDrops} price drops in the last 24 hours` : "Prices updated every 4 hours"}
-          {totalAtLowest > 0 && ` · ${totalAtLowest} products at their lowest tracked price`}
-        </p>
       </section>
 
-      {/* ── Pulse stats bar ── */}
-      <section
-        className="animate-in animate-delay-4"
-        style={{ maxWidth: 700, margin: "0 auto 1.5rem", padding: "0 1.5rem" }}
-      >
-        <StatsBar stats={{ ...stats, categories: stats.categories.filter((c: string) => c !== "other") }} />
-      </section>
-
-      {/* ── Retailer ticker ── */}
-      <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+      {/* ── Retailer line ── */}
+      <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
         <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", letterSpacing: "0.02em" }}>
           Tracking prices from{" "}
           <span style={{ color: "var(--cc-color, #e63946)", fontWeight: 600 }}>Canada Computers</span>
@@ -219,7 +195,37 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* ── Categories ── */}
+      {/* ── Price Index one-liner ── */}
+      {indexDays >= 2 && indexChange !== null && (
+        <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+          <Link
+            href="/trends"
+            style={{
+              fontSize: "0.8125rem",
+              color: "var(--text-secondary)",
+              textDecoration: "none",
+            }}
+          >
+            {"📈 Price Index: electronics prices are "}
+            <span
+              style={{
+                fontWeight: 700,
+                color: indexChange <= -0.5 ? "var(--accent)" : indexChange >= 0.5 ? "var(--danger, #ff6b6b)" : "var(--text-primary)",
+              }}
+            >
+              {indexChange <= -0.5
+                ? "down " + Math.abs(indexChange).toFixed(1) + "%"
+                : indexChange >= 0.5
+                ? "up " + indexChange.toFixed(1) + "%"
+                : "holding steady"}
+            </span>
+            {" over " + indexDays + " days "}
+            <span style={{ color: "var(--accent)", fontWeight: 600 }}>→</span>
+          </Link>
+        </div>
+      )}
+
+      {/* ── Categories (flat grid, top 12) ── */}
       <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <div
           style={{
@@ -289,7 +295,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Top Deals Spotlight ── */}
+      {/* ── Top Deals ── */}
       {featured.length > 0 && (
         <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
           <div
@@ -425,64 +431,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Buying Guides ── */}
-      <section style={{ maxWidth: 1200, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1rem",
-          }}
-        >
-          <h2
-            style={{
-              fontFamily: "'Sora', sans-serif",
-              fontWeight: 700,
-              fontSize: "1.25rem",
-            }}
-          >
-            Buying Guides
-          </h2>
-          <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
-            {"All guides →"}
-          </Link>
-        </div>
-        <div className="grid-guides">
-          {topGuides.map((cat) => (
-            <Link
-              key={"best-" + cat.key}
-              href={"/best/" + cat.key}
-              className="card"
-              style={{
-                padding: "1rem 1.25rem",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-              }}
-            >
-              <span style={{ fontSize: "1.5rem" }}>{cat.icon}</span>
-              <div>
-                <p
-                  style={{
-                    fontFamily: "'Sora', sans-serif",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {"Best " + cat.label}
-                </p>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                  Data-driven picks & price drops
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {/* ── Email signup ── */}
       <section style={{ maxWidth: 600, margin: "0 auto 3rem", padding: "0 1.5rem" }}>
         <EmailSignup />
@@ -505,14 +453,14 @@ export default function HomePage() {
             marginBottom: "1.5rem",
           }}
         >
-          How TrackAura Works
+          How It Works
         </h2>
         <div className="grid-howitworks">
           {[
             {
               step: "1",
               title: "Prices Get Logged",
-              desc: "Every 4 hours, our system checks prices across Canada Computers, Newegg, and Vuugo.",
+              desc: "Every day, our system checks prices across Canada Computers, Newegg, and Vuugo.",
             },
             {
               step: "2",
