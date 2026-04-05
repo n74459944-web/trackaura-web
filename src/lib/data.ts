@@ -5,6 +5,7 @@ import path from "path";
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
 let _productCache: Product[] | null = null;
+let _lineageCache: LineageFile | null = null;
 
 export function getAllProducts(): Product[] {
   if (_productCache) return _productCache;
@@ -117,4 +118,96 @@ export function formatPrice(price: number): string {
 export function getAmazonSearchUrl(productName: string): string {
   const query = encodeURIComponent(productName);
   return `https://www.amazon.ca/s?k=${query}&tag=trackaura00-20`;
+}
+
+// ---- Lineage ----
+
+interface Generation {
+  name: string;
+  search: string;
+  year: number;
+}
+
+interface LineageLine {
+  line: string;
+  generations: Generation[];
+}
+
+interface LineageFile {
+  gpu: LineageLine[];
+  cpu: LineageLine[];
+}
+
+export interface ResolvedLineage {
+  line: string;
+  previous?: { gen: Generation; product: Product | null };
+  current: { gen: Generation };
+  next?: { gen: Generation; product: Product | null };
+}
+
+function getLineageFile(): LineageFile | null {
+  if (_lineageCache) return _lineageCache;
+  const filePath = path.join(DATA_DIR, "product-lineage.json");
+  if (!fs.existsSync(filePath)) return null;
+  const raw = fs.readFileSync(filePath, "utf-8");
+  _lineageCache = JSON.parse(raw) as LineageFile;
+  return _lineageCache;
+}
+
+/**
+ * Resolve lineage for a product on the server.
+ * Returns at most 2 related products (prev, next) instead of the full catalog.
+ * Uses category fast path — never loads all 6,400 products.
+ */
+export function resolveLineage(product: Product): ResolvedLineage | null {
+  const file = getLineageFile();
+  if (!file) return null;
+
+  const nameLower = product.name.toLowerCase();
+  const lines = [...(file.gpu || []), ...(file.cpu || [])];
+
+  for (const line of lines) {
+    for (let i = 0; i < line.generations.length; i++) {
+      const gen = line.generations[i];
+      if (!nameLower.includes(gen.search)) continue;
+
+      const previousGen = i > 0 ? line.generations[i - 1] : undefined;
+      const nextGen = i < line.generations.length - 1 ? line.generations[i + 1] : undefined;
+
+      // Load only this category — not all products
+      const categoryProducts = getProductsByCategory(product.category);
+
+      const findCheapest = (search: string): Product | null => {
+        const matches = categoryProducts
+          .filter((p) => p.name.toLowerCase().includes(search))
+          .sort((a, b) => a.currentPrice - b.currentPrice);
+        return matches[0] || null;
+      };
+
+      return {
+        line: line.line,
+        previous: previousGen
+          ? { gen: previousGen, product: findCheapest(previousGen.search) }
+          : undefined,
+        current: { gen },
+        next: nextGen
+          ? { gen: nextGen, product: findCheapest(nextGen.search) }
+          : undefined,
+      };
+    }
+  }
+
+  return null;
+}
+
+export function getRelatedProducts(product: Product, limit: number = 6): Product[] {
+  return getProductsByCategory(product.category)
+    .filter((p) => p.id !== product.id && p.currentPrice > 0)
+    .sort((a, b) => {
+      const aAtLowest = a.currentPrice <= a.minPrice && a.priceCount > 1 ? 1 : 0;
+      const bAtLowest = b.currentPrice <= b.minPrice && b.priceCount > 1 ? 1 : 0;
+      if (bAtLowest !== aAtLowest) return bAtLowest - aAtLowest;
+      return b.priceCount - a.priceCount;
+    })
+    .slice(0, limit);
 }

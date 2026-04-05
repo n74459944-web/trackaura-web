@@ -2,9 +2,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  getAllProducts,
   getProductBySlug,
+  getProductsByCategory,
   getPriceHistory,
+  getRelatedProducts,
+  resolveLineage,
 } from "@/lib/data";
 import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
@@ -17,7 +19,8 @@ import PriceCompare from "@/components/PriceCompare";
 import RelatedProducts from "@/components/RelatedProducts";
 import ProductLineage from "@/components/ProductLineage";
 
-export const revalidate = 14400; // 4 hours, matches scrape cycle
+export const revalidate = 14400;
+export const dynamicParams = true;
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -75,7 +78,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!product) return { title: "Product Not Found" };
 
   const title = product.name + " Price History - " + product.retailer;
-  const description = "Track the price of " + product.name + " at " + product.retailer + ". Current price: $" + product.currentPrice.toFixed(2) + " CAD. Lowest: $" + product.minPrice.toFixed(2) + ". Compare across Canadian retailers.";
+  const description =
+    "Track the price of " +
+    product.name +
+    " at " +
+    product.retailer +
+    ". Current price: $" +
+    product.currentPrice.toFixed(2) +
+    " CAD. Lowest: $" +
+    product.minPrice.toFixed(2) +
+    ". Compare across Canadian retailers.";
 
   return {
     title,
@@ -105,149 +117,114 @@ export default async function ProductPage({ params }: PageProps) {
     : 0;
 
   // Cross-retailer comparison: use canonical data (already in product.priceComparison)
-  // Only load all products if we need fuzzy matching OR related products
+  // Only scan category products if we need fuzzy matching
   const hasCanonicalMatch = product.priceComparison && product.priceComparison.length > 0;
-  const allProducts = getAllProducts();
+
+  // Use category fast path — loads ~400 products instead of 6,400
+  const categoryProducts = hasCanonicalMatch ? [] : getProductsByCategory(product.category);
 
   // If canonical match exists, pass empty similar array (PriceCompare will use priceComparison)
   // If no canonical match, find similar products from other retailers as fallback
-  const similar = hasCanonicalMatch ? [] : (() => {
-    const STOP_WORDS = new Set([
-      "the", "and", "for", "with", "from", "that", "this", "your",
-      "desktop", "laptop", "gaming", "computer", "processor", "graphics",
-      "card", "memory", "module", "internal", "external", "solid", "state",
-      "drive", "compatible", "support", "series", "edition", "version",
-      "black", "white", "red", "blue", "green", "grey", "gray", "silver",
-      "gold", "pink", "brown", "orange", "purple",
-    ]);
+  const similar = hasCanonicalMatch
+    ? []
+    : (() => {
+        const STOP_WORDS = new Set([
+          "the", "and", "for", "with", "from", "that", "this", "your",
+          "desktop", "laptop", "gaming", "computer", "processor", "graphics",
+          "card", "memory", "module", "internal", "external", "solid", "state",
+          "drive", "compatible", "support", "series", "edition", "version",
+          "black", "white", "red", "blue", "green", "grey", "gray", "silver",
+          "gold", "pink", "brown", "orange", "purple",
+        ]);
 
-    function extractKeyTokens(name: string): string[] {
-      return name.toLowerCase().replace(/[^a-z0-9\s.-]/g, " ").split(/\s+/)
-        .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
-    }
+        function extractKeyTokens(name: string): string[] {
+          return name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s.-]/g, " ")
+            .split(/\s+/)
+            .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+        }
 
-    function extractModelTokens(name: string): string[] {
-      const matches = name.match(/[a-zA-Z]*\d+[a-zA-Z0-9\-.]*/g) || [];
-      return matches.map((m) => m.toLowerCase()).filter((m) => m.length >= 2);
-    }
+        function extractModelTokens(name: string): string[] {
+          const matches = name.match(/[a-zA-Z]*\d+[a-zA-Z0-9\-.]*/g) || [];
+          return matches.map((m) => m.toLowerCase()).filter((m) => m.length >= 2);
+        }
 
-    function computeMatchScore(source: Product, candidate: Product): number {
-      if (candidate.category !== source.category) return 0;
-      const sourceIsLaptop = source.name.toLowerCase().includes("laptop") || source.name.toLowerCase().includes("notebook");
-      const candidateIsLaptop = candidate.name.toLowerCase().includes("laptop") || candidate.name.toLowerCase().includes("notebook");
-      if (sourceIsLaptop !== candidateIsLaptop) return 0;
-      if (candidate.retailer === source.retailer) return 0;
-      if (candidate.id === source.id) return 0;
+        function computeMatchScore(source: Product, candidate: Product): number {
+          if (candidate.category !== source.category) return 0;
+          const sourceIsLaptop =
+            source.name.toLowerCase().includes("laptop") ||
+            source.name.toLowerCase().includes("notebook");
+          const candidateIsLaptop =
+            candidate.name.toLowerCase().includes("laptop") ||
+            candidate.name.toLowerCase().includes("notebook");
+          if (sourceIsLaptop !== candidateIsLaptop) return 0;
+          if (candidate.retailer === source.retailer) return 0;
+          if (candidate.id === source.id) return 0;
 
-      const sourceBrand = extractBrand(source.name);
-      const candidateBrand = extractBrand(candidate.name);
-      if (sourceBrand && candidateBrand && sourceBrand !== candidateBrand) return 0;
+          const sourceBrand = extractBrand(source.name);
+          const candidateBrand = extractBrand(candidate.name);
+          if (sourceBrand && candidateBrand && sourceBrand !== candidateBrand) return 0;
 
-      let score = 0;
-      if (sourceBrand && candidateBrand && sourceBrand === candidateBrand) score += 15;
+          let score = 0;
+          if (sourceBrand && candidateBrand && sourceBrand === candidateBrand) score += 15;
 
-      const sourceModels = extractModelTokens(source.name);
-      const candidateModels = extractModelTokens(candidate.name);
-      let modelMatches = 0;
-      for (const m of sourceModels) {
-        if (candidateModels.some((cm) => cm === m || cm.includes(m) || m.includes(cm))) modelMatches++;
-      }
-      score += modelMatches * 10;
+          const sourceModels = extractModelTokens(source.name);
+          const candidateModels = extractModelTokens(candidate.name);
+          let modelMatches = 0;
+          for (const m of sourceModels) {
+            if (candidateModels.some((cm) => cm === m || cm.includes(m) || m.includes(cm)))
+              modelMatches++;
+          }
+          score += modelMatches * 10;
 
-      const sourceTokens = extractKeyTokens(source.name);
-      const candidateTokens = new Set(extractKeyTokens(candidate.name));
-      let wordMatches = 0;
-      for (const token of sourceTokens) {
-        if (candidateTokens.has(token)) wordMatches++;
-      }
-      const overlapRatio = sourceTokens.length > 0 ? wordMatches / sourceTokens.length : 0;
-      score += overlapRatio * 20;
+          const sourceTokens = extractKeyTokens(source.name);
+          const candidateTokens = extractKeyTokens(candidate.name);
+          let wordMatches = 0;
+          for (const w of sourceTokens) {
+            if (candidateTokens.includes(w)) wordMatches++;
+          }
+          score += wordMatches * 3;
 
-      const priceDiff = Math.abs(source.currentPrice - candidate.currentPrice);
-      const avgPrice = (source.currentPrice + candidate.currentPrice) / 2;
-      if (avgPrice > 0) {
-        const priceRatio = priceDiff / avgPrice;
-        if (priceRatio > 0.5) score -= 10;
-        if (priceRatio > 1.0) score -= 20;
-      }
+          return score;
+        }
 
-      return score;
-    }
+        return categoryProducts
+          .filter((p) => p.retailer !== product.retailer)
+          .map((p) => ({ product: p, score: computeMatchScore(product, p) }))
+          .filter((m) => m.score >= 20)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5)
+          .map((m) => m.product);
+      })();
 
-    // Only search within same category for efficiency
-    const sameCat = allProducts.filter((p) => p.category === product.category && p.retailer !== product.retailer);
-    return sameCat
-      .map((p) => ({ product: p, score: computeMatchScore(product, p) }))
-      .filter((s) => s.score >= 25)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
-      .map((s) => s.product);
-  })();
+  // Related products from the same category — uses category fast path
+  const related = getRelatedProducts(product, 6);
 
-  // Related products: same category, prefer same brand and similar price
-  const related = (() => {
-    const sameCat = allProducts.filter(
-      (p) => p.id !== product.id && p.category === product.category
-    );
-    const getBrand = (name: string) => {
-      const words = name.split(/\s+/);
-      if (words[0] && words[0].length <= 3 && words[1]) return (words[0] + " " + words[1]).toLowerCase();
-      return (words[0] || "").toLowerCase();
-    };
-    const productBrand = getBrand(product.name);
-    const scored = sameCat.map((p) => {
-      let score = 0;
-      if (getBrand(p.name) === productBrand) score += 20;
-      const priceDiff = Math.abs(p.currentPrice - product.currentPrice);
-      const avgPrice = (p.currentPrice + product.currentPrice) / 2;
-      if (avgPrice > 0) {
-        const ratio = priceDiff / avgPrice;
-        if (ratio < 0.2) score += 10;
-        else if (ratio < 0.5) score += 5;
-      }
-      if (p.minPrice < p.maxPrice) score += 3;
-      if (p.retailer !== product.retailer) score += 5;
-      return { product: p, score };
-    });
-    scored.sort((a, b) => b.score - a.score);
-    const result: typeof allProducts = [];
-    let sameBrandCount = 0;
-    for (const s of scored) {
-      if (result.length >= 6) break;
-      const isSameBrand = getBrand(s.product.name) === productBrand;
-      if (isSameBrand && sameBrandCount >= 3) continue;
-      result.push(s.product);
-      if (isSameBrand) sameBrandCount++;
-    }
-    return result;
-  })();
+  // Lineage resolved server-side — returns at most 2 products, not 6,400
+  const lineage = resolveLineage(product);
 
   const retailerUrl = getRetailerAffiliateUrl(product);
+  const catLabel = CATEGORY_LABELS[product.category] || product.category;
+  const catIcon = CATEGORY_ICONS[product.category] || "\uD83D\uDCE6";
 
-  // Extract brand for structured data
-  const productBrand = extractBrand(product.name);
-
+  // Structured data for SEO
   const structuredData = [
     {
       "@context": "https://schema.org",
       "@type": "Product",
       name: product.name,
-      url: "https://www.trackaura.com/product/" + product.slug,
-      description: "Price tracking for " + product.name + " at " + product.retailer,
-      ...(productBrand ? { brand: { "@type": "Brand", name: productBrand.charAt(0).toUpperCase() + productBrand.slice(1) } } : {}),
-      ...(product.mpn ? { mpn: product.mpn } : {}),
-      ...(product.upc ? { gtin12: product.upc } : {}),
+      image: product.imageUrl || undefined,
+      description: product.name + " — price tracked at " + product.retailer,
+      brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+      ...(product.upc ? { gtin13: product.upc } : {}),
       offers: {
         "@type": "Offer",
-        price: product.currentPrice,
+        url: "https://www.trackaura.com/product/" + product.slug,
         priceCurrency: "CAD",
+        price: product.currentPrice.toFixed(2),
         availability: "https://schema.org/InStock",
-        url: product.url,
-        seller: {
-          "@type": "Organization",
-          name: product.retailer,
-        },
-        priceValidUntil: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        seller: { "@type": "Organization", name: product.retailer },
       },
     },
     {
@@ -256,7 +233,12 @@ export default async function ProductPage({ params }: PageProps) {
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: "https://www.trackaura.com" },
         { "@type": "ListItem", position: 2, name: "Products", item: "https://www.trackaura.com/products" },
-        { "@type": "ListItem", position: 3, name: CATEGORY_LABELS[product.category] || product.category, item: "https://www.trackaura.com//category/${product.category}" + product.category },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: catLabel,
+          item: "https://www.trackaura.com/category/" + product.category,
+        },
         { "@type": "ListItem", position: 4, name: product.name },
       ],
     },
@@ -264,14 +246,29 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "2rem 1.5rem" }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
 
-      <nav style={{ display: "flex", gap: "0.5rem", fontSize: "0.8125rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <Link href="/" className="accent-link">Home</Link>
+      <nav
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          fontSize: "0.8125rem",
+          marginBottom: "1.5rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <Link href="/" className="accent-link">
+          Home
+        </Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
-        <Link href="/products" className="accent-link">Products</Link>
+        <Link href="/products" className="accent-link">
+          Products
+        </Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
-        <Link href={"/category/${product.category}" + product.category} className="accent-link">
+        <Link href={"/category/" + product.category} className="accent-link">
           {CATEGORY_LABELS[product.category] || product.category}
         </Link>
         <span style={{ color: "var(--text-secondary)" }}>/</span>
@@ -280,106 +277,297 @@ export default async function ProductPage({ params }: PageProps) {
         </span>
       </nav>
 
-      <ProductInfo product={product} />    
+      <ProductInfo product={product} />
       <div className="card" style={{ padding: "2rem", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "1rem",
+          }}
+        >
           <div style={{ flex: 1, minWidth: 280 }}>
-            <span className={product.retailer === "Canada Computers" ? "badge-cc" : "badge-newegg"} style={{ padding: "0.25rem 0.625rem", borderRadius: 999, fontSize: "0.75rem", fontWeight: 600, display: "inline-block", marginBottom: "0.75rem" }}>
+            <span
+              className={product.retailer === "Canada Computers" ? "badge-cc" : "badge-newegg"}
+              style={{
+                padding: "0.25rem 0.625rem",
+                borderRadius: 999,
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                display: "inline-block",
+                marginBottom: "0.75rem",
+              }}
+            >
               {product.retailer}
             </span>
 
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.5rem", lineHeight: 1.3, marginBottom: "1rem" }}>
+            <h1
+              style={{
+                fontFamily: "'Sora', sans-serif",
+                fontWeight: 700,
+                fontSize: "1.5rem",
+                lineHeight: 1.3,
+                marginBottom: "1rem",
+              }}
+            >
               {product.name}
             </h1>
 
-            <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
-              <span className="price-tag" style={{ fontSize: "2rem" }}>{formatPrice(product.currentPrice)}</span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: "0.75rem",
+                marginBottom: "0.5rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <span className="price-tag" style={{ fontSize: "2rem" }}>
+                {formatPrice(product.currentPrice)}
+              </span>
               <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>CAD</span>
               {hasRange && discountPercent > 0 && (
-                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--accent)", background: "var(--accent-glow)", padding: "0.125rem 0.5rem", borderRadius: 4 }}>
+                <span
+                  style={{
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    color: "var(--accent)",
+                    background: "var(--accent-glow)",
+                    padding: "0.125rem 0.5rem",
+                    borderRadius: 4,
+                  }}
+                >
                   {discountPercent}% below high
                 </span>
               )}
             </div>
 
             {isAtLowest && (
-              <p style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600, marginBottom: "0.75rem" }}>
+              <p
+                style={{
+                  fontSize: "0.8125rem",
+                  color: "var(--accent)",
+                  fontWeight: 600,
+                  marginBottom: "0.75rem",
+                }}
+              >
                 {"\u25CF Currently at the lowest tracked price"}
               </p>
             )}
 
             {/* Deal quality indicator based on price vs average */}
-            {!isAtLowest && product.priceCount >= 5 && (() => {
-              const avg = (product.minPrice + product.maxPrice) / 2;
-              const pctFromAvg = ((product.currentPrice - avg) / avg) * 100;
-              if (pctFromAvg < -15) return (
-                <p style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600, marginBottom: "0.75rem" }}>
-                  {"🟢 Great price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
-                </p>
-              );
-              if (pctFromAvg < -5) return (
-                <p style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600, marginBottom: "0.75rem" }}>
-                  {"🟢 Good price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
-                </p>
-              );
-              if (pctFromAvg > 15) return (
-                <p style={{ fontSize: "0.8125rem", color: "var(--danger)", fontWeight: 600, marginBottom: "0.75rem" }}>
-                  {"🔴 Above average — consider waiting"}
-                </p>
-              );
-              if (pctFromAvg > 5) return (
-                <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600, marginBottom: "0.75rem" }}>
-                  {"🟡 Fair price — close to average"}
-                </p>
-              );
-              return null;
-            })()}
+            {!isAtLowest &&
+              product.priceCount >= 5 &&
+              (() => {
+                const avg = (product.minPrice + product.maxPrice) / 2;
+                const pctFromAvg = ((product.currentPrice - avg) / avg) * 100;
+                if (pctFromAvg < -15)
+                  return (
+                    <p
+                      style={{
+                        fontSize: "0.8125rem",
+                        color: "var(--accent)",
+                        fontWeight: 600,
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      {"🟢 Great price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
+                    </p>
+                  );
+                if (pctFromAvg < -5)
+                  return (
+                    <p
+                      style={{
+                        fontSize: "0.8125rem",
+                        color: "var(--accent)",
+                        fontWeight: 600,
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      {"🟢 Good price — " + Math.abs(Math.round(pctFromAvg)) + "% below average"}
+                    </p>
+                  );
+                if (pctFromAvg > 15)
+                  return (
+                    <p
+                      style={{
+                        fontSize: "0.8125rem",
+                        color: "var(--danger)",
+                        fontWeight: 600,
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      {"🔴 Above average — consider waiting"}
+                    </p>
+                  );
+                if (pctFromAvg > 5)
+                  return (
+                    <p
+                      style={{
+                        fontSize: "0.8125rem",
+                        color: "var(--text-secondary)",
+                        fontWeight: 600,
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      {"🟡 Fair price — close to average"}
+                    </p>
+                  );
+                return null;
+              })()}
 
             {hasRange && (
-              <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "1rem", flexWrap: "wrap" }}>
-                <span>Low: <strong style={{ color: "var(--accent)" }}>{formatPrice(product.minPrice)}</strong></span>
-                <span>High: <strong style={{ color: "var(--danger)" }}>{formatPrice(product.maxPrice)}</strong></span>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1.5rem",
+                  fontSize: "0.8125rem",
+                  color: "var(--text-secondary)",
+                  marginBottom: "1rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>
+                  Low:{" "}
+                  <strong style={{ color: "var(--accent)" }}>{formatPrice(product.minPrice)}</strong>
+                </span>
+                <span>
+                  High:{" "}
+                  <strong style={{ color: "var(--danger)" }}>{formatPrice(product.maxPrice)}</strong>
+                </span>
                 <span>{product.priceCount} price points</span>
               </div>
             )}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180, width: "100%", maxWidth: 220 }}>
-            <ClickTracker href={retailerUrl} event={product.retailer === "Newegg Canada" ? "affiliate_click" : "retailer_click"} label={product.name} retailer={product.retailer} category={product.category} price={product.currentPrice} className="btn-primary" style={{ textAlign: "center", textDecoration: "none", display: "block" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+              minWidth: 180,
+              width: "100%",
+              maxWidth: 220,
+            }}
+          >
+            <ClickTracker
+              href={retailerUrl}
+              event={product.retailer === "Newegg Canada" ? "affiliate_click" : "retailer_click"}
+              label={product.name}
+              retailer={product.retailer}
+              category={product.category}
+              price={product.currentPrice}
+              className="btn-primary"
+              style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+            >
               {"View at " + product.retailer}
             </ClickTracker>
-            <ClickTracker href={getAmazonSearchUrl(product.name)} event="affiliate_click" label={product.name} retailer="Amazon" category={product.category} price={product.currentPrice} className="btn-amazon" style={{ textAlign: "center", textDecoration: "none", display: "block" }} rel="nofollow">
+            <ClickTracker
+              href={getAmazonSearchUrl(product.name)}
+              event="affiliate_click"
+              label={product.name}
+              retailer="Amazon"
+              category={product.category}
+              price={product.currentPrice}
+              className="btn-amazon"
+              style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+              rel="nofollow"
+            >
               Compare on Amazon
             </ClickTracker>
           </div>
 
-          <PriceAlert productSlug={product.slug} productName={product.name} currentPrice={product.currentPrice} retailer={product.retailer} />
+          <PriceAlert
+            productSlug={product.slug}
+            productName={product.name}
+            currentPrice={product.currentPrice}
+            retailer={product.retailer}
+          />
         </div>
       </div>
 
       <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "1rem", marginBottom: "1rem" }}>Price History</h2>
-        <PriceChart data={history} currentPrice={product.currentPrice} minPrice={product.minPrice} maxPrice={product.maxPrice} />
-        <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.75rem", textAlign: "center" }}>
-          {"Tracking since " + new Date(product.firstSeen).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" }) + " \u00B7 Last updated " + new Date(product.lastUpdated).toLocaleDateString("en-CA", { month: "long", day: "numeric", year: "numeric" })}
+        <h2
+          style={{
+            fontFamily: "'Sora', sans-serif",
+            fontWeight: 600,
+            fontSize: "1rem",
+            marginBottom: "1rem",
+          }}
+        >
+          Price History
+        </h2>
+        <PriceChart
+          data={history}
+          currentPrice={product.currentPrice}
+          minPrice={product.minPrice}
+          maxPrice={product.maxPrice}
+        />
+        <p
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--text-secondary)",
+            marginTop: "0.75rem",
+            textAlign: "center",
+          }}
+        >
+          {"Tracking since " +
+            new Date(product.firstSeen).toLocaleDateString("en-CA", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }) +
+            " \u00B7 Last updated " +
+            new Date(product.lastUpdated).toLocaleDateString("en-CA", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
         </p>
       </div>
 
       <PriceCompare product={product} similar={similar} />
-      <ProductLineage product={product} allProducts={allProducts} />
+      <ProductLineage product={product} lineage={lineage} />
       <RelatedProducts products={related} />
 
       {/* Link to buying guide */}
-      <div className="card" style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+      <div
+        className="card"
+        style={{
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1.5rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+        }}
+      >
         <div>
-          <p style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", marginBottom: "0.25rem" }}>
-            {(CATEGORY_ICONS[product.category] || "\uD83D\uDCE6") + " Best " + (CATEGORY_LABELS[product.category] || product.category) + " Deals"}
+          <p
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              marginBottom: "0.25rem",
+            }}
+          >
+            {(CATEGORY_ICONS[product.category] || "\uD83D\uDCE6") +
+              " Best " +
+              (CATEGORY_LABELS[product.category] || product.category) +
+              " Deals"}
           </p>
           <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
             {"See our full buying guide with budget, mid-range, and high-end picks."}
           </p>
         </div>
-        <Link href={"/best/" + product.category} className="btn-secondary" style={{ textDecoration: "none", fontSize: "0.8125rem", whiteSpace: "nowrap" }}>
+        <Link
+          href={"/best/" + product.category}
+          className="btn-secondary"
+          style={{ textDecoration: "none", fontSize: "0.8125rem", whiteSpace: "nowrap" }}
+        >
           View Buying Guide
         </Link>
       </div>
@@ -387,16 +575,28 @@ export default async function ProductPage({ params }: PageProps) {
       {/* Related categories */}
       {(RELATED_CATEGORIES[product.category] || []).length > 0 && (
         <div className="card" style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: "0.9375rem", marginBottom: "0.75rem" }}>
+          <h2
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              marginBottom: "0.75rem",
+            }}
+          >
             Related Categories
           </h2>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             {(RELATED_CATEGORIES[product.category] || []).map((cat) => (
               <Link
                 key={cat}
-                href={"/category/${product.category}" + cat}
+                href={"/category/" + cat}
                 className="filter-pill"
-                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.375rem" }}
+                style={{
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
+                }}
               >
                 <span>{CATEGORY_ICONS[cat] || "\uD83D\uDCE6"}</span>
                 <span>{CATEGORY_LABELS[cat] || cat}</span>
@@ -406,8 +606,17 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
       )}
 
-      <div style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6 }}>
-        Prices are in Canadian dollars (CAD) and are scraped every 4 hours. Amazon and Newegg links may earn TrackAura a commission.
+      <div
+        style={{
+          padding: "1rem",
+          fontSize: "0.75rem",
+          color: "var(--text-secondary)",
+          textAlign: "center",
+          lineHeight: 1.6,
+        }}
+      >
+        Prices are in Canadian dollars (CAD) and are scraped daily. Amazon and Newegg links may earn
+        TrackAura a commission.
       </div>
     </div>
   );

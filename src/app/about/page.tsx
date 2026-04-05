@@ -63,7 +63,7 @@ export default function AboutPage() {
           <strong style={{ color: "var(--text-primary)" }}>
             {stats.totalPricePoints.toLocaleString()} price points
           </strong>
-          {" collected so far. Our scrapers run daily so the data is always fresh."}
+          {" collected so far. Our scrapers run daily, 24/7, so the data is always fresh."}
         </p>
 
         <h2
