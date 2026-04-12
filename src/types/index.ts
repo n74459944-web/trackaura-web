@@ -44,8 +44,40 @@ export interface SiteStats {
   productsByCategory: Record<string, number>;
 }
 
-export type Category = "headphones" | "gpus" | "ssds" | "monitors" | "keyboards" | "mice" | "laptops" | "ram" | "cpus" | "power-supplies" | "cases" | "motherboards" | "coolers" | "routers" | "webcams" | "speakers" | "external-storage" | "hard-drives" | "tvs" | "tablets" | "printers" | "gaming-consoles" | "smart-home" | "ups-power" | "network-switches" | "case-fans" | "desktops" | "nas" | "other";
-export type Retailer = "Canada Computers" | "Newegg Canada";
+export type Category =
+  | "headphones"
+  | "gpus"
+  | "ssds"
+  | "monitors"
+  | "keyboards"
+  | "mice"
+  | "laptops"
+  | "ram"
+  | "cpus"
+  | "power-supplies"
+  | "cases"
+  | "motherboards"
+  | "coolers"
+  | "routers"
+  | "webcams"
+  | "speakers"
+  | "external-storage"
+  | "hard-drives"
+  | "tvs"
+  | "tablets"
+  | "printers"
+  | "gaming-consoles"
+  | "smart-home"
+  | "ups-power"
+  | "network-switches"
+  | "case-fans"
+  | "desktops"
+  | "nas"
+  | "accessories"
+  | "controllers"
+  | "other";
+
+export type Retailer = "Canada Computers" | "Newegg Canada" | "Vuugo";
 
 export const CATEGORY_LABELS: Record<string, string> = {
   headphones: "Headphones",
@@ -76,6 +108,8 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "case-fans": "Case Fans",
   desktops: "Desktop PCs",
   nas: "NAS",
+  accessories: "Accessories",
+  controllers: "Game Controllers",
   other: "Other",
 };
 
@@ -108,12 +142,15 @@ export const CATEGORY_ICONS: Record<string, string> = {
   "case-fans": "🌀",
   desktops: "🖥️",
   nas: "🗄️",
+  accessories: "🧩",
+  controllers: "🕹️",
   other: "📦",
 };
 
 export const RETAILER_COLORS: Record<string, string> = {
   "Canada Computers": "#e63946",
   "Newegg Canada": "#f77f00",
+  "Vuugo": "#2a9d8f",
 };
 
 export const AMAZON_AFFILIATE_TAG = "trackaura00-20";

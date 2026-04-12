@@ -65,13 +65,15 @@ const RELATED_CATEGORIES: Record<string, string[]> = {
   tvs: ["monitors", "speakers", "gaming-consoles"],
   tablets: ["laptops", "keyboards", "headphones"],
   printers: ["monitors", "external-storage"],
-  "gaming-consoles": ["tvs", "headphones", "keyboards", "mice"],
+  "gaming-consoles": ["controllers", "tvs", "headphones", "keyboards", "mice"],
   "smart-home": ["routers", "speakers"],
   "ups-power": ["power-supplies", "desktops"],
   "network-switches": ["routers"],
   "case-fans": ["coolers", "cases"],
-  desktops: ["monitors", "keyboards", "mice"],
-  nas: ["hard-drives", "ssds", "external-storage"],
+  "desktops": ["monitors", "keyboards", "mice"],
+  "nas": ["hard-drives", "ssds", "external-storage"],
+  "accessories": ["keyboards", "mice", "headphones", "cases"],
+  "controllers": ["gaming-consoles", "headphones", "keyboards"],
 };
 
 // ── Price changes for this category ──
