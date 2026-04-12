@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getAllProducts } from "@/lib/data";
 
-export const revalidate = 14400; // 4 hours, matches scrape cycle
+export const dynamic = "force-dynamic";
+
 
 export const metadata: Metadata = {
   title: "All Brands - Canadian Electronics Price Tracker",

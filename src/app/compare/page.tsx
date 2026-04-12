@@ -4,7 +4,8 @@ import { getAllProducts } from "@/lib/data";
 import { CATEGORY_LABELS, CATEGORY_ICONS, RETAILER_COLORS } from "@/types";
 import type { Product } from "@/types";
 
-export const revalidate = 14400; // 4 hours, matches scrape cycle
+export const dynamic = "force-dynamic";
+
 
 export const metadata: Metadata = {
   title: "Compare Prices Across Canadian Retailers | TrackAura",

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { getAllProducts } from "@/lib/data";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 
-export const revalidate = 14400;
+export const dynamic = "force-dynamic";
+
 
 export const metadata: Metadata = {
   title: "All Categories — TrackAura Canadian Electronics Price Tracker",
