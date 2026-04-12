@@ -15,10 +15,29 @@ let _lineageCache: LineageFile | null = null;
 
 const rowToProduct = (row: any): Product => JSON.parse(row.data as string) as Product;
 
+// Chunked fetch helper — Turso's mem_hrana_response cap trips on large result sets.
+// Caller's SQL must NOT include LIMIT/OFFSET; this helper appends them.
+async function fetchChunked(sql: string, baseArgs: unknown[] = []): Promise<Product[]> {
+  const all: Product[] = [];
+  const pageSize = 1000;
+  let offset = 0;
+
+  while (true) {
+    const res = await db.execute({
+      sql: `${sql} LIMIT ? OFFSET ?`,
+      args: [...baseArgs, pageSize, offset] as never,
+    });
+    const rows = res.rows.map(rowToProduct);
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 export async function getAllProducts(): Promise<Product[]> {
   if (_allProductsCache) return _allProductsCache;
-  const res = await db.execute("SELECT data FROM products");
-  _allProductsCache = res.rows.map(rowToProduct);
+  _allProductsCache = await fetchChunked("SELECT data FROM products ORDER BY rowid");
   return _allProductsCache;
 }
 
@@ -28,13 +47,11 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 export async function getProductsByCategory(category: string): Promise<Product[]> {
-  const res = await db.execute({ sql: "SELECT data FROM products WHERE category = ?", args: [category] });
-  return res.rows.map(rowToProduct);
+  return fetchChunked("SELECT data FROM products WHERE category = ? ORDER BY rowid", [category]);
 }
 
 export async function getProductsByRetailer(retailer: string): Promise<Product[]> {
-  const res = await db.execute({ sql: "SELECT data FROM products WHERE retailer = ?", args: [retailer] });
-  return res.rows.map(rowToProduct);
+  return fetchChunked("SELECT data FROM products WHERE retailer = ? ORDER BY rowid", [retailer]);
 }
 
 export async function getPriceHistory(productId: number): Promise<PricePoint[]> {
