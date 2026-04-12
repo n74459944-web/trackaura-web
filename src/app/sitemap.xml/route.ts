@@ -10,7 +10,7 @@ const BASE_URL = "https://www.trackaura.com";
 const PRODUCTS_PER_SITEMAP = 1000;
 
 export async function GET() {
-  const products = getAllProducts();
+  const products = await getAllProducts();
   const productChunkCount = Math.ceil(products.length / PRODUCTS_PER_SITEMAP);
 
   // Build list of child sitemap URLs.

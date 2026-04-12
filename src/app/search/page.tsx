@@ -25,10 +25,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const { q } = await searchParams;
   const query = (q || "").trim();
 
-  let results: ReturnType<typeof getAllProducts> = [];
+  let results: Awaited<ReturnType<typeof getAllProducts>> = [];
   if (query.length >= 2) {
     const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
-    const allProducts = getAllProducts();
+    const allProducts = await getAllProducts();
     results = allProducts
       .filter((p) => {
         const name = p.name.toLowerCase();

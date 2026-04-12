@@ -11,7 +11,7 @@ type PageProps = { params: Promise<{ mpn: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { mpn } = await params;
   const decoded = decodeURIComponent(mpn).toUpperCase();
-  const allProducts = getAllProducts();
+  const allProducts = await getAllProducts();
   const matches = allProducts.filter((p) => p.mpn && p.mpn.toUpperCase() === decoded);
   const product = matches[0];
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function MpnPage({ params }: PageProps) {
   const { mpn } = await params;
   const decoded = decodeURIComponent(mpn).toUpperCase();
-  const allProducts = getAllProducts();
+  const allProducts = await getAllProducts();
 
   // Find all products with this MPN
   const matches = allProducts.filter((p) => p.mpn && p.mpn.toUpperCase() === decoded);

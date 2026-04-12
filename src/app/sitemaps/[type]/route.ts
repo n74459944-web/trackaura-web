@@ -57,9 +57,9 @@ function entriesToXml(entries: SitemapEntry[]): string {
   );
 }
 
-function buildStaticSitemap(): SitemapEntry[] {
+async function buildStaticSitemap(): Promise<SitemapEntry[]> {
   const today = new Date().toISOString().split("T")[0];
-  const products = getAllProducts();
+  const products = await getAllProducts();
 
   const staticPages: SitemapEntry[] = [
     { url: BASE_URL, lastmod: today, changefreq: "daily", priority: 1.0 },
@@ -132,8 +132,8 @@ function buildStaticSitemap(): SitemapEntry[] {
   return [...staticPages, ...categoryPages, ...bestPages, ...brandPages, ...blogPages];
 }
 
-function buildProductSitemap(chunkIndex: number): SitemapEntry[] {
-  const products = getAllProducts();
+async function buildProductSitemap(chunkIndex: number): Promise<SitemapEntry[]> {
+  const products = await getAllProducts();
   const start = chunkIndex * PRODUCTS_PER_SITEMAP;
   const end = start + PRODUCTS_PER_SITEMAP;
   const chunk = products.slice(start, end);
@@ -158,14 +158,14 @@ export async function GET(
   let entries: SitemapEntry[];
 
   if (typeName === "static") {
-    entries = buildStaticSitemap();
+    entries = await buildStaticSitemap();
   } else if (typeName.startsWith("products-")) {
     const indexStr = typeName.replace("products-", "");
     const index = parseInt(indexStr, 10);
     if (isNaN(index) || index < 0) {
       return new NextResponse("Not found", { status: 404 });
     }
-    entries = buildProductSitemap(index);
+    entries = await buildProductSitemap(index);
     if (entries.length === 0) {
       return new NextResponse("Not found", { status: 404 });
     }

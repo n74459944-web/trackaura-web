@@ -10,8 +10,8 @@ function extractBrand(name: string): string {
   return words[0] || "";
 }
 
-function getBrandData() {
-  const products = getAllProducts();
+async function getBrandData() {
+  const products = await getAllProducts();
   const brands: Record<string, typeof products> = {};
 
   for (const p of products) {
@@ -33,8 +33,8 @@ function brandSlug(brand: string): string {
   return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-export function generateStaticParams() {
-  const brands = getBrandData();
+export async function generateStaticParams() {
+  const brands = await getBrandData();
   return Object.keys(brands).map((brand) => ({ brand: brandSlug(brand) }));
 }
 
@@ -42,7 +42,7 @@ type PageProps = { params: Promise<{ brand: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { brand: slug } = await params;
-  const brands = getBrandData();
+  const brands = await getBrandData();
   const brandName = Object.keys(brands).find((b) => brandSlug(b) === slug);
   if (!brandName) return { title: "Brand Not Found" };
 
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BrandPage({ params }: PageProps) {
   const { brand: slug } = await params;
-  const brands = getBrandData();
+  const brands = await getBrandData();
   const brandName = Object.keys(brands).find((b) => brandSlug(b) === slug);
   if (!brandName) notFound();
 

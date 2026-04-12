@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://www.trackaura.com/categories" },
 };
 
-export default function CategoriesPage() {
-  const allProducts = getAllProducts();
+export default async function CategoriesPage() {
+  const allProducts = await getAllProducts();
 
   const categoryCounts: Record<string, number> = {};
   const categoryAtLowest: Record<string, number> = {};

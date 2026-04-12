@@ -80,7 +80,7 @@ function median(nums: number[]): number {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Product Not Found" };
 
   const title = product.name + " Price History - " + product.retailer;
@@ -107,10 +107,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const history = getPriceHistory(product.id);
+  const history = await getPriceHistory(product.id);
   const isAtLowest = product.currentPrice <= product.minPrice && product.priceCount > 1;
   const hasRange = product.minPrice < product.maxPrice;
 
@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: PageProps) {
     : null;
 
   const hasCanonicalMatch = product.priceComparison && product.priceComparison.length > 0;
-  const categoryProducts = hasCanonicalMatch ? [] : getProductsByCategory(product.category);
+  const categoryProducts = hasCanonicalMatch ? [] : await getProductsByCategory(product.category);
 
   const similar = hasCanonicalMatch
     ? []
@@ -185,8 +185,8 @@ export default async function ProductPage({ params }: PageProps) {
           .map((m) => m.product);
       })();
 
-  const related = getRelatedProducts(product, 6);
-  const lineage = resolveLineage(product);
+  const related = await getRelatedProducts(product, 6);
+  const lineage = await resolveLineage(product);
   const retailerUrl = getRetailerAffiliateUrl(product);
   const catLabel = CATEGORY_LABELS[product.category] || product.category;
   const catIcon = CATEGORY_ICONS[product.category] || "📦";

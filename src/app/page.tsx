@@ -44,11 +44,11 @@ function getRecentDrops(): { feed: PriceChange[] } {
   }
 }
 
-export default function HomePage() {
-  const stats = getStats();
-  const allProducts = getAllProducts();
+export default async function HomePage() {
+  const stats = await getStats();
+  const allProducts = await getAllProducts();
   const { feed: dropFeed } = getRecentDrops();
-  const priceIndex = getPriceIndex();
+  const priceIndex = await getPriceIndex();
 
   // ── Category data ──
   const categoryCounts: Record<string, number> = {};

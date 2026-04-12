@@ -24,8 +24,8 @@ function normalizeForDedup(name: string): string {
     .toLowerCase();
 }
 
-export default function DealsPage() {
-  const allProducts = getAllProducts().filter((p) => p.category !== "other");
+export default async function DealsPage() {
+  const allProducts = (await getAllProducts()).filter((p) => p.category !== "other");
 
   const deals = allProducts
     .filter((p) => {

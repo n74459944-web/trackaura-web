@@ -18,8 +18,8 @@ function brandSlug(brand: string): string {
   return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-export default function BrandsPage() {
-  const products = getAllProducts();
+export default async function BrandsPage() {
+  const products = await getAllProducts();
   const brandCounts: Record<string, number> = {};
   const brandMinPrice: Record<string, number> = {};
 

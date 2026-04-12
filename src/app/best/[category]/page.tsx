@@ -150,7 +150,7 @@ export default async function BestCategoryPage({ params }: PageProps) {
   if (!label) notFound();
 
   const icon = CATEGORY_ICONS[category] || "\uD83D\uDCE6";
-  const allProducts = getAllProducts().filter((p) => p.category === category);
+  const allProducts = (await getAllProducts()).filter((p) => p.category === category);
   const thresholds = TIER_THRESHOLDS[category] || [100, 300];
   const month = new Date().toLocaleString("en-CA", { month: "long" });
   const year = new Date().getFullYear();

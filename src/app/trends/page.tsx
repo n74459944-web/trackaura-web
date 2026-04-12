@@ -46,9 +46,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   nas: "#78e08f",
 };
 
-export default function TrendsPage() {
-  const allProducts = getAllProducts();
-  const priceIndex = getPriceIndex();
+export default async function TrendsPage() {
+  const allProducts = await getAllProducts();
+  const priceIndex = await getPriceIndex();
   const month = new Date().toLocaleString("en-CA", { month: "long" });
   const year = new Date().getFullYear();
 

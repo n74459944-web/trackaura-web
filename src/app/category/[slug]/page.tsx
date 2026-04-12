@@ -13,8 +13,8 @@ export const revalidate = 14400;
 type PageProps = { params: Promise<{ slug: string }> };
 
 // Build all category routes at build time
-export function generateStaticParams() {
-  const stats = getStats();
+export async function generateStaticParams() {
+  const stats = await getStats();
   return stats.categories
     .filter((c: string) => c !== "other")
     .map((c: string) => ({ slug: c }));
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const label = CATEGORY_LABELS[slug];
   if (!label) return { title: "Category Not Found" };
 
-  const products = getProductsByCategory(slug);
+  const products = await getProductsByCategory(slug);
   const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))];
   const topBrands = brands.slice(0, 6).join(", ");
   const count = products.length;
@@ -190,7 +190,7 @@ export default async function CategoryPage({ params }: PageProps) {
   const label = CATEGORY_LABELS[slug];
   if (!label) notFound();
 
-  const products = getProductsByCategory(slug);
+  const products = await getProductsByCategory(slug);
   if (products.length === 0) notFound();
 
   const icon = CATEGORY_ICONS[slug] || "📦";

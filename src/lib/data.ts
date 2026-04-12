@@ -1,84 +1,80 @@
 import { Product, PricePoint, SiteStats } from "@/types";
+import { createClient } from "@libsql/client";
 import fs from "fs";
 import path from "path";
 
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
+
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
-let _productCache: Product[] | null = null;
+let _allProductsCache: Product[] | null = null;
 let _lineageCache: LineageFile | null = null;
 
-export function getAllProducts(): Product[] {
-  if (_productCache) return _productCache;
-  const filePath = path.join(DATA_DIR, "products.json");
-  if (!fs.existsSync(filePath)) return [];
-  const raw = fs.readFileSync(filePath, "utf-8");
-  _productCache = JSON.parse(raw) as Product[];
-  return _productCache;
+const rowToProduct = (row: any): Product => JSON.parse(row.data as string) as Product;
+
+export async function getAllProducts(): Promise<Product[]> {
+  if (_allProductsCache) return _allProductsCache;
+  const res = await db.execute("SELECT data FROM products");
+  _allProductsCache = res.rows.map(rowToProduct);
+  return _allProductsCache;
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  // Fast path: individual file
-  const fastPath = path.join(DATA_DIR, "products", `${slug}.json`);
-  if (fs.existsSync(fastPath)) {
-    const raw = fs.readFileSync(fastPath, "utf-8");
-    return JSON.parse(raw) as Product;
-  }
-  // Fallback: full scan
-  const products = getAllProducts();
-  return products.find((p) => p.slug === slug);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const res = await db.execute({ sql: "SELECT data FROM products WHERE slug = ? LIMIT 1", args: [slug] });
+  return res.rows.length ? rowToProduct(res.rows[0]) : undefined;
 }
 
-export function getProductsByCategory(category: string): Product[] {
-  // Fast path: category index file
-  const fastPath = path.join(DATA_DIR, "products", "_categories", `${category}.json`);
-  if (fs.existsSync(fastPath)) {
-    const raw = fs.readFileSync(fastPath, "utf-8");
-    return JSON.parse(raw) as Product[];
-  }
-  // Fallback: full scan
-  return getAllProducts().filter((p) => p.category === category);
+export async function getProductsByCategory(category: string): Promise<Product[]> {
+  const res = await db.execute({ sql: "SELECT data FROM products WHERE category = ?", args: [category] });
+  return res.rows.map(rowToProduct);
 }
 
-export function getProductsByRetailer(retailer: string): Product[] {
-  return getAllProducts().filter((p) => p.retailer === retailer);
+export async function getProductsByRetailer(retailer: string): Promise<Product[]> {
+  const res = await db.execute({ sql: "SELECT data FROM products WHERE retailer = ?", args: [retailer] });
+  return res.rows.map(rowToProduct);
 }
 
-export function getPriceHistory(productId: number): PricePoint[] {
-  const filePath = path.join(DATA_DIR, "history", `${productId}.json`);
-  if (!fs.existsSync(filePath)) return [];
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw) as PricePoint[];
+export async function getPriceHistory(productId: number): Promise<PricePoint[]> {
+  const res = await db.execute({
+    sql: "SELECT ts AS date, price FROM price_history WHERE product_id = ? ORDER BY ts",
+    args: [productId],
+  });
+  return res.rows.map((r: any) => ({ date: r.date as string, price: r.price as number })) as PricePoint[];
+}
+
+export async function searchProducts(query: string): Promise<Product[]> {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  const res = await db.execute({
+    sql: "SELECT data FROM products WHERE LOWER(name) LIKE ? LIMIT 50",
+    args: [`%${q}%`],
+  });
+  return res.rows.map(rowToProduct);
+}
+
+export async function getDeals(): Promise<Product[]> {
+  const res = await db.execute(
+    `SELECT data FROM products WHERE minPrice < maxPrice AND maxPrice > 0
+     ORDER BY (maxPrice - currentPrice) * 1.0 / maxPrice DESC LIMIT 12`
+  );
+  return res.rows.map(rowToProduct);
 }
 
 export function getStats(): SiteStats {
   const filePath = path.join(DATA_DIR, "stats.json");
   if (!fs.existsSync(filePath)) {
-    return {
-      totalProducts: 0,
-      totalPricePoints: 0,
-      retailers: [],
-      categories: [],
-      lastUpdated: new Date().toISOString(),
-      productsByRetailer: {},
-      productsByCategory: {},
-    };
+    return { totalProducts: 0, totalPricePoints: 0, retailers: [], categories: [],
+      lastUpdated: new Date().toISOString(), productsByRetailer: {}, productsByCategory: {} };
   }
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw) as SiteStats;
+  return JSON.parse(fs.readFileSync(filePath, "utf-8")) as SiteStats;
 }
 
-export interface PriceIndexDay {
-  date: string;
-  avg: number;
-  median?: number;
-  count: number;
-}
-
+export interface PriceIndexDay { date: string; avg: number; median?: number; count: number; }
 export interface PriceIndex {
-  generated: string;
-  basketSize?: number;
-  basketDate?: string;
-  overallPctChange?: number;
+  generated: string; basketSize?: number; basketDate?: string; overallPctChange?: number;
   overall: PriceIndexDay[];
   categories: Record<string, { trend: PriceIndexDay[]; pctChange: number } | PriceIndexDay[]>;
 }
@@ -86,58 +82,19 @@ export interface PriceIndex {
 export function getPriceIndex(): PriceIndex | null {
   const filePath = path.join(DATA_DIR, "price-index.json");
   if (!fs.existsSync(filePath)) return null;
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw) as PriceIndex;
+  return JSON.parse(fs.readFileSync(filePath, "utf-8")) as PriceIndex;
 }
 
-export function searchProducts(query: string): Product[] {
-  const q = query.toLowerCase().trim();
-  if (!q) return [];
-  const products = getAllProducts();
-  return products
-    .filter((p) => p.name.toLowerCase().includes(q))
-    .slice(0, 50);
-}
-
-export function getDeals(): Product[] {
-  const products = getAllProducts();
-  return products
-    .filter((p) => p.minPrice < p.maxPrice)
-    .sort((a, b) => {
-      const aDiscount = (a.maxPrice - a.currentPrice) / a.maxPrice;
-      const bDiscount = (b.maxPrice - b.currentPrice) / b.maxPrice;
-      return bDiscount - aDiscount;
-    })
-    .slice(0, 12);
-}
-
-export function formatPrice(price: number): string {
-  return `$${price.toFixed(2)}`;
-}
+export function formatPrice(price: number): string { return `$${price.toFixed(2)}`; }
 
 export function getAmazonSearchUrl(productName: string): string {
-  const query = encodeURIComponent(productName);
-  return `https://www.amazon.ca/s?k=${query}&tag=trackaura00-20`;
+  return `https://www.amazon.ca/s?k=${encodeURIComponent(productName)}&tag=trackaura00-20`;
 }
 
 // ---- Lineage ----
-
-interface Generation {
-  name: string;
-  search: string;
-  year: number;
-}
-
-interface LineageLine {
-  line: string;
-  generations: Generation[];
-}
-
-interface LineageFile {
-  gpu: LineageLine[];
-  cpu: LineageLine[];
-}
-
+interface Generation { name: string; search: string; year: number; }
+interface LineageLine { line: string; generations: Generation[]; }
+interface LineageFile { gpu: LineageLine[]; cpu: LineageLine[]; }
 export interface ResolvedLineage {
   line: string;
   previous?: { gen: Generation; product: Product | null };
@@ -149,20 +106,13 @@ function getLineageFile(): LineageFile | null {
   if (_lineageCache) return _lineageCache;
   const filePath = path.join(DATA_DIR, "product-lineage.json");
   if (!fs.existsSync(filePath)) return null;
-  const raw = fs.readFileSync(filePath, "utf-8");
-  _lineageCache = JSON.parse(raw) as LineageFile;
+  _lineageCache = JSON.parse(fs.readFileSync(filePath, "utf-8")) as LineageFile;
   return _lineageCache;
 }
 
-/**
- * Resolve lineage for a product on the server.
- * Returns at most 2 related products (prev, next) instead of the full catalog.
- * Uses category fast path — never loads all 6,400 products.
- */
-export function resolveLineage(product: Product): ResolvedLineage | null {
+export async function resolveLineage(product: Product): Promise<ResolvedLineage | null> {
   const file = getLineageFile();
   if (!file) return null;
-
   const nameLower = product.name.toLowerCase();
   const lines = [...(file.gpu || []), ...(file.cpu || [])];
 
@@ -170,38 +120,29 @@ export function resolveLineage(product: Product): ResolvedLineage | null {
     for (let i = 0; i < line.generations.length; i++) {
       const gen = line.generations[i];
       if (!nameLower.includes(gen.search)) continue;
-
       const previousGen = i > 0 ? line.generations[i - 1] : undefined;
       const nextGen = i < line.generations.length - 1 ? line.generations[i + 1] : undefined;
-
-      // Load only this category — not all products
-      const categoryProducts = getProductsByCategory(product.category);
-
+      const categoryProducts = await getProductsByCategory(product.category);
       const findCheapest = (search: string): Product | null => {
         const matches = categoryProducts
           .filter((p) => p.name.toLowerCase().includes(search))
           .sort((a, b) => a.currentPrice - b.currentPrice);
         return matches[0] || null;
       };
-
       return {
         line: line.line,
-        previous: previousGen
-          ? { gen: previousGen, product: findCheapest(previousGen.search) }
-          : undefined,
+        previous: previousGen ? { gen: previousGen, product: findCheapest(previousGen.search) } : undefined,
         current: { gen },
-        next: nextGen
-          ? { gen: nextGen, product: findCheapest(nextGen.search) }
-          : undefined,
+        next: nextGen ? { gen: nextGen, product: findCheapest(nextGen.search) } : undefined,
       };
     }
   }
-
   return null;
 }
 
-export function getRelatedProducts(product: Product, limit: number = 6): Product[] {
-  return getProductsByCategory(product.category)
+export async function getRelatedProducts(product: Product, limit: number = 6): Promise<Product[]> {
+  const products = await getProductsByCategory(product.category);
+  return products
     .filter((p) => p.id !== product.id && p.currentPrice > 0)
     .sort((a, b) => {
       const aAtLowest = a.currentPrice <= a.minPrice && a.priceCount > 1 ? 1 : 0;

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getAllProducts } from "@/lib/data";
 import { CATEGORY_LABELS, CATEGORY_ICONS, RETAILER_COLORS } from "@/types";
+import type { Product } from "@/types";
 
 export const revalidate = 14400; // 4 hours, matches scrape cycle
 
@@ -30,11 +31,11 @@ interface ComparisonGroup {
   cheapestRetailer: string;
 }
 
-export default function ComparePage() {
-  const allProducts = getAllProducts();
+export default async function ComparePage() {
+  const allProducts = await getAllProducts();
 
   // Group products by canonicalId where multiple retailers exist
-  const canonicalMap: Record<number, typeof allProducts> = {};
+  const canonicalMap: Record<number, Product[]> = {};
   for (const p of allProducts) {
     const cid = (p as any).canonicalId;
     if (!cid) continue;
