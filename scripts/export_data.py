@@ -582,6 +582,7 @@ def export():
             p.description,
             p.specs,
             p.source_category,
+            p.category as db_category,
             p.match_group,
             p.canonical_id,
             pp_latest.price as current_price,
@@ -655,7 +656,12 @@ def export():
                 return True
             return False
         
-        if resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
+        # DB category is the truth (cleaned manually, scraper-assigned, AI-assigned).
+        # Trust it if present. Only run keyword guessing as a fallback for null/other.
+        db_category = row["db_category"] or ""
+        if db_category and db_category != "other":
+            category = db_category
+        elif resolved_cat and resolved_cat != "other" and name_matches_category(resolved_cat, name_lower):
             category = resolved_cat
         else:
             category = guess_category(row["name"], row["url"], keywords_map)
