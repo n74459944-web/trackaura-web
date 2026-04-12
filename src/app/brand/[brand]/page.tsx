@@ -3,39 +3,59 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllProducts } from "@/lib/data";
 import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
-import { CATEGORY_LABELS } from "@/types";
+import { CATEGORY_LABELS, Product } from "@/types";
+
+export const dynamic = "force-dynamic";
 
 function extractBrand(name: string): string {
   const words = name.split(/\s+/);
   return words[0] || "";
 }
 
-async function getBrandData() {
+// Reject obvious junk "brands" — numeric tokens, capacities, sizes, refurb prefixes, etc.
+function isLikelyRealBrand(token: string): boolean {
+  if (token.length < 3) return false;
+  // purely numeric, or starts with a digit (e.g. "850w", "64gb", "16gb", "2000w", "4pcs")
+  if (/^\d/.test(token)) return false;
+  // generic descriptors that appear as first-word
+  const junk = new Set([
+    "REFURBISHED", "NEW", "HOT", "ALL", "ONE", "HUB", "CABLE", "BLACK", "BLUE",
+    "SILVER", "WHITE", "MICRO", "MINI", "COMPACT", "FULL", "SMALL", "LARGE",
+    "LAPTOP", "DESKTOP", "GAMING", "PURE", "COMPATIBLE", "ERGONOMIC",
+    "MECHANICAL", "STEREO", "WIRELESS", "WIRED", "RETRO", "HANDHELD",
+    "UNLOCKED", "CLOTH", "SSD", "DDR5", "DDR4", "AC",
+  ]);
+  if (junk.has(token)) return false;
+  return true;
+}
+
+type BrandMap = Record<string, Product[]>;
+let _brandDataCache: BrandMap | null = null;
+
+async function getBrandData(): Promise<BrandMap> {
+  if (_brandDataCache) return _brandDataCache;
+
   const products = await getAllProducts();
-  const brands: Record<string, typeof products> = {};
+  const brands: BrandMap = {};
 
   for (const p of products) {
     const brand = extractBrand(p.name).toUpperCase();
-    if (brand.length < 2) continue;
+    if (!isLikelyRealBrand(brand)) continue;
     if (!brands[brand]) brands[brand] = [];
     brands[brand].push(p);
   }
 
-  // Only include brands with 3+ products
-  const filtered: Record<string, typeof products> = {};
+  // Only include brands with 10+ products (raised from 3 to cut junk further)
+  const filtered: BrandMap = {};
   for (const [brand, items] of Object.entries(brands)) {
-    if (items.length >= 3) filtered[brand] = items;
+    if (items.length >= 10) filtered[brand] = items;
   }
+  _brandDataCache = filtered;
   return filtered;
 }
 
 function brandSlug(brand: string): string {
   return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-export async function generateStaticParams() {
-  const brands = await getBrandData();
-  return Object.keys(brands).map((brand) => ({ brand: brandSlug(brand) }));
 }
 
 type PageProps = { params: Promise<{ brand: string }> };
@@ -95,7 +115,6 @@ export default async function BrandPage({ params }: PageProps) {
         </p>
       </div>
 
-      {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", background: "var(--border)", borderRadius: 12, overflow: "hidden", marginBottom: "2rem" }}>
         {[
           { label: "Products", value: products.length.toString() },
@@ -110,7 +129,6 @@ export default async function BrandPage({ params }: PageProps) {
         ))}
       </div>
 
-      {/* Categories this brand is in */}
       <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", marginBottom: "2rem" }}>
         {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).map(([cat, count]) => (
           <Link key={cat} href={"/category/" + cat} className="filter-pill" style={{ textDecoration: "none" }}>
@@ -119,19 +137,16 @@ export default async function BrandPage({ params }: PageProps) {
         ))}
       </div>
 
-      {/* At lowest price */}
       {atLowest.length > 0 && (
         <Section title={brandName + " Products at Lowest Price"}>
           {atLowest.map((p) => (<ProductRow key={p.id} product={p} badge={"\u25CF Lowest"} badgeColor="var(--accent)" />))}
         </Section>
       )}
 
-      {/* Cheapest */}
       <Section title={"Most Affordable " + brandName + " Products"}>
         {cheapest.map((p) => (<ProductRow key={p.id} product={p} />))}
       </Section>
 
-      {/* Most expensive */}
       {mostExpensive.length > 0 && (
         <Section title={"Premium " + brandName + " Products"}>
           {mostExpensive.map((p) => (<ProductRow key={p.id} product={p} />))}
@@ -160,7 +175,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function ProductRow({ product, badge, badgeColor }: { product: any; badge?: string; badgeColor?: string }) {
+function ProductRow({ product, badge, badgeColor }: { product: Product; badge?: string; badgeColor?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1rem", borderBottom: "1px solid var(--border)", gap: "0.75rem", flexWrap: "wrap" }}>
       <div style={{ flex: 1, minWidth: 200 }}>
