@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Product, CATEGORY_LABELS } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getRetailerAffiliateUrl } from "@/lib/utils";
+import ClickTracker from "@/components/ClickTracker";
 
 function RetailerBadge({ retailer }: { retailer: string }) {
   let cn = "badge-cc";
@@ -30,6 +31,9 @@ export default function ProductCard({ product }: { product: Product }) {
     .replace(/\s+is\s+(?:designed|built|made|compatible|compliant).*/i, "")
     .replace(/\s+is\s+(?:a\s+)?(?:power|the|an)\s+.*/i, "")
     .trim();
+
+  const retailerUrl = getRetailerAffiliateUrl(product);
+  const buyEvent = product.retailer === "Newegg Canada" ? "affiliate_click" : "retailer_click";
 
   return (
     <div className="card" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -76,13 +80,27 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      <Link
-        href={"/product/" + product.slug}
-        className="btn-secondary"
-        style={{ textAlign: "center", textDecoration: "none", marginTop: "0.5rem" }}
-      >
-        View History
-      </Link>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem", marginTop: "0.5rem" }}>
+        <ClickTracker
+          href={retailerUrl}
+          event={buyEvent}
+          label={product.name}
+          retailer={product.retailer}
+          category={product.category}
+          price={product.currentPrice}
+          className="btn-primary"
+          style={{ textAlign: "center", textDecoration: "none", display: "block" }}
+        >
+          {"Buy at " + product.retailer + " \u2192"}
+        </ClickTracker>
+        <Link
+          href={"/product/" + product.slug}
+          className="btn-secondary"
+          style={{ textAlign: "center", textDecoration: "none" }}
+        >
+          View Price History
+        </Link>
+      </div>
     </div>
   );
 }
