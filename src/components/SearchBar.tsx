@@ -14,15 +14,27 @@ export default function SearchBar({ large }: SearchBarProps) {
   const [results, setResults] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const hasFetchedRef = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Load products data on mount
-  useEffect(() => {
+  // Lazy-load products.json ONLY when the user first interacts with the
+  // search input. Before this change, every homepage visitor downloaded
+  // ~3 MB of product data up front — a huge TBT/LCP cost for anyone who
+  // never actually searches. Now we pay that cost only on first focus
+  // (or first keystroke), and only once per page load.
+  const ensureProductsLoaded = () => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    setIsLoading(true);
     fetch("/data/products.json")
       .then((r) => r.json())
-      .then((data) => setAllProducts(data))
-      .catch(() => {});
-  }, []);
+      .then((data) => {
+        setAllProducts(data);
+        setIsLoading(false);
+      })
+      .catch(() => setIsLoading(false));
+  };
 
   // Search filtering
   useEffect(() => {
@@ -40,8 +52,8 @@ export default function SearchBar({ large }: SearchBarProps) {
       })
       .slice(0, 8);
     setResults(filtered);
-    setIsOpen(filtered.length > 0);
-  }, [query, allProducts]);
+    setIsOpen(filtered.length > 0 || isLoading);
+  }, [query, allProducts, isLoading]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -79,7 +91,11 @@ export default function SearchBar({ large }: SearchBarProps) {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onFocus={ensureProductsLoaded}
+          onChange={(e) => {
+            ensureProductsLoaded();
+            setQuery(e.target.value);
+          }}
           placeholder="Search products... (e.g. RTX 4070, Sony WH-1000XM5)"
           style={{
             width: "100%",
@@ -93,7 +109,6 @@ export default function SearchBar({ large }: SearchBarProps) {
             fontFamily: "'DM Sans', sans-serif",
             transition: "border-color 0.15s",
           }}
-          onFocus={() => results.length > 0 && setIsOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && query.trim().length >= 2) {
               setIsOpen(false);
@@ -121,6 +136,11 @@ export default function SearchBar({ large }: SearchBarProps) {
             isolation: "isolate",
           }}
         >
+          {isLoading && results.length === 0 && (
+            <div style={{ padding: "0.875rem 1rem", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+              Loading products…
+            </div>
+          )}
           {results.map((product) => (
             <Link
               key={product.id}
