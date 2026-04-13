@@ -2,13 +2,28 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    unoptimized: true,
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    remotePatterns: [
+      // Canada Computers
+      { protocol: "https", hostname: "ccimg1.canadacomputers.com" },
+      { protocol: "https", hostname: "ccimg2.canadacomputers.com" },
+      { protocol: "https", hostname: "www.canadacomputers.com" },
+      // Newegg Canada
+      { protocol: "https", hostname: "c1.neweggimages.com" },
+      { protocol: "https", hostname: "c2.neweggimages.com" },
+      { protocol: "https", hostname: "images10.newegg.com" },
+      { protocol: "https", hostname: "images11.newegg.com" },
+      // Vuugo (Cloudfront — subdomain may rotate, so wildcard)
+      { protocol: "https", hostname: "**.cloudfront.net" },
+      { protocol: "https", hostname: "www.vuugo.com" },
+      { protocol: "https", hostname: "vuugo.com" },
+    ],
   },
 
   async redirects() {
     return [
       // Old /products?category=X → new /category/X
-      // Next.js matches query params with "has" + "value"
       ...[
         "gpus", "cpus", "ssds", "ram", "monitors", "keyboards", "mice",
         "laptops", "motherboards", "power-supplies", "cases", "coolers",
@@ -23,7 +38,7 @@ const nextConfig: NextConfig = {
         permanent: true,
       })),
 
-      // /changes → homepage (price drops now live on homepage + category pages)
+      // /changes → homepage
       {
         source: "/changes",
         destination: "/",

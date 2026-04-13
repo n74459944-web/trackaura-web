@@ -1,19 +1,18 @@
-"use client";
-
+import Image from "next/image";
 import { Product } from "@/types";
 
 export default function ProductInfo({ product }: { product: Product }) {
-  const hasImage = product.imageUrl && product.imageUrl.startsWith("http");
-  const hasDescription = product.description && product.description.length > 5;
-  const hasSpecs = product.specs && Object.keys(product.specs).length > 0;
-  const hasBrand = product.brand && product.brand.length > 1;
+  const hasImage = !!(product.imageUrl && product.imageUrl.startsWith("http"));
+  const hasDescription = !!(product.description && product.description.length > 5);
+  const hasSpecs = !!(product.specs && Object.keys(product.specs).length > 0);
+  const hasBrand = !!(product.brand && product.brand.length > 1);
 
   if (!hasImage && !hasDescription && !hasSpecs) return null;
 
   return (
     <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem" }}>
       <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-        {/* Product image */}
+        {/* Product image — LCP element, preloaded with priority */}
         {hasImage && (
           <div style={{
             width: 180,
@@ -25,23 +24,28 @@ export default function ProductInfo({ product }: { product: Product }) {
             alignItems: "center",
             justifyContent: "center",
             overflow: "hidden",
+            position: "relative",
           }}>
-            <img
-              src={product.imageUrl}
+            <Image
+              src={product.imageUrl!}
               alt={product.shortName || product.name}
+              width={180}
+              height={180}
+              priority
+              sizes="180px"
               style={{
                 maxWidth: "100%",
                 maxHeight: "100%",
+                width: "auto",
+                height: "auto",
                 objectFit: "contain",
               }}
-              loading="lazy"
             />
           </div>
         )}
 
         {/* Info section */}
         <div style={{ flex: 1, minWidth: 200 }}>
-          {/* Brand */}
           {hasBrand && (
             <p style={{
               fontSize: "0.75rem",
@@ -55,7 +59,6 @@ export default function ProductInfo({ product }: { product: Product }) {
             </p>
           )}
 
-          {/* Description */}
           {hasDescription && (
             <p style={{
               fontSize: "0.9375rem",
@@ -67,7 +70,6 @@ export default function ProductInfo({ product }: { product: Product }) {
             </p>
           )}
 
-          {/* Specs */}
           {hasSpecs && (
             <div>
               <p style={{
@@ -101,14 +103,14 @@ export default function ProductInfo({ product }: { product: Product }) {
                       {key.replace(/_/g, " ")}
                     </span>
                     <span style={{ color: "var(--text-primary)", fontWeight: 600, marginLeft: "0.5rem" }}>
-                      {value}
+                      {String(value)}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
-          {/* Product identifiers */}
+
           {(product.mpn || product.upc) && (
             <div style={{ marginTop: hasSpecs ? "0.75rem" : 0 }}>
               <div style={{
