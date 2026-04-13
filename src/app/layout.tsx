@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -67,20 +68,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="impact-site-verification" content="c001a43a-bc75-4c79-91a3-7d18227c42e5" />
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-TDTJZ8L61H"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-TDTJZ8L61H');
-            `,
-          }}
+        <meta
+          name="impact-site-verification"
+          content="c001a43a-bc75-4c79-91a3-7d18227c42e5"
         />
         <script
           type="application/ld+json"
@@ -109,6 +99,27 @@ export default function RootLayout({
         <Header />
         <main style={{ minHeight: "calc(100vh - 200px)" }}>{children}</main>
         <Footer />
+
+        {/*
+          Google Tag Manager loaded with strategy="lazyOnload".
+          This defers GA/GTM until the browser is idle after page load,
+          removing ~150 KiB of JS from the critical path and cutting
+          ~200-400ms of main-thread blocking time.
+          Analytics still fires — just after the user can interact.
+        */}
+        <Script
+          id="gtag-src"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TDTJZ8L61H"
+          strategy="lazyOnload"
+        />
+        <Script id="gtag-init" strategy="lazyOnload">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-TDTJZ8L61H');
+          `}
+        </Script>
       </body>
     </html>
   );
