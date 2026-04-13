@@ -197,7 +197,15 @@ export default async function ProductPage({ params }: PageProps) {
       "@context": "https://schema.org",
       "@type": "Product",
       name: product.name,
+      description:
+        "Price history and current price for " + product.name +
+        " at " + product.retailer +
+        ". Current: $" + product.currentPrice.toFixed(2) +
+        " CAD. Lowest tracked: $" + product.minPrice.toFixed(2) +
+        ". Highest tracked: $" + product.maxPrice.toFixed(2) +
+        ". Compare prices across Canadian retailers on TrackAura.",
       image: product.imageUrl || undefined,
+      sku: String(product.id),
       brand: brand ? { "@type": "Brand", name: brand } : undefined,
       offers: {
         "@type": "Offer",
