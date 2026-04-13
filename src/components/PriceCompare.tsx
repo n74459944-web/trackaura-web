@@ -24,7 +24,6 @@ export default function PriceCompare({ product, similar }: CompareProps) {
 
   if (comparisons.length === 0) return null;
 
-  // Build full options list: current product + comparisons
   const allOptions = [
     {
       id: product.id,
@@ -127,7 +126,7 @@ export default function PriceCompare({ product, similar }: CompareProps) {
                 <a
                   href={affiliateUrl}
                   target="_blank"
-                  rel={isNewegg ? "noopener noreferrer nofollow sponsored" : "noopener noreferrer"}
+                  rel="noopener noreferrer nofollow sponsored"
                   className={isCheapest ? "btn-primary" : "btn-secondary"}
                   style={{ textDecoration: "none", fontSize: "0.75rem", padding: "0.375rem 0.75rem", whiteSpace: "nowrap" }}
                   onClick={() => trackClick(p.retailer, isNewegg ? "affiliate_click" : "retailer_click")}
