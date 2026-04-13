@@ -47,3 +47,14 @@ next-env.d.ts
 
 
 *.bak
+.env.local
+
+# Legacy JSON data (migrated to Turso)
+public/data/products.json
+public/data/products/
+public/data/history/
+public/data/changes.json
+
+# Python cache and logs
+scripts/__pycache__/
+*.log

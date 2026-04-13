@@ -12,7 +12,16 @@ import sqlite3
 import json
 import os
 import re
+import sys
 from datetime import datetime
+
+# Turso dual-write (optional — fails soft if libsql-client not installed)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import turso_writer
+except ImportError:
+    turso_writer = None
+    print("turso_writer not importable; skipping Turso dual-write", file=sys.stderr)
 
 # --- CONFIGURE THESE PATHS ---
 DB_PATH = os.environ.get("DB_PATH", "prices.db")
@@ -767,6 +776,7 @@ def export():
 
     # --- Export price history per product ---
     history_dir = os.path.join(OUTPUT_DIR, "history")
+    history_by_pid = {}
     for product in products:
         history_rows = conn.execute("""
             SELECT price, timestamp
@@ -776,6 +786,7 @@ def export():
         """, (product["id"],)).fetchall()
 
         history = [{"price": r["price"], "date": r["timestamp"]} for r in history_rows]
+        history_by_pid[product["id"]] = history
 
         with open(os.path.join(history_dir, f"{product['id']}.json"), "w") as f:
             json.dump(history, f)
@@ -807,6 +818,16 @@ def export():
 
     conn.close()
     print(f"\nAll data exported to: {OUTPUT_DIR}")
+
+    # --- Turso dual-write (non-fatal) ---
+    if turso_writer is not None:
+        # Attach product_id to each product payload so the JSON blob stored in
+        # Turso.data has it (some read paths rely on it).
+        for p in products:
+            p.setdefault("id", p.get("id"))
+        turso_writer.safe_dual_write(products, history_by_pid)
+    else:
+        print("Skipped Turso write: turso_writer module not available.")
 
 
 if __name__ == "__main__":
