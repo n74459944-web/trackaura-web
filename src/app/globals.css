@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-
 @import "tailwindcss";
 
 :root {
@@ -26,13 +24,13 @@
 html, body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-family: var(--font-dm-sans), -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Sora', -apple-system, sans-serif;
+  font-family: var(--font-sora), -apple-system, sans-serif;
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -72,7 +70,7 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
-.price-tag { font-family: 'Sora', monospace; font-weight: 700; color: var(--accent); }
+.price-tag { font-family: var(--font-sora), monospace; font-weight: 700; color: var(--accent); }
 
 .badge-cc {
   background: rgba(230, 57, 70, 0.15);
@@ -96,7 +94,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.625rem 1.25rem;
   border-radius: 8px;
   transition: all 0.15s ease;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-sora), sans-serif;
   font-size: 0.875rem;
   cursor: pointer;
   border: none;
@@ -111,7 +109,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 8px;
   border: 1px solid var(--border);
   transition: all 0.15s ease;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   font-size: 0.875rem;
   cursor: pointer;
 }
@@ -124,7 +122,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.8125rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   cursor: pointer;
   border: none;
   transition: all 0.15s;
@@ -138,7 +136,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.8125rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   cursor: pointer;
   border: none;
   transition: all 0.15s;
@@ -152,7 +150,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0.5rem 1rem;
   border-radius: 8px;
   font-size: 0.8125rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   cursor: pointer;
   border: none;
   transition: all 0.15s;
@@ -168,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
 }
 .filter-pill:hover { border-color: var(--text-secondary); color: var(--text-primary); }
 .filter-pill.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
