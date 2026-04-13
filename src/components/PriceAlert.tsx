@@ -17,10 +17,28 @@ export default function PriceAlert({ productSlug, productName, currentPrice, ret
   const [email, setEmail] = useState("");
   const [target, setTarget] = useState(Math.floor(currentPrice * 0.9 * 100) / 100);
   const [status, setStatus] = useState<"idle" | "saving" | "done" | "exists" | "error">("idle");
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validate = (): string | null => {
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      return "Please enter a valid email address.";
+    }
+    if (!Number.isFinite(target) || target <= 0) {
+      return "Target price must be greater than $0.";
+    }
+    if (target >= currentPrice) {
+      return "Target must be less than the current price of $" + currentPrice.toFixed(2) + ".";
+    }
+    return null;
+  };
 
   const handleSubmit = async () => {
-    if (!email || !email.includes("@") || !email.includes(".")) return;
-    if (target <= 0 || target >= currentPrice) return;
+    const err = validate();
+    if (err) {
+      setValidationError(err);
+      return;
+    }
+    setValidationError(null);
     setStatus("saving");
 
     try {
@@ -100,11 +118,29 @@ export default function PriceAlert({ productSlug, productName, currentPrice, ret
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
         <div>
           <label style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", display: "block", marginBottom: "0.25rem" }}>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" style={{ width: "100%", padding: "0.5rem 0.75rem", background: "var(--bg-primary)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-primary)", fontSize: "0.8125rem", outline: "none", fontFamily: "'DM Sans', sans-serif" }} />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); if (validationError) setValidationError(null); }}
+            placeholder="your@email.com"
+            style={{ width: "100%", padding: "0.5rem 0.75rem", background: "var(--bg-primary)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-primary)", fontSize: "0.8125rem", outline: "none", fontFamily: "'DM Sans', sans-serif" }}
+          />
         </div>
         <div>
           <label style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", display: "block", marginBottom: "0.25rem" }}>{"Alert me when price drops below (currently $" + currentPrice.toFixed(2) + ")"}</label>
-          <input type="number" value={target} onChange={(e) => setTarget(Number(e.target.value))} step="0.01" min="0" max={currentPrice} style={{ width: "100%", padding: "0.5rem 0.75rem", background: "var(--bg-primary)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-primary)", fontSize: "0.8125rem", outline: "none", fontFamily: "'DM Sans', sans-serif" }} />
+          <input
+            type="number"
+            value={Number.isFinite(target) ? target : ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              setTarget(v === "" ? NaN : Number(v));
+              if (validationError) setValidationError(null);
+            }}
+            step="0.01"
+            min="0.01"
+            max={currentPrice}
+            style={{ width: "100%", padding: "0.5rem 0.75rem", background: "var(--bg-primary)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text-primary)", fontSize: "0.8125rem", outline: "none", fontFamily: "'DM Sans', sans-serif" }}
+          />
         </div>
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
           <button onClick={handleSubmit} disabled={status === "saving"} className="btn-primary" style={{ flex: 1, fontSize: "0.8125rem" }}>
@@ -112,6 +148,9 @@ export default function PriceAlert({ productSlug, productName, currentPrice, ret
           </button>
           <button onClick={() => setOpen(false)} className="btn-secondary" style={{ fontSize: "0.8125rem" }}>Cancel</button>
         </div>
+        {validationError && (
+          <p style={{ color: "var(--danger)", fontSize: "0.75rem" }}>{validationError}</p>
+        )}
         {status === "error" && (
           <p style={{ color: "var(--danger)", fontSize: "0.75rem" }}>Something went wrong. Try again.</p>
         )}
