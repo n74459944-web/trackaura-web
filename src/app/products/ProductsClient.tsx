@@ -1,148 +1,171 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import { Product, CATEGORY_LABELS } from "@/types";
+import { useState, useTransition, useEffect, useMemo, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Product, CATEGORY_LABELS, SiteStats } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
-type SortKey = "name" | "price-asc" | "price-desc" | "biggest-drop" | "at-lowest" | "newest";
-
-const PRODUCTS_PER_PAGE = 48;
-
-interface ProductsClientProps {
-  initialProducts: Product[];
+interface Filters {
+  category: string;
+  retailer: string;
+  search: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort: string;
+  page: number;
+  pageSize: number;
 }
 
-export default function ProductsClient({ initialProducts }: ProductsClientProps) {
-  const searchParams = useSearchParams();
-  const initialCategory = searchParams.get("category") || "all";
-  const initialRetailer = searchParams.get("retailer") || "all";
+interface ProductsClientProps {
+  products: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
+  filters: Filters;
+  stats: SiteStats;
+}
 
-  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
-  const [category, setCategory] = useState(initialCategory);
-  const [retailer, setRetailer] = useState(initialRetailer);
-  const [sort, setSort] = useState<SortKey>("at-lowest");
-  const [loading, setLoading] = useState(initialProducts.length === 0);
-  const [page, setPage] = useState(1);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [showAllCategories, setShowAllCategories] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+export default function ProductsClient({
+  products,
+  total,
+  page,
+  totalPages,
+  filters,
+  stats,
+}: ProductsClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
-  // Fallback: if server didn't provide products, fetch client-side
-  useEffect(() => {
-    if (initialProducts.length === 0) {
-      fetch("/api/products")
-        .then((r) => r.json())
-        .then((data) => {
-          setAllProducts(data);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [initialProducts]);
-
-  // Sync URL params
-  useEffect(() => {
-    const c = searchParams.get("category");
-    if (c) setCategory(c);
-  }, [searchParams]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [category, retailer, sort, minPrice, maxPrice, searchQuery]);
-
-  const filtered = useMemo(() => {
-    let result = allProducts;
-    // Filter out bad data
-    result = result.filter((p) => {
-      // Skip products with very short names (bad scrape data)
-      if (p.name.length < 15) return false;
-      // Skip template variables in names
-      if (p.name.includes("{") || p.name.includes("}")) return false;
-      // Skip products where high price is 10x+ the low (data errors inflating discounts)
-      if (p.maxPrice > p.minPrice * 10 && p.minPrice > 0) return false;
-      // Skip suspiciously cheap products (likely errors)
-      if (p.currentPrice < 5) return false;
-      return true;
-    });
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const words = q.split(/\s+/).filter((w) => w.length > 0);
-      result = result.filter((p) => {
-        const name = p.name.toLowerCase();
-        return words.every((w) => name.includes(w));
-      });
-    }
-
-    // Category filter
-    if (category !== "all") result = result.filter((p) => p.category === category);
-
-    // Retailer filter
-    if (retailer !== "all") result = result.filter((p) => p.retailer === retailer);
-
-    // Price range filter
-    const min = parseFloat(minPrice);
-    const max = parseFloat(maxPrice);
-    if (!isNaN(min)) result = result.filter((p) => p.currentPrice >= min);
-    if (!isNaN(max)) result = result.filter((p) => p.currentPrice <= max);
-
-    // Sort
-    if (sort === "price-asc") {
-      result = [...result].sort((a, b) => {
-        // Push $0 and sub-$1 products to the end
-        if (a.currentPrice < 1 && b.currentPrice >= 1) return 1;
-        if (b.currentPrice < 1 && a.currentPrice >= 1) return -1;
-        return a.currentPrice - b.currentPrice;
-      });
-    } else if (sort === "price-desc") {
-      result = [...result].sort((a, b) => b.currentPrice - a.currentPrice);
-    } else if (sort === "biggest-drop") {
-      result = [...result].sort((a, b) => {
-        const aDrop = a.maxPrice > a.minPrice ? (a.maxPrice - a.currentPrice) / a.maxPrice : 0;
-        const bDrop = b.maxPrice > b.minPrice ? (b.maxPrice - b.currentPrice) / b.maxPrice : 0;
-        return bDrop - aDrop;
-      });
-    } else if (sort === "at-lowest") {
-      result = [...result].sort((a, b) => {
-        const aAtLow = a.currentPrice <= a.minPrice && a.priceCount > 1 ? 1 : 0;
-        const bAtLow = b.currentPrice <= b.minPrice && b.priceCount > 1 ? 1 : 0;
-        return bAtLow - aAtLow;
-      });
-    } else if (sort === "newest") {
-      result = [...result].sort((a, b) => new Date(b.firstSeen).getTime() - new Date(a.firstSeen).getTime());
-    } else {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return result;
-  }, [allProducts, category, retailer, sort, minPrice, maxPrice, searchQuery]);
-
-  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = filtered.slice(
-    (page - 1) * PRODUCTS_PER_PAGE,
-    page * PRODUCTS_PER_PAGE
+  // Controlled inputs — synced to URL on change (with debounce for search/price)
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const [minPriceInput, setMinPriceInput] = useState(
+    filters.minPrice !== undefined ? String(filters.minPrice) : "",
   );
+  const [maxPriceInput, setMaxPriceInput] = useState(
+    filters.maxPrice !== undefined ? String(filters.maxPrice) : "",
+  );
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  // Keep inputs in sync when server provides fresh filters (e.g. clear filters)
+  useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
+  useEffect(() => {
+    setMinPriceInput(filters.minPrice !== undefined ? String(filters.minPrice) : "");
+  }, [filters.minPrice]);
+  useEffect(() => {
+    setMaxPriceInput(filters.maxPrice !== undefined ? String(filters.maxPrice) : "");
+  }, [filters.maxPrice]);
+
+  // Update URL with patched params. Any filter change resets page to 1
+  // unless `keepPage` is true (for the pagination controls themselves).
+  function applyFilters(
+    patch: Partial<{
+      category: string;
+      retailer: string;
+      search: string;
+      minPrice: string;
+      maxPrice: string;
+      sort: string;
+      page: string;
+    }>,
+    opts: { keepPage?: boolean } = {},
+  ) {
+    const params = new URLSearchParams();
+    const current = {
+      category: filters.category,
+      retailer: filters.retailer,
+      search: filters.search,
+      minPrice:
+        filters.minPrice !== undefined ? String(filters.minPrice) : "",
+      maxPrice:
+        filters.maxPrice !== undefined ? String(filters.maxPrice) : "",
+      sort: filters.sort,
+      page: String(filters.page),
+    };
+    const merged = { ...current, ...patch };
+
+    if (!opts.keepPage && !("page" in patch)) {
+      merged.page = "1";
+    }
+
+    if (merged.category && merged.category !== "all") params.set("category", merged.category);
+    if (merged.retailer && merged.retailer !== "all") params.set("retailer", merged.retailer);
+    if (merged.search) params.set("q", merged.search);
+    if (merged.minPrice) params.set("minPrice", merged.minPrice);
+    if (merged.maxPrice) params.set("maxPrice", merged.maxPrice);
+    if (merged.sort && merged.sort !== "biggest-drop") params.set("sort", merged.sort);
+    if (merged.page && merged.page !== "1") params.set("page", merged.page);
+
+    const qs = params.toString();
+    const url = qs ? `${pathname}?${qs}` : pathname;
+
+    startTransition(() => {
+      router.push(url, { scroll: false });
+    });
+  }
+
+  // Debounced search — fire 350ms after user stops typing
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchInput === filters.search) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      applyFilters({ search: searchInput });
+    }, 350);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  // Debounced price inputs — fire 500ms after user stops typing
+  const priceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const currentMin =
+      filters.minPrice !== undefined ? String(filters.minPrice) : "";
+    const currentMax =
+      filters.maxPrice !== undefined ? String(filters.maxPrice) : "";
+    if (minPriceInput === currentMin && maxPriceInput === currentMax) return;
+    if (priceTimerRef.current) clearTimeout(priceTimerRef.current);
+    priceTimerRef.current = setTimeout(() => {
+      applyFilters({
+        minPrice: minPriceInput,
+        maxPrice: maxPriceInput,
+      });
+    }, 500);
+    return () => {
+      if (priceTimerRef.current) clearTimeout(priceTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minPriceInput, maxPriceInput]);
+
+  // Category pills ordered by count from stats (global, not current-filter)
+  const orderedCategories = useMemo(() => {
+    const counts = stats.productsByCategory || {};
+    return Object.entries(CATEGORY_LABELS)
+      .filter(([key]) => key !== "other" && (counts[key] || 0) > 0)
+      .sort((a, b) => (counts[b[0]] || 0) - (counts[a[0]] || 0));
+  }, [stats]);
 
   const retailers = useMemo(() => {
-    const set = new Set(allProducts.map((p) => p.retailer));
-    return Array.from(set).sort();
-  }, [allProducts]);
+    return (stats.retailers || []).slice().sort();
+  }, [stats]);
 
   const pageTitle =
-    category !== "all" && CATEGORY_LABELS[category]
-      ? CATEGORY_LABELS[category]
+    filters.category !== "all" && CATEGORY_LABELS[filters.category]
+      ? CATEGORY_LABELS[filters.category]
       : "All Products";
 
-  const atLowestCount = filtered.filter((p) => p.currentPrice <= p.minPrice && p.priceCount > 1).length;
-  const withDropsCount = filtered.filter((p) => p.currentPrice < p.maxPrice && p.minPrice < p.maxPrice).length;
+  const hasActiveFilters =
+    filters.category !== "all" ||
+    filters.retailer !== "all" ||
+    filters.minPrice !== undefined ||
+    filters.maxPrice !== undefined ||
+    filters.search !== "" ||
+    filters.sort !== "biggest-drop";
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1.5rem" }}>
-      {/* Page header */}
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1.5rem", opacity: isPending ? 0.6 : 1, transition: "opacity 0.15s" }}>
       <div style={{ marginBottom: "1.5rem" }}>
         <h1
           style={{
@@ -155,11 +178,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           {pageTitle}
         </h1>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-          {loading
-            ? "Loading..."
-            : filtered.length.toLocaleString() + " products" +
-              (atLowestCount > 0 ? " \u00B7 " + atLowestCount + " at lowest price" : "") +
-              (withDropsCount > 0 ? " \u00B7 " + withDropsCount + " with price drops" : "")}
+          {total.toLocaleString()} products
+          {totalPages > 1 && ` · page ${page} of ${totalPages}`}
         </p>
       </div>
 
@@ -167,8 +187,8 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
       <div style={{ maxWidth: 480, marginBottom: "1.25rem" }}>
         <input
           type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Filter products..."
           style={{
             width: "100%",
@@ -194,32 +214,26 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           alignItems: "center",
         }}
       >
-        {/* Category pills — show top 10 + expandable */}
+        {/* Category pills */}
         <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", alignItems: "center" }}>
           <button
-            className={`filter-pill ${category === "all" ? "active" : ""}`}
-            onClick={() => setCategory("all")}
+            className={`filter-pill ${filters.category === "all" ? "active" : ""}`}
+            onClick={() => applyFilters({ category: "all" })}
           >
             All
           </button>
-          {Object.entries(CATEGORY_LABELS)
-            .filter(([key]) => key !== "other" && allProducts.some((p) => p.category === key))
-            .sort((a, b) => {
-              const aCount = allProducts.filter((p) => p.category === a[0]).length;
-              const bCount = allProducts.filter((p) => p.category === b[0]).length;
-              return bCount - aCount;
-            })
+          {orderedCategories
             .slice(0, showAllCategories ? 999 : 10)
             .map(([key, label]) => (
               <button
                 key={key}
-                className={`filter-pill ${category === key ? "active" : ""}`}
-                onClick={() => setCategory(key)}
+                className={`filter-pill ${filters.category === key ? "active" : ""}`}
+                onClick={() => applyFilters({ category: key })}
               >
                 {label}
               </button>
             ))}
-          {!showAllCategories && (
+          {!showAllCategories && orderedCategories.length > 10 && (
             <button
               className="filter-pill"
               onClick={() => setShowAllCategories(true)}
@@ -230,37 +244,35 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           )}
         </div>
 
-        {/* Divider */}
         <div style={{ width: 1, height: 24, background: "var(--border)", margin: "0 0.25rem" }} />
 
         {/* Retailer pills */}
         <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
           <button
-            className={`filter-pill ${retailer === "all" ? "active" : ""}`}
-            onClick={() => setRetailer("all")}
+            className={`filter-pill ${filters.retailer === "all" ? "active" : ""}`}
+            onClick={() => applyFilters({ retailer: "all" })}
           >
             All Retailers
           </button>
           {retailers.map((r) => (
             <button
               key={r}
-              className={`filter-pill ${retailer === r ? "active" : ""}`}
-              onClick={() => setRetailer(r)}
+              className={`filter-pill ${filters.retailer === r ? "active" : ""}`}
+              onClick={() => applyFilters({ retailer: r })}
             >
               {r}
             </button>
           ))}
         </div>
 
-        {/* Divider */}
         <div style={{ width: 1, height: 24, background: "var(--border)", margin: "0 0.25rem" }} />
 
         {/* Price range */}
         <div style={{ display: "flex", gap: "0.375rem", alignItems: "center" }}>
           <input
             type="number"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
+            value={minPriceInput}
+            onChange={(e) => setMinPriceInput(e.target.value)}
             placeholder="Min $"
             style={{
               width: 80,
@@ -274,11 +286,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
               outline: "none",
             }}
           />
-          <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem" }}>\u2013</span>
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.75rem" }}>–</span>
           <input
             type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            value={maxPriceInput}
+            onChange={(e) => setMaxPriceInput(e.target.value)}
             placeholder="Max $"
             style={{
               width: 80,
@@ -294,13 +306,12 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           />
         </div>
 
-        {/* Divider */}
         <div style={{ width: 1, height: 24, background: "var(--border)", margin: "0 0.25rem" }} />
 
         {/* Sort */}
         <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
+          value={filters.sort}
+          onChange={(e) => applyFilters({ sort: e.target.value })}
           style={{
             background: "var(--bg-card)",
             border: "1px solid var(--border)",
@@ -320,16 +331,15 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
           <option value="name">Sort: A-Z</option>
         </select>
 
-        {/* Clear filters */}
-        {(category !== "all" || retailer !== "all" || minPrice || maxPrice || searchQuery) && (
+        {hasActiveFilters && (
           <button
             onClick={() => {
-              setCategory("all");
-              setRetailer("all");
-              setMinPrice("");
-              setMaxPrice("");
-              setSearchQuery("");
-              setSort("biggest-drop");
+              setSearchInput("");
+              setMinPriceInput("");
+              setMaxPriceInput("");
+              startTransition(() => {
+                router.push(pathname, { scroll: false });
+              });
             }}
             style={{
               background: "none",
@@ -347,11 +357,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
       </div>
 
       {/* Product grid */}
-      {loading ? (
-        <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
-          Loading products...
-        </div>
-      ) : filtered.length === 0 ? (
+      {products.length === 0 ? (
         <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-secondary)" }}>
           No products found with these filters.
         </div>
@@ -364,12 +370,11 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
               gap: "1rem",
             }}
           >
-            {paginatedProducts.map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div
               style={{
@@ -382,7 +387,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
               }}
             >
               <button
-                onClick={() => setPage(Math.max(1, page - 1))}
+                onClick={() => applyFilters({ page: String(Math.max(1, page - 1)) }, { keepPage: true })}
                 disabled={page === 1}
                 style={{
                   ...paginationBtnStyle,
@@ -401,7 +406,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
                 ) : (
                   <button
                     key={p}
-                    onClick={() => setPage(p as number)}
+                    onClick={() => applyFilters({ page: String(p) }, { keepPage: true })}
                     style={{
                       ...paginationBtnStyle,
                       background: page === p ? "var(--accent)" : "var(--bg-card)",
@@ -415,7 +420,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
               )}
 
               <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                onClick={() => applyFilters({ page: String(Math.min(totalPages, page + 1)) }, { keepPage: true })}
                 disabled={page === totalPages}
                 style={{
                   ...paginationBtnStyle,
@@ -451,19 +456,12 @@ const paginationBtnStyle: React.CSSProperties = {
 
 function generatePageNumbers(current: number, total: number): (number | string)[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
   const pages: (number | string)[] = [1];
-
   if (current > 3) pages.push("...");
-
   const start = Math.max(2, current - 1);
   const end = Math.min(total - 1, current + 1);
-
   for (let i = start; i <= end; i++) pages.push(i);
-
   if (current < total - 2) pages.push("...");
-
   pages.push(total);
-
   return pages;
 }

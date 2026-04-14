@@ -169,3 +169,124 @@ export async function getRelatedProducts(product: Product, limit: number = 6): P
     })
     .slice(0, limit);
 }
+
+// ============================================================
+// Server-side filtering for /products page
+// Append the code below to the end of src/lib/data.ts
+// ============================================================
+
+export interface ProductFilters {
+  category?: string;      // slug or "all"
+  retailer?: string;      // retailer name or "all"
+  search?: string;        // multi-word AND search on name
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: string;          // biggest-drop | at-lowest | price-asc | price-desc | newest | name
+  page?: number;          // 1-indexed
+  pageSize?: number;      // default 48
+}
+
+export interface FilteredProductsResult {
+  products: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Quality filters — match the client-side logic that was in ProductsClient.
+// These get AND'd into every query so bad-data rows never appear.
+const QUALITY_WHERE = `
+  length(name) >= 15
+  AND instr(name, '{') = 0
+  AND instr(name, '}') = 0
+  AND currentPrice >= 5
+  AND NOT (maxPrice > minPrice * 10 AND minPrice > 0)
+`;
+
+// priceCount and firstSeen aren't confirmed columns on `products` (they may
+// live only inside the JSON blob), so we read them via json_extract. Slightly
+// slower than a column reference but works whether they're columns or not.
+const PRICE_COUNT_EXPR = "CAST(json_extract(data, '$.priceCount') AS INTEGER)";
+const FIRST_SEEN_EXPR = "json_extract(data, '$.firstSeen')";
+
+const SORT_EXPRESSIONS: Record<string, string> = {
+  "biggest-drop":
+    "CASE WHEN maxPrice > 0 AND maxPrice > minPrice " +
+    "THEN (maxPrice - currentPrice) * 1.0 / maxPrice ELSE -1 END DESC",
+  "at-lowest":
+    `CASE WHEN currentPrice <= minPrice AND ${PRICE_COUNT_EXPR} > 1 THEN 0 ELSE 1 END ASC, ` +
+    `${PRICE_COUNT_EXPR} DESC`,
+  "price-asc":
+    "CASE WHEN currentPrice < 1 THEN 2 ELSE 1 END ASC, currentPrice ASC",
+  "price-desc": "currentPrice DESC",
+  newest: `${FIRST_SEEN_EXPR} DESC`,
+  name: "name ASC",
+};
+
+export async function getFilteredProducts(
+  filters: ProductFilters,
+): Promise<FilteredProductsResult> {
+  const pageSize = filters.pageSize ?? 48;
+  const page = Math.max(1, filters.page ?? 1);
+
+  const whereClauses: string[] = [QUALITY_WHERE];
+  const args: unknown[] = [];
+
+  if (filters.category && filters.category !== "all") {
+    whereClauses.push("category = ?");
+    args.push(filters.category);
+  }
+  if (filters.retailer && filters.retailer !== "all") {
+    whereClauses.push("retailer = ?");
+    args.push(filters.retailer);
+  }
+  if (typeof filters.minPrice === "number" && !isNaN(filters.minPrice)) {
+    whereClauses.push("currentPrice >= ?");
+    args.push(filters.minPrice);
+  }
+  if (typeof filters.maxPrice === "number" && !isNaN(filters.maxPrice)) {
+    whereClauses.push("currentPrice <= ?");
+    args.push(filters.maxPrice);
+  }
+
+  // Multi-word AND search. Matches client behavior: every word must appear
+  // somewhere in the product name, case-insensitive.
+  if (filters.search && filters.search.trim()) {
+    const words = filters.search
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0);
+    for (const w of words) {
+      whereClauses.push("LOWER(name) LIKE ?");
+      args.push(`%${w}%`);
+    }
+  }
+
+  const whereSQL = whereClauses.join(" AND ");
+  const sortSQL =
+    SORT_EXPRESSIONS[filters.sort || "biggest-drop"] ||
+    SORT_EXPRESSIONS["biggest-drop"];
+
+  // Count + page queries in parallel
+  const countPromise = db.execute({
+    sql: `SELECT COUNT(*) AS n FROM products WHERE ${whereSQL}`,
+    args: args as never,
+  });
+
+  const pagePromise = db.execute({
+    sql:
+      `SELECT data FROM products WHERE ${whereSQL} ` +
+      `ORDER BY ${sortSQL} LIMIT ? OFFSET ?`,
+    args: [...args, pageSize, (page - 1) * pageSize] as never,
+  });
+
+  const [countRes, pageRes] = await Promise.all([countPromise, pagePromise]);
+
+  const total = Number(countRes.rows[0].n) || 0;
+  const products = pageRes.rows.map(rowToProduct);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return { products, total, page, pageSize, totalPages };
+}
