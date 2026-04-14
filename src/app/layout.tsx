@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Sora, DM_Sans } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -118,6 +119,19 @@ export default function RootLayout({
         />
       </head>
       <body className="noise-bg">
+        {/*
+          Top-of-page progress bar. Automatically triggers on every
+          <Link> navigation and browser back/forward. Gives instant visual
+          feedback while server components render or API routes respond.
+          Color matches --accent; height is thin so it doesn't obstruct
+          the header.
+        */}
+        <NextTopLoader
+          color="#22d3ee"
+          height={3}
+          showSpinner={false}
+          shadow="0 0 10px #22d3ee, 0 0 5px #22d3ee"
+        />
         <Header />
         <main style={{ minHeight: "calc(100vh - 200px)" }}>{children}</main>
         <Footer />
