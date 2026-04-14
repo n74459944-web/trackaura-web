@@ -1,24 +1,47 @@
-import { NextResponse } from "next/server";
-import { getAllProducts } from "@/lib/data";
+import { createClient } from "@libsql/client/web";
 
-// Cache at the edge for 4 hours (matches scrape cycle).
-// s-maxage tells Vercel's CDN to cache; stale-while-revalidate lets
-// the next request trigger a background refresh so users never wait.
+// Edge runtime has no 4.5MB response body limit (serverless does).
+// Required for 40K+ product catalogs where a full dump is ~15MB.
+export const runtime = "edge";
 export const revalidate = 14400;
+
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
+
+const PAGE_SIZE = 2000;
 
 export async function GET() {
   try {
-    const products = await getAllProducts();
-    return NextResponse.json(products, {
+    const all: unknown[] = [];
+    let offset = 0;
+
+    // Chunk to stay under Turso's per-response size cap.
+    while (true) {
+      const res = await db.execute({
+        sql: "SELECT data FROM products ORDER BY rowid LIMIT ? OFFSET ?",
+        args: [PAGE_SIZE, offset],
+      });
+      for (const row of res.rows) {
+        all.push(JSON.parse(row.data as string));
+      }
+      if (res.rows.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    return new Response(JSON.stringify(all), {
       headers: {
-        "Cache-Control": "public, s-maxage=14400, stale-while-revalidate=86400",
+        "Content-Type": "application/json",
+        "Cache-Control":
+          "public, s-maxage=14400, stale-while-revalidate=86400",
       },
     });
   } catch (err) {
     console.error("GET /api/products failed:", err);
-    return NextResponse.json(
-      { error: "Failed to load products" },
-      { status: 500 },
+    return new Response(
+      JSON.stringify({ error: "Failed to load products" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
