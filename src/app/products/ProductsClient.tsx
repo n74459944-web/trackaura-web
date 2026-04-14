@@ -32,7 +32,7 @@ export default function ProductsClient({ initialProducts }: ProductsClientProps)
   // Fallback: if server didn't provide products, fetch client-side
   useEffect(() => {
     if (initialProducts.length === 0) {
-      fetch("/data/products.json")
+      fetch("/api/products")
         .then((r) => r.json())
         .then((data) => {
           setAllProducts(data);
