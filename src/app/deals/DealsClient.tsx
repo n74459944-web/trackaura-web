@@ -16,7 +16,7 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
   // Fallback: fetch client-side if server didn't provide data
   useEffect(() => {
     if (initialProducts.length === 0) {
-      fetch("/data/products.json")
+      fetch("/api/products")
         .then((r) => r.json())
         .then((data) => {
           setAllProducts(data);

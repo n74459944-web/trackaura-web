@@ -13,47 +13,49 @@ export default function SearchBar({ large }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const hasFetchedRef = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Lazy-load products.json ONLY when the user first interacts with the
-  // search input. Before this change, every homepage visitor downloaded
-  // ~3 MB of product data up front — a huge TBT/LCP cost for anyone who
-  // never actually searches. Now we pay that cost only on first focus
-  // (or first keystroke), and only once per page load.
-  const ensureProductsLoaded = () => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-    setIsLoading(true);
-    fetch("/data/products.json")
-      .then((r) => r.json())
-      .then((data) => {
-        setAllProducts(data);
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
-  };
-
-  // Search filtering
+  // Debounced server-side search. Previous version downloaded the entire
+  // product catalog (~60 MB) on first focus; now we query Turso via
+  // /api/search and only fetch the 8 results the user actually sees.
   useEffect(() => {
-    if (!query.trim() || query.length < 2) {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
       setResults([]);
       setIsOpen(false);
+      setIsLoading(false);
       return;
     }
-    const q = query.toLowerCase();
-    const words = q.split(/\s+/).filter((w) => w.length > 0);
-    const filtered = allProducts
-      .filter((p) => {
-        const name = p.name.toLowerCase();
-        return words.every((w) => name.includes(w));
-      })
-      .slice(0, 8);
-    setResults(filtered);
-    setIsOpen(filtered.length > 0 || isLoading);
-  }, [query, allProducts, isLoading]);
+
+    // Abort previous in-flight request on new keystroke
+    if (abortRef.current) abortRef.current.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+
+    setIsLoading(true);
+    const timeout = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, { signal: ac.signal })
+        .then((r) => r.json())
+        .then((data: Product[]) => {
+          if (ac.signal.aborted) return;
+          const top = Array.isArray(data) ? data.slice(0, 8) : [];
+          setResults(top);
+          setIsOpen(top.length > 0);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          if (err?.name === "AbortError") return;
+          setIsLoading(false);
+        });
+    }, 200); // 200ms debounce
+
+    return () => {
+      clearTimeout(timeout);
+      ac.abort();
+    };
+  }, [query]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -69,7 +71,6 @@ export default function SearchBar({ large }: SearchBarProps) {
   return (
     <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
       <div style={{ position: "relative" }}>
-        {/* Search icon */}
         <svg
           style={{
             position: "absolute",
@@ -91,11 +92,8 @@ export default function SearchBar({ large }: SearchBarProps) {
         <input
           type="text"
           value={query}
-          onFocus={ensureProductsLoaded}
-          onChange={(e) => {
-            ensureProductsLoaded();
-            setQuery(e.target.value);
-          }}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => { if (results.length > 0) setIsOpen(true); }}
           placeholder="Search products... (e.g. RTX 4070, Sony WH-1000XM5)"
           style={{
             width: "100%",
@@ -118,7 +116,6 @@ export default function SearchBar({ large }: SearchBarProps) {
         />
       </div>
 
-      {/* Dropdown results */}
       {isOpen && (
         <div
           style={{
@@ -138,7 +135,7 @@ export default function SearchBar({ large }: SearchBarProps) {
         >
           {isLoading && results.length === 0 && (
             <div style={{ padding: "0.875rem 1rem", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-              Loading products…
+              Searching…
             </div>
           )}
           {results.map((product) => (
@@ -159,28 +156,28 @@ export default function SearchBar({ large }: SearchBarProps) {
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
-              {product.imageUrl && (
-                <div style={{ width: 36, height: 36, flexShrink: 0, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                  <img src={product.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} loading="lazy" />
+                {product.imageUrl && (
+                  <div style={{ width: 36, height: 36, flexShrink: 0, background: "#fff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    <img src={product.imageUrl} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} loading="lazy" />
+                  </div>
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      fontSize: "0.8125rem",
+                      color: "var(--text-primary)",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {product.shortName || product.name}
+                  </p>
+                  <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                    {product.retailer}
+                  </p>
                 </div>
-              )}
-              <div style={{ minWidth: 0 }}>
-                <p
-                  style={{
-                    fontSize: "0.8125rem",
-                    color: "var(--text-primary)",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {product.shortName || product.name}
-                </p>
-                <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginTop: 2 }}>
-                  {product.retailer}
-                </p>
               </div>
-            </div>
               <span className="price-tag" style={{ fontSize: "0.875rem", marginLeft: "1rem" }}>
                 {formatPrice(product.currentPrice)}
               </span>

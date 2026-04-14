@@ -30,7 +30,7 @@ export default function ChangesClient({ initialChanges }: ChangesClientProps) {
   // Fallback: fetch client-side if server didn't provide data
   useEffect(() => {
     if (initialChanges.length === 0) {
-      fetch("/data/changes.json")
+      fetch("/api/changes")
         .then((r) => r.json())
         .then((data) => { setChanges(data); setLoading(false); })
         .catch(() => setLoading(false));
