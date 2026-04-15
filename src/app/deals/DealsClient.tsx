@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Product, CATEGORY_LABELS } from "@/types";
 import ProductCard from "@/components/ProductCard";
 
@@ -9,22 +9,11 @@ interface DealsClientProps {
 }
 
 export default function DealsClient({ initialProducts }: DealsClientProps) {
-  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
+  // Server always provides initialProducts now (page is no longer force-dynamic
+  // and always renders top50 from getAllProducts). The previous /api/products
+  // client-side fallback was dead code and pulled the entire 37K-row catalog.
   const [category, setCategory] = useState("all");
-  const [loading, setLoading] = useState(initialProducts.length === 0);
-
-  // Fallback: fetch client-side if server didn't provide data
-  useEffect(() => {
-    if (initialProducts.length === 0) {
-      fetch("/api/products")
-        .then((r) => r.json())
-        .then((data) => {
-          setAllProducts(data);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [initialProducts]);
+  const allProducts = initialProducts;
 
   const deals = useMemo(() => {
     let products = allProducts.filter((p) => {
@@ -135,17 +124,7 @@ export default function DealsClient({ initialProducts }: DealsClientProps) {
         ))}
       </div>
 
-      {loading ? (
-        <div
-          style={{
-            padding: "4rem",
-            textAlign: "center",
-            color: "var(--text-secondary)",
-          }}
-        >
-          Loading deals...
-        </div>
-      ) : deals.length === 0 ? (
+      {deals.length === 0 ? (
         <div
           style={{
             padding: "4rem",

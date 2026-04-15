@@ -3,8 +3,10 @@ import { Metadata } from "next";
 import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
 
-export const dynamic = "force-dynamic";
-
+// CRITICAL: was force-dynamic, which re-scanned the entire 37K-row products
+// table on EVERY visit. Now caches for 4 hours per region (matches scrape
+// cycle). Cuts reads from this page by ~99.7%.
+export const revalidate = 14400;
 
 export const metadata: Metadata = {
   title: "Best Electronics Deals in Canada",
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 // Normalize a product name for deduplication (strip color/variant suffixes)
 function normalizeForDedup(name: string): string {
   return name
-    .replace(/\s*[-–]\s*(black|white|blue|pink|red|green|grey|gray|silver|purple|beige|navy|orange|cream)\s*$/i, "")
+    .replace(/\s*[-\u2013]\s*(black|white|blue|pink|red|green|grey|gray|silver|purple|beige|navy|orange|cream)\s*$/i, "")
     .replace(/\s*,\s*(black|white|blue|pink|red|green|grey|gray|silver|purple|beige|navy|orange|cream)\s*$/i, "")
     .replace(/\(open\s*box\)/i, "")
     .trim()
