@@ -1,5 +1,6 @@
 import { Product, PricePoint, SiteStats } from "@/types";
 import { createClient } from "@libsql/client";
+import { cache } from "react";
 import fs from "fs";
 import path from "path";
 
@@ -10,7 +11,6 @@ const db = createClient({
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
-let _allProductsCache: Product[] | null = null;
 let _lineageCache: LineageFile | null = null;
 
 const rowToProduct = (row: any): Product => JSON.parse(row.data as string) as Product;
@@ -35,32 +35,80 @@ async function fetchChunked(sql: string, baseArgs: unknown[] = []): Promise<Prod
   return all;
 }
 
-export async function getAllProducts(): Promise<Product[]> {
-  if (_allProductsCache) return _allProductsCache;
-  _allProductsCache = await fetchChunked("SELECT data FROM products ORDER BY rowid");
-  return _allProductsCache;
-}
+// ============================================================
+// All read functions below are wrapped in React.cache() so that
+// multiple calls with the same args within a single request
+// dedupe to one Turso query.
+//
+// This is the critical fix for pages that call getProductsByCategory()
+// multiple times per render (product page does it 3x, category page 2x
+// counting metadata). After this change, each unique (function, args)
+// pair hits Turso exactly once per request.
+//
+// React.cache() is per-request only — it does NOT cache across requests,
+// which is correct: cross-request caching is Vercel's job (via revalidate).
+// ============================================================
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const res = await db.execute({ sql: "SELECT data FROM products WHERE slug = ? LIMIT 1", args: [slug] });
+export const getAllProducts = cache(async (): Promise<Product[]> => {
+  return fetchChunked("SELECT data FROM products ORDER BY rowid");
+});
+
+export const getProductBySlug = cache(async (slug: string): Promise<Product | undefined> => {
+  const res = await db.execute({
+    sql: "SELECT data FROM products WHERE slug = ? LIMIT 1",
+    args: [slug],
+  });
   return res.rows.length ? rowToProduct(res.rows[0]) : undefined;
-}
+});
 
-export async function getProductsByCategory(category: string): Promise<Product[]> {
+export const getProductsByCategory = cache(async (category: string): Promise<Product[]> => {
   return fetchChunked("SELECT data FROM products WHERE category = ? ORDER BY rowid", [category]);
-}
+});
 
-export async function getProductsByRetailer(retailer: string): Promise<Product[]> {
+export const getProductsByRetailer = cache(async (retailer: string): Promise<Product[]> => {
   return fetchChunked("SELECT data FROM products WHERE retailer = ? ORDER BY rowid", [retailer]);
-}
+});
 
-export async function getPriceHistory(productId: number): Promise<PricePoint[]> {
+export const getPriceHistory = cache(async (productId: number): Promise<PricePoint[]> => {
   const res = await db.execute({
     sql: "SELECT ts AS date, price FROM price_history WHERE product_id = ? ORDER BY ts",
     args: [productId],
   });
   return res.rows.map((r: any) => ({ date: r.date as string, price: r.price as number })) as PricePoint[];
-}
+});
+
+// ============================================================
+// Cheap aggregate helpers
+// ============================================================
+// Use these when you only need a count or a small summary, instead
+// of pulling the full category. Available for future use in metadata
+// functions or stats blocks where the full row data isn't needed.
+
+export const getCategoryCount = cache(async (category: string): Promise<number> => {
+  const res = await db.execute({
+    sql: "SELECT COUNT(*) AS n FROM products WHERE category = ?",
+    args: [category],
+  });
+  return Number(res.rows[0]?.n) || 0;
+});
+
+export const getCategoryTopBrands = cache(async (category: string, limit: number = 6): Promise<string[]> => {
+  const res = await db.execute({
+    sql:
+      "SELECT json_extract(data, '$.brand') AS brand, COUNT(*) AS n " +
+      "FROM products WHERE category = ? AND json_extract(data, '$.brand') IS NOT NULL " +
+      "GROUP BY brand ORDER BY n DESC LIMIT ?",
+    args: [category, limit],
+  });
+  return res.rows
+    .map((r: any) => String(r.brand || "").trim())
+    .filter((b) => b.length > 0);
+});
+
+// ============================================================
+// Other reads (search, deals) — kept un-cached because each call
+// generally has unique args, so caching wouldn't help.
+// ============================================================
 
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.toLowerCase().trim();
@@ -108,7 +156,9 @@ export function getAmazonSearchUrl(productName: string): string {
   return `https://www.amazon.ca/s?k=${encodeURIComponent(productName)}&tag=trackaura00-20`;
 }
 
-// ---- Lineage ----
+// ============================================================
+// Lineage
+// ============================================================
 interface Generation { name: string; search: string; year: number; }
 interface LineageLine { line: string; generations: Generation[]; }
 interface LineageFile { gpu: LineageLine[]; cpu: LineageLine[]; }
@@ -139,6 +189,8 @@ export async function resolveLineage(product: Product): Promise<ResolvedLineage 
       if (!nameLower.includes(gen.search)) continue;
       const previousGen = i > 0 ? line.generations[i - 1] : undefined;
       const nextGen = i < line.generations.length - 1 ? line.generations[i + 1] : undefined;
+      // Hits the React.cache layer: if the product page already pulled this
+      // category for `similar` or `getRelatedProducts`, no extra Turso query.
       const categoryProducts = await getProductsByCategory(product.category);
       const findCheapest = (search: string): Product | null => {
         const matches = categoryProducts
@@ -158,6 +210,7 @@ export async function resolveLineage(product: Product): Promise<ResolvedLineage 
 }
 
 export async function getRelatedProducts(product: Product, limit: number = 6): Promise<Product[]> {
+  // Hits the React.cache layer: deduped with other category dumps in the same render.
   const products = await getProductsByCategory(product.category);
   return products
     .filter((p) => p.id !== product.id && p.currentPrice > 0)
@@ -172,7 +225,6 @@ export async function getRelatedProducts(product: Product, limit: number = 6): P
 
 // ============================================================
 // Server-side filtering for /products page
-// Append the code below to the end of src/lib/data.ts
 // ============================================================
 
 export interface ProductFilters {

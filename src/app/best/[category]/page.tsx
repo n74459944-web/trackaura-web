@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllProducts } from "@/lib/data";
+import { getProductsByCategory } from "@/lib/data";
 import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import { Product } from "@/types";
@@ -150,7 +150,9 @@ export default async function BestCategoryPage({ params }: PageProps) {
   if (!label) notFound();
 
   const icon = CATEGORY_ICONS[category] || "\uD83D\uDCE6";
-  const allProducts = (await getAllProducts()).filter((p) => p.category === category);
+  // CHANGED: Was getAllProducts().filter(category) which scanned all 37K rows.
+  // Now scoped to ~3K rows per category. Same data, ~12x fewer Turso reads.
+  const allProducts = await getProductsByCategory(category);
   const thresholds = TIER_THRESHOLDS[category] || [100, 300];
   const month = new Date().toLocaleString("en-CA", { month: "long" });
   const year = new Date().getFullYear();
