@@ -5,7 +5,10 @@ import { getAllProducts } from "@/lib/data";
 import { formatPrice, getAmazonSearchUrl } from "@/lib/utils";
 import { CATEGORY_LABELS, Product } from "@/types";
 
-export const dynamic = "force-dynamic";
+// CRITICAL: was force-dynamic, which re-scanned the entire 37K-row products
+// table on EVERY visit to a brand page. Now caches for 4 hours per region
+// (matches scrape cycle). Cuts reads from this page by ~95%+.
+export const revalidate = 14400;
 
 function extractBrand(name: string): string {
   const words = name.split(/\s+/);
@@ -30,11 +33,11 @@ function isLikelyRealBrand(token: string): boolean {
 }
 
 type BrandMap = Record<string, Product[]>;
-let _brandDataCache: BrandMap | null = null;
 
+// REMOVED: _brandDataCache module-level cache. With React.cache wrapping
+// getAllProducts in data.ts, per-request dedupe is automatic. The module
+// cache could serve stale data after revalidation in warm Lambdas.
 async function getBrandData(): Promise<BrandMap> {
-  if (_brandDataCache) return _brandDataCache;
-
   const products = await getAllProducts();
   const brands: BrandMap = {};
 
@@ -50,7 +53,6 @@ async function getBrandData(): Promise<BrandMap> {
   for (const [brand, items] of Object.entries(brands)) {
     if (items.length >= 10) filtered[brand] = items;
   }
-  _brandDataCache = filtered;
   return filtered;
 }
 
@@ -76,6 +78,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BrandPage({ params }: PageProps) {
   const { brand: slug } = await params;
+  // React.cache dedupes this with the call in generateMetadata above.
   const brands = await getBrandData();
   const brandName = Object.keys(brands).find((b) => brandSlug(b) === slug);
   if (!brandName) notFound();

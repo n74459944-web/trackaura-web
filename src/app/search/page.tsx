@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { getAllProducts } from "@/lib/data";
-import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
-import { formatPrice, getAmazonSearchUrl, getRetailerAffiliateUrl } from "@/lib/utils";
+import { getFilteredProducts } from "@/lib/data";
+import { CATEGORY_LABELS, CATEGORY_ICONS, Product } from "@/types";
+import { formatPrice, getRetailerAffiliateUrl } from "@/lib/utils";
 import SearchBar from "@/components/SearchBar";
 
 export const revalidate = 14400;
@@ -13,10 +13,10 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const { q } = await searchParams;
   const query = q || "";
   return {
-    title: query ? `"${query}" — Search Results | TrackAura` : "Search Products | TrackAura",
+    title: query ? `"${query}" \u2014 Search Results | TrackAura` : "Search Products | TrackAura",
     description: query
       ? `Search results for "${query}" across Canadian electronics retailers. Compare prices at Canada Computers and Newegg Canada.`
-      : "Search over 21,000 electronics products tracked across Canadian retailers.",
+      : "Search electronics products tracked across Canadian retailers.",
     alternates: { canonical: "https://www.trackaura.com/search" },
   };
 }
@@ -25,29 +25,21 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const { q } = await searchParams;
   const query = (q || "").trim();
 
-  let results: Awaited<ReturnType<typeof getAllProducts>> = [];
+  // CHANGED: was getAllProducts() + JS filter (scanned 37K rows per query).
+  // Now uses surgical SQL via getFilteredProducts. Multi-word AND search on
+  // product name only.
+  //
+  // NOTE: This drops MPN/UPC matching from /search results. Use the dedicated
+  // /mpn/[mpn] route for direct MPN lookups. To restore MPN/UPC search here,
+  // add an FTS5 index on (name, mpn, upc) and a new searchProductsFull() helper.
+  let results: Product[] = [];
   if (query.length >= 2) {
-    const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
-    const allProducts = await getAllProducts();
-    results = allProducts
-      .filter((p) => {
-        const name = p.name.toLowerCase();
-        const mpn = (p.mpn || "").toLowerCase();
-        const upc = p.upc || "";
-        return (
-          words.every((w) => name.includes(w)) ||
-          (mpn && words.some((w) => mpn.includes(w))) ||
-          (upc && words.some((w) => upc.includes(w)))
-        );
-      })
-      .sort((a, b) => {
-        // Prioritize exact matches, then by price count (popularity proxy)
-        const aExact = a.name.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
-        const bExact = b.name.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
-        if (bExact !== aExact) return bExact - aExact;
-        return (b.priceCount || 0) - (a.priceCount || 0);
-      })
-      .slice(0, 100);
+    const result = await getFilteredProducts({
+      search: query,
+      pageSize: 100,
+      sort: "at-lowest", // popular + at-lowest first; closest match to old sort
+    });
+    results = result.products;
   }
 
   // Category breakdown of results
@@ -86,7 +78,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
           {topCats.map(([key, count]) => (
             <span key={key} className="filter-pill" style={{ fontSize: "0.75rem" }}>
-              {(CATEGORY_ICONS[key] || "📦") + " " + (CATEGORY_LABELS[key] || key) + " (" + count + ")"}
+              {(CATEGORY_ICONS[key] || "\uD83D\uDCE6") + " " + (CATEGORY_LABELS[key] || key) + " (" + count + ")"}
             </span>
           ))}
         </div>
@@ -153,7 +145,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                   </span>
                 )}
                 {isAtLowest && (
-                  <p style={{ fontSize: "0.625rem", color: "var(--accent)", fontWeight: 600 }}>● Lowest</p>
+                  <p style={{ fontSize: "0.625rem", color: "var(--accent)", fontWeight: 600 }}>{"\u25CF Lowest"}</p>
                 )}
               </div>
             </div>
@@ -164,10 +156,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
       {/* No query state */}
       {!query && (
         <div style={{ textAlign: "center", padding: "3rem 0", color: "var(--text-secondary)" }}>
-          <p style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>🔍</p>
-          <p>Search by product name, brand, or part number</p>
+          <p style={{ fontSize: "1.25rem", marginBottom: "0.5rem" }}>{"\uD83D\uDD0D"}</p>
+          <p>Search by product name or brand</p>
           <p style={{ fontSize: "0.8125rem", marginTop: "0.25rem" }}>
-            {"Try: RTX 5070, Sony WH-1000XM5, Corsair RAM, or a UPC/MPN"}
+            {"Try: RTX 5070, Sony WH-1000XM5, Corsair RAM"}
           </p>
         </div>
       )}
