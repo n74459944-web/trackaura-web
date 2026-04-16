@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { getAllProducts, getStats, getPriceIndex } from "@/lib/data";
+import {
+  getHomeSnapshot,
+  type HomeCategoryEntry,
+  type FeaturedProduct,
+} from "@/lib/snapshots";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import SearchBar from "@/components/SearchBar";
 import ProductCard from "@/components/ProductCard";
@@ -44,16 +49,16 @@ function getRecentDrops(): { feed: PriceChange[] } {
   }
 }
 
-export default async function HomePage() {
-  const stats = await getStats();
+// Fallback path: compute categories + featured from full product fetch.
+// Only used when the snapshot file is missing (first deploy, generator not yet run).
+async function computeFromDb(): Promise<{
+  categories: HomeCategoryEntry[];
+  featured: FeaturedProduct[];
+}> {
   const allProducts = await getAllProducts();
-  const { feed: dropFeed } = getRecentDrops();
-  const priceIndex = await getPriceIndex();
 
-  // ── Category data ──
   const categoryCounts: Record<string, number> = {};
   const categoryAtLowest: Record<string, number> = {};
-
   for (const p of allProducts) {
     categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
     if (p.currentPrice <= p.minPrice && p.priceCount > 1) {
@@ -61,77 +66,93 @@ export default async function HomePage() {
     }
   }
 
-  const categories = Object.entries(categoryCounts)
+  const categories: HomeCategoryEntry[] = Object.entries(categoryCounts)
     .filter(([key, count]) => key !== "other" && count >= 50)
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
       key,
-      label: CATEGORY_LABELS[key] || key,
       count,
       atLowest: categoryAtLowest[key] || 0,
-      icon: CATEGORY_ICONS[key] || "📦",
     }));
 
+  const SKIP_KEYWORDS = [
+    "server", "enterprise", "hpe ", "proliant", "rack mount",
+    "ecc reg", "registered", "refurbished", "open box",
+    "replacement", "spare", "oem", "bulk pack",
+    "keycap", "key cap", "wrist rest", "cable", "adapter",
+    "dongle", "converter", "extension", "splitter",
+  ];
+  const shouldSkip = (name: string) => {
+    const lower = name.toLowerCase();
+    return SKIP_KEYWORDS.some((kw) => lower.includes(kw));
+  };
+  const hasRealName = (name: string) => name.trim().split(/\s+/).length >= 3;
+
+  const candidates = allProducts
+    .filter((p) =>
+      p.category !== "other" &&
+      p.minPrice < p.maxPrice &&
+      p.currentPrice < p.maxPrice &&
+      p.currentPrice >= 30 &&
+      p.currentPrice <= 3000 &&
+      p.priceCount >= 3 &&
+      p.maxPrice <= p.minPrice * 5 &&
+      !shouldSkip(p.name) &&
+      hasRealName(p.name)
+    )
+    .map((p) => ({
+      ...p,
+      savings: p.maxPrice - p.currentPrice,
+      dropPct: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100,
+    }))
+    .filter((p) => p.dropPct >= 10 && p.dropPct <= 70);
+
+  const byCategory: Record<string, typeof candidates> = {};
+  for (const p of candidates) {
+    if (!byCategory[p.category]) byCategory[p.category] = [];
+    byCategory[p.category].push(p);
+  }
+  for (const cat of Object.keys(byCategory)) {
+    byCategory[cat].sort((a, b) => b.dropPct - a.dropPct);
+  }
+
+  const catKeys = Object.keys(byCategory).sort(
+    (a, b) => (byCategory[b][0]?.dropPct || 0) - (byCategory[a][0]?.dropPct || 0)
+  );
+  const featured: FeaturedProduct[] = [];
+  let round = 0;
+  while (featured.length < 6 && round < 3) {
+    for (const cat of catKeys) {
+      if (featured.length >= 6) break;
+      const item = byCategory[cat][round];
+      if (item) featured.push(item);
+    }
+    round++;
+  }
+
+  return { categories, featured };
+}
+
+// ── Page ──
+
+export default async function HomePage() {
+  const stats = await getStats();
+  const { feed: dropFeed } = getRecentDrops();
+  const priceIndex = await getPriceIndex();
+
+  // Snapshot-first; fall back to DB if missing.
+  const snapshot = getHomeSnapshot();
+  const { categories: rawCategories, featured } = snapshot
+    ? { categories: snapshot.categories, featured: snapshot.featured }
+    : await computeFromDb();
+
+  // Join label/icon at render time (they live in frontend types, not the snapshot).
+  const categories = rawCategories.map((c) => ({
+    ...c,
+    label: CATEGORY_LABELS[c.key] || c.key,
+    icon: CATEGORY_ICONS[c.key] || "📦",
+  }));
   const topCategories = categories.slice(0, 12);
-
-  // ── Featured deals ──
-  const featured = (() => {
-    const SKIP_KEYWORDS = [
-      "server", "enterprise", "hpe ", "proliant", "rack mount",
-      "ecc reg", "registered", "refurbished", "open box",
-      "replacement", "spare", "oem", "bulk pack",
-      "keycap", "key cap", "wrist rest", "cable", "adapter",
-      "dongle", "converter", "extension", "splitter",
-    ];
-    const shouldSkip = (name: string) => {
-      const lower = name.toLowerCase();
-      return SKIP_KEYWORDS.some((kw) => lower.includes(kw));
-    };
-    const hasRealName = (name: string) => name.trim().split(/\s+/).length >= 3;
-
-    const candidates = allProducts
-      .filter((p) =>
-        p.category !== "other" &&
-        p.minPrice < p.maxPrice &&
-        p.currentPrice < p.maxPrice &&
-        p.currentPrice >= 30 &&
-        p.currentPrice <= 3000 &&
-        p.priceCount >= 3 &&
-        p.maxPrice <= p.minPrice * 5 && // Filter out data errors
-        !shouldSkip(p.name) &&
-        hasRealName(p.name)
-      )
-      .map((p) => ({
-        ...p,
-        savings: p.maxPrice - p.currentPrice,
-        dropPct: ((p.maxPrice - p.currentPrice) / p.maxPrice) * 100,
-      }))
-      .filter((p) => p.dropPct >= 10 && p.dropPct <= 70);
-
-    const byCategory: Record<string, typeof candidates> = {};
-    for (const p of candidates) {
-      if (!byCategory[p.category]) byCategory[p.category] = [];
-      byCategory[p.category].push(p);
-    }
-    for (const cat of Object.keys(byCategory)) {
-      byCategory[cat].sort((a, b) => b.dropPct - a.dropPct);
-    }
-
-    const result: typeof candidates = [];
-    const catKeys = Object.keys(byCategory).sort(
-      (a, b) => (byCategory[b][0]?.dropPct || 0) - (byCategory[a][0]?.dropPct || 0)
-    );
-    let round = 0;
-    while (result.length < 6 && round < 3) {
-      for (const cat of catKeys) {
-        if (result.length >= 6) break;
-        const item = byCategory[cat][round];
-        if (item) result.push(item);
-      }
-      round++;
-    }
-    return result;
-  })();
 
   // ── Price Index one-liner ──
   const indexChange = priceIndex?.overallPctChange ?? null;
@@ -242,10 +263,10 @@ export default async function HomePage() {
               fontSize: "1.25rem",
             }}
           >
-            Browse by Category
+            Browse Categories
           </h2>
           <Link href="/categories" className="accent-link" style={{ fontSize: "0.875rem" }}>
-            {"All " + categories.length + " categories →"}
+            All categories →
           </Link>
         </div>
         <div
@@ -261,32 +282,30 @@ export default async function HomePage() {
               href={`/category/${cat.key}`}
               className="card"
               style={{
-                padding: "1.25rem 0.75rem",
+                padding: "1rem",
                 textDecoration: "none",
                 textAlign: "center",
-                transition: "border-color 0.15s",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.25rem",
               }}
             >
-              <span style={{ fontSize: "1.75rem", display: "block", marginBottom: "0.375rem" }}>
-                {cat.icon}
-              </span>
+              <span style={{ fontSize: "1.5rem" }}>{cat.icon}</span>
               <p
                 style={{
                   fontFamily: "'Sora', sans-serif",
                   fontWeight: 600,
-                  fontSize: "0.8125rem",
+                  fontSize: "0.875rem",
                   color: "var(--text-primary)",
-                  marginBottom: "0.25rem",
-                  lineHeight: 1.3,
                 }}
               >
                 {cat.label}
               </p>
-              <p style={{ fontSize: "0.6875rem", color: "var(--text-secondary)", marginBottom: "0.125rem" }}>
-                {cat.count.toLocaleString()} products
+              <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                {cat.count.toLocaleString()} tracked
               </p>
               {cat.atLowest > 0 && (
-                <p style={{ fontSize: "0.625rem", color: "var(--accent)", fontWeight: 600 }}>
+                <p style={{ fontSize: "0.6875rem", color: "var(--accent)", fontWeight: 600 }}>
                   {cat.atLowest} at lowest
                 </p>
               )}

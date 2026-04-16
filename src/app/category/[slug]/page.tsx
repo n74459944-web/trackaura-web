@@ -2,6 +2,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductsByCategory, getStats } from "@/lib/data";
+import {
+  getCategorySnapshot,
+  type BrandStat,
+  type CategoryStats,
+} from "@/lib/snapshots";
 import { CATEGORY_LABELS, CATEGORY_ICONS } from "@/types";
 import type { Product } from "@/types";
 import CategoryPageClient from "./CategoryPageClient";
@@ -25,10 +30,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const label = CATEGORY_LABELS[slug];
   if (!label) return { title: "Category Not Found" };
 
-  const products = await getProductsByCategory(slug);
-  const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))];
-  const topBrands = brands.slice(0, 6).join(", ");
-  const count = products.length;
+  // Prefer snapshot; fall back to DB.
+  const snapshot = getCategorySnapshot(slug);
+  let topBrands: string;
+  let count: number;
+
+  if (snapshot) {
+    topBrands = snapshot.brandStats.slice(0, 6).map((b) => b.name).join(", ");
+    count = snapshot.catStats.totalProducts;
+  } else {
+    const products = await getProductsByCategory(slug);
+    const brands = [...new Set(products.map((p) => p.brand).filter(Boolean))];
+    topBrands = brands.slice(0, 6).join(", ");
+    count = products.length;
+  }
 
   return {
     title: `${label} — Compare Prices Across Canadian Retailers | TrackAura`,
@@ -109,14 +124,7 @@ function getRecentChanges(category: string): PriceChange[] {
   }
 }
 
-// ── Compute brand stats ──
-interface BrandStat {
-  name: string;
-  count: number;
-  avgPrice: number;
-  minPrice: number;
-  deals: number; // products currently below their average tracked price
-}
+// ── DB-fallback computations (only used when snapshot missing) ──
 
 function computeBrandStats(products: Product[]): BrandStat[] {
   const map: Record<string, { count: number; totalPrice: number; minPrice: number; deals: number }> = {};
@@ -155,16 +163,6 @@ function computeBrandStats(products: Product[]): BrandStat[] {
     .sort((a, b) => b.count - a.count);
 }
 
-// ── Compute price range stats for the category ──
-interface CategoryStats {
-  totalProducts: number;
-  avgPrice: number;
-  medianPrice: number;
-  atLowest: number;
-  withHistory: number;
-  retailers: { name: string; count: number }[];
-}
-
 function computeCategoryStats(products: Product[]): CategoryStats {
   const prices = products.map((p) => p.currentPrice).sort((a, b) => a - b);
   const median = prices.length > 0 ? prices[Math.floor(prices.length / 2)] : 0;
@@ -190,12 +188,27 @@ export default async function CategoryPage({ params }: PageProps) {
   const label = CATEGORY_LABELS[slug];
   if (!label) notFound();
 
-  const products = await getProductsByCategory(slug);
+  // Snapshot-first; fall back to DB if missing.
+  const snapshot = getCategorySnapshot(slug);
+
+  let products: Product[];
+  let brandStats: BrandStat[];
+  let catStats: CategoryStats;
+
+  if (snapshot) {
+    products = snapshot.products;
+    brandStats = snapshot.brandStats;
+    catStats = snapshot.catStats;
+  } else {
+    products = await getProductsByCategory(slug);
+    if (products.length === 0) notFound();
+    brandStats = computeBrandStats(products);
+    catStats = computeCategoryStats(products);
+  }
+
   if (products.length === 0) notFound();
 
   const icon = CATEGORY_ICONS[slug] || "📦";
-  const brandStats = computeBrandStats(products);
-  const catStats = computeCategoryStats(products);
   const recentChanges = getRecentChanges(slug);
   const relatedCats = (RELATED_CATEGORIES[slug] || []).filter(
     (c) => CATEGORY_LABELS[c]

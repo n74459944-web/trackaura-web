@@ -7,6 +7,8 @@ Run this from your price-tracker folder:
 It reads prices.db and categories.json, then writes JSON files
 to the trackaura-web/public/data/ folder.
 """
+from dotenv import load_dotenv
+load_dotenv(r"C:\Users\crown\price-tracker\.env")
 
 import sqlite3
 import json
