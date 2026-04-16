@@ -2,7 +2,7 @@
 Export prices.db to JSON files for the Next.js frontend.
 
 Run this from your price-tracker folder:
-    python C:\\Users\\crown\\trackaura-web\\scripts\\export_data.py
+    python C:\\dev\\trackaura-web\\scripts\\export_data.py
 
 It reads prices.db and categories.json, then writes JSON files
 to the trackaura-web/public/data/ folder.
@@ -14,16 +14,7 @@ import sqlite3
 import json
 import os
 import re
-import sys
 from datetime import datetime
-
-# Turso dual-write (optional — fails soft if libsql-client not installed)
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    import turso_writer
-except ImportError:
-    turso_writer = None
-    print("turso_writer not importable; skipping Turso dual-write", file=sys.stderr)
 
 # --- CONFIGURE THESE PATHS ---
 DB_PATH = os.environ.get("DB_PATH", "prices.db")
@@ -31,7 +22,7 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pub
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "price-tracker", "categories.json")
 
 # If running from price-tracker folder, override paths:
-ALT_OUTPUT = r"C:\Users\crown\trackaura-web\public\data"
+ALT_OUTPUT = r"C:\dev\trackaura-web\public\data"
 ALT_CONFIG = r"C:\Users\crown\price-tracker\categories.json"
 if os.path.isdir(os.path.dirname(ALT_OUTPUT)):
     OUTPUT_DIR = ALT_OUTPUT
@@ -820,16 +811,6 @@ def export():
 
     conn.close()
     print(f"\nAll data exported to: {OUTPUT_DIR}")
-
-    # --- Turso dual-write (non-fatal) ---
-    if turso_writer is not None:
-        # Attach product_id to each product payload so the JSON blob stored in
-        # Turso.data has it (some read paths rely on it).
-        for p in products:
-            p.setdefault("id", p.get("id"))
-        turso_writer.safe_dual_write(products, history_by_pid)
-    else:
-        print("Skipped Turso write: turso_writer module not available.")
 
 
 if __name__ == "__main__":
