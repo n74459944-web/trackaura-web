@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-17T02:28:30.141765+00:00",
+  "generated": "2026-04-17T02:57:37.188814+00:00",
   "categories": [
     {
       "key": "ram",
@@ -102,14 +102,14 @@
       "atLowest": 65
     },
     {
-      "key": "tvs",
-      "count": 513,
-      "atLowest": 21
-    },
-    {
       "key": "cellphones",
       "count": 513,
       "atLowest": 0
+    },
+    {
+      "key": "tvs",
+      "count": 513,
+      "atLowest": 21
     },
     {
       "key": "speakers",
