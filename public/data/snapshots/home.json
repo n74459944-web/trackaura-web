@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-17T10:30:55.077567+00:00",
+  "generated": "2026-04-17T10:39:05.474651+00:00",
   "categories": [
     {
       "key": "ram",
@@ -29,27 +29,27 @@
     {
       "key": "coolers",
       "count": 2259,
-      "atLowest": 1035
+      "atLowest": 1039
     },
     {
       "key": "case-fans",
       "count": 2098,
-      "atLowest": 300
+      "atLowest": 314
     },
     {
       "key": "power-supplies",
       "count": 2032,
-      "atLowest": 923
-    },
-    {
-      "key": "ssds",
-      "count": 1926,
-      "atLowest": 544
+      "atLowest": 933
     },
     {
       "key": "cases",
-      "count": 1913,
-      "atLowest": 684
+      "count": 1923,
+      "atLowest": 706
+    },
+    {
+      "key": "ssds",
+      "count": 1916,
+      "atLowest": 636
     },
     {
       "key": "mice",
@@ -72,11 +72,6 @@
       "atLowest": 57
     },
     {
-      "key": "hard-drives",
-      "count": 1159,
-      "atLowest": 59
-    },
-    {
       "key": "ups-power",
       "count": 1093,
       "atLowest": 145
@@ -90,6 +85,11 @@
       "key": "routers",
       "count": 993,
       "atLowest": 476
+    },
+    {
+      "key": "hard-drives",
+      "count": 968,
+      "atLowest": 54
     },
     {
       "key": "cpus",
@@ -127,6 +127,11 @@
       "atLowest": 0
     },
     {
+      "key": "external-storage",
+      "count": 386,
+      "atLowest": 39
+    },
+    {
       "key": "nas",
       "count": 375,
       "atLowest": 85
@@ -145,11 +150,6 @@
       "key": "webcams",
       "count": 197,
       "atLowest": 62
-    },
-    {
-      "key": "external-storage",
-      "count": 185,
-      "atLowest": 29
     },
     {
       "key": "tablets",
