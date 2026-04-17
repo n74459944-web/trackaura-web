@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Metadata } from "next";
 import { getAllProducts } from "@/lib/data";
 import DealsClient from "./DealsClient";
@@ -34,18 +33,14 @@ export default async function DealsPage() {
     .filter((p) => {
       // Must have a real price drop
       if (!(p.minPrice < p.maxPrice && p.currentPrice < p.maxPrice)) return false;
-
       // Filter out data errors: max/min ratio > 5x is suspicious
       if (p.maxPrice > p.minPrice * 5) return false;
-
       // Filter out tiny drops (less than 2% AND less than $2)
       const dropPct = (p.maxPrice - p.currentPrice) / p.maxPrice;
       const dropAbs = p.maxPrice - p.currentPrice;
       if (dropPct < 0.02 && dropAbs < 2) return false;
-
       // Must have enough price history to be meaningful
       if ((p.priceCount || 0) < 2) return false;
-
       return true;
     })
     .sort((a, b) => {
@@ -63,17 +58,7 @@ export default async function DealsPage() {
     return true;
   });
 
-  const top50 = deduped.slice(0, 50);
+  const top200 = deduped.slice(0, 200);
 
-  return (
-    <Suspense
-      fallback={
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "4rem 1.5rem", textAlign: "center", color: "var(--text-secondary)" }}>
-          Loading deals...
-        </div>
-      }
-    >
-      <DealsClient initialProducts={top50} />
-    </Suspense>
-  );
+  return <DealsClient initialProducts={top200} />;
 }
