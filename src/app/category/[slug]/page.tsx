@@ -46,12 +46,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${label} — Compare Prices Across Canadian Retailers | TrackAura`,
+    title: `${label} — Compare Prices Across Canadian Retailers`,
     description: `Track ${count.toLocaleString()} ${label.toLowerCase()} from ${topBrands} and more. Price history, deals, and cross-retailer comparisons updated every 4 hours.`,
     alternates: { canonical: `https://www.trackaura.com/category/${slug}` },
     openGraph: {
-      title: `${label} Price Tracker — TrackAura`,
-      description: `${count.toLocaleString()} ${label.toLowerCase()} tracked across Canada Computers, Newegg & Vuugo.`,
+      title: `${label} Price Tracker`,
+      description: `${count.toLocaleString()} ${label.toLowerCase()} tracked across Canada Computers and Newegg.`,
       url: `https://www.trackaura.com/category/${slug}`,
     },
   };
