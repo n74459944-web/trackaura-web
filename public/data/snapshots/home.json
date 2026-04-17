@@ -1,10 +1,10 @@
 {
-  "generated": "2026-04-17T02:57:37.188814+00:00",
+  "generated": "2026-04-17T10:30:55.077567+00:00",
   "categories": [
     {
       "key": "ram",
       "count": 3341,
-      "atLowest": 725
+      "atLowest": 869
     },
     {
       "key": "motherboards",
@@ -24,7 +24,7 @@
     {
       "key": "gpus",
       "count": 2501,
-      "atLowest": 882
+      "atLowest": 942
     },
     {
       "key": "coolers",
@@ -94,7 +94,7 @@
     {
       "key": "cpus",
       "count": 957,
-      "atLowest": 538
+      "atLowest": 569
     },
     {
       "key": "desktops",
@@ -102,14 +102,14 @@
       "atLowest": 65
     },
     {
-      "key": "cellphones",
-      "count": 513,
-      "atLowest": 0
-    },
-    {
       "key": "tvs",
       "count": 513,
       "atLowest": 21
+    },
+    {
+      "key": "cellphones",
+      "count": 513,
+      "atLowest": 0
     },
     {
       "key": "speakers",
