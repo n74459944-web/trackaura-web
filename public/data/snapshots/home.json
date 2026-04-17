@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-16T12:31:47.644527+00:00",
+  "generated": "2026-04-17T02:28:30.141765+00:00",
   "categories": [
     {
       "key": "ram",
@@ -42,14 +42,14 @@
       "atLowest": 923
     },
     {
+      "key": "ssds",
+      "count": 1926,
+      "atLowest": 544
+    },
+    {
       "key": "cases",
       "count": 1913,
       "atLowest": 684
-    },
-    {
-      "key": "ssds",
-      "count": 1898,
-      "atLowest": 539
     },
     {
       "key": "mice",
@@ -68,13 +68,13 @@
     },
     {
       "key": "smart-home",
-      "count": 1274,
+      "count": 1273,
       "atLowest": 57
     },
     {
       "key": "hard-drives",
-      "count": 1187,
-      "atLowest": 64
+      "count": 1159,
+      "atLowest": 59
     },
     {
       "key": "ups-power",
@@ -88,8 +88,8 @@
     },
     {
       "key": "routers",
-      "count": 992,
-      "atLowest": 474
+      "count": 993,
+      "atLowest": 476
     },
     {
       "key": "cpus",
@@ -230,7 +230,7 @@
       "name": "Lenovo 240 GB 2.5\" Internal Solid State Drive",
       "retailer": "Newegg Canada",
       "url": "https://www.newegg.ca/p/1Z4-000G-003S2",
-      "category": "hard-drives",
+      "category": "ssds",
       "sourceCategory": "hard-drives",
       "brand": "Lenovo",
       "modelKey": null,

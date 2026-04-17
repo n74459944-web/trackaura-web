@@ -1,36 +1,6 @@
 {
-  "generated": "2026-04-16T12:31:49.517534+00:00",
+  "generated": "2026-04-17T02:28:31.931482+00:00",
   "products": [
-    {
-      "id": 24455,
-      "slug": "tp-link-wifi-6-router-ax1800-smart-wifi-router-archer-ax21-dual-band-gigabit-router-works-with-alexa",
-      "name": "TP-Link WiFi 6 Router AX1800 Smart WiFi Router (Archer AX21) - Dual Band Gigabit Router, Works with Alexa",
-      "retailer": "Newegg Canada",
-      "url": "https://www.newegg.ca/tp-link-archer-ax21-ieee-802-11ax-ac-n-a-5-ghz-ieee-802-11ax-n-b-g-2-4-ghz/p/0E6-002W-006B5",
-      "category": "smart-home",
-      "sourceCategory": "smart-home",
-      "brand": "TP-Link",
-      "modelKey": "TP-LINK|ARCHER AX21",
-      "description": "WiFi 6 dual-band smart router with Alexa compatibility for modern homes.",
-      "specs": {
-        "type": "Gigabit Router",
-        "model": "Archer AX21",
-        "speed": "AX1800",
-        "features": "Alexa Compatible",
-        "standard": "WiFi 6"
-      },
-      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/V1DSD210106J40U5.jpg",
-      "matchGroup": null,
-      "canonicalId": 5401,
-      "isOpenbox": false,
-      "firstSeen": "2026-03-09T09:37:38+00:00",
-      "lastSeen": "2026-04-16T02:22:03+00:00",
-      "currentPrice": 229.99,
-      "minPrice": 204.08,
-      "maxPrice": 229.99,
-      "priceCount": 9,
-      "lastUpdated": "2026-03-15T04:06:38+00:00"
-    },
     {
       "id": 24510,
       "slug": "exvist-4g-lte-wifi-router-with-sim-card-slot-industrial-4g-lte-router-with-eg25-g-rs232-vpn-external-antennas-for-smart-",
@@ -30739,15 +30709,15 @@
     }
   ],
   "catStats": {
-    "totalProducts": 1274,
+    "totalProducts": 1273,
     "avgPrice": 396,
-    "medianPrice": 97.88,
+    "medianPrice": 97.87,
     "atLowest": 57,
-    "withHistory": 26,
+    "withHistory": 25,
     "retailers": [
       {
         "name": "Newegg Canada",
-        "count": 1179
+        "count": 1178
       },
       {
         "name": "Visions Electronics",
@@ -30762,8 +30732,8 @@
   "brandStats": [
     {
       "name": "TP-Link",
-      "count": 61,
-      "avgPrice": 133,
+      "count": 60,
+      "avgPrice": 132,
       "minPrice": 19.99,
       "deals": 1
     },
