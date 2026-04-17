@@ -1,105 +1,110 @@
 {
-  "generated": "2026-04-17T10:39:05.474651+00:00",
+  "generated": "2026-04-17T10:54:41.935656+00:00",
   "categories": [
     {
       "key": "ram",
-      "count": 3341,
-      "atLowest": 869
+      "count": 3342,
+      "atLowest": 862
     },
     {
       "key": "motherboards",
-      "count": 3129,
-      "atLowest": 928
+      "count": 3138,
+      "atLowest": 931
     },
     {
       "key": "monitors",
-      "count": 3051,
-      "atLowest": 1057
+      "count": 3054,
+      "atLowest": 1104
     },
     {
       "key": "keyboards",
-      "count": 2542,
-      "atLowest": 1284
+      "count": 2543,
+      "atLowest": 1279
     },
     {
       "key": "gpus",
-      "count": 2501,
-      "atLowest": 942
+      "count": 2503,
+      "atLowest": 944
     },
     {
       "key": "coolers",
       "count": 2259,
-      "atLowest": 1039
+      "atLowest": 1031
     },
     {
       "key": "case-fans",
-      "count": 2098,
-      "atLowest": 314
+      "count": 2100,
+      "atLowest": 318
     },
     {
       "key": "power-supplies",
-      "count": 2032,
-      "atLowest": 933
+      "count": 2033,
+      "atLowest": 935
     },
     {
       "key": "cases",
-      "count": 1923,
+      "count": 1925,
       "atLowest": 706
     },
     {
-      "key": "ssds",
-      "count": 1916,
-      "atLowest": 636
+      "key": "mice",
+      "count": 1747,
+      "atLowest": 655
     },
     {
-      "key": "mice",
-      "count": 1748,
-      "atLowest": 665
+      "key": "ssds",
+      "count": 1706,
+      "atLowest": 576
     },
     {
       "key": "headphones",
       "count": 1652,
-      "atLowest": 730
+      "atLowest": 734
     },
     {
       "key": "laptops",
-      "count": 1350,
-      "atLowest": 559
+      "count": 1352,
+      "atLowest": 558
     },
     {
       "key": "smart-home",
-      "count": 1273,
-      "atLowest": 57
+      "count": 1329,
+      "atLowest": 77
     },
     {
       "key": "ups-power",
       "count": 1093,
-      "atLowest": 145
+      "atLowest": 148
     },
     {
       "key": "network-switches",
-      "count": 1042,
-      "atLowest": 140
+      "count": 1034,
+      "atLowest": 151
     },
     {
       "key": "routers",
-      "count": 993,
-      "atLowest": 476
+      "count": 997,
+      "atLowest": 475
     },
     {
       "key": "hard-drives",
-      "count": 968,
-      "atLowest": 54
+      "count": 978,
+      "atLowest": 67
     },
     {
       "key": "cpus",
       "count": 957,
-      "atLowest": 569
+      "atLowest": 571
     },
     {
       "key": "desktops",
-      "count": 803,
-      "atLowest": 65
+      "count": 808,
+      "atLowest": 69
+    },
+    {
+      "key": "external-storage",
+      "count": 601,
+      "atLowest": 97
     },
     {
       "key": "tvs",
@@ -113,13 +118,13 @@
     },
     {
       "key": "speakers",
-      "count": 495,
-      "atLowest": 95
+      "count": 496,
+      "atLowest": 118
     },
     {
       "key": "printers",
       "count": 471,
-      "atLowest": 43
+      "atLowest": 48
     },
     {
       "key": "cameras",
@@ -127,19 +132,14 @@
       "atLowest": 0
     },
     {
-      "key": "external-storage",
-      "count": 386,
-      "atLowest": 39
-    },
-    {
       "key": "nas",
-      "count": 375,
-      "atLowest": 85
+      "count": 376,
+      "atLowest": 90
     },
     {
       "key": "gaming-consoles",
-      "count": 300,
-      "atLowest": 18
+      "count": 309,
+      "atLowest": 37
     },
     {
       "key": "car-audio",
@@ -148,13 +148,13 @@
     },
     {
       "key": "webcams",
-      "count": 197,
-      "atLowest": 62
+      "count": 201,
+      "atLowest": 63
     },
     {
       "key": "tablets",
-      "count": 124,
-      "atLowest": 28
+      "count": 125,
+      "atLowest": 29
     },
     {
       "key": "wearables",
@@ -183,7 +183,7 @@
       "canonicalId": 5197,
       "isOpenbox": false,
       "firstSeen": "2026-03-09T09:36:21+00:00",
-      "lastSeen": "2026-04-16T02:32:57+00:00",
+      "lastSeen": "2026-04-17T03:31:14+00:00",
       "currentPrice": 59.95,
       "minPrice": 59.95,
       "maxPrice": 194.97,
@@ -281,34 +281,35 @@
       "savings": 169.0
     },
     {
-      "id": 13502,
-      "slug": "kensington-orbit-trackball-with-scroll-ring-white",
-      "name": "Kensington Orbit Trackball With Scroll Ring - White",
+      "id": 13460,
+      "slug": "corsair-harpoon-rgb-wireless-wireless-rechargeable-gaming-mouse-with-slipstream-technology-10000-dpi-optical-sensor",
+      "name": "Corsair Harpoon RGB Wireless - Wireless Rechargeable Gaming Mouse with SLIPSTREAM Technology - 10,000 DPI Optical Sensor",
       "retailer": "Newegg Canada",
-      "url": "https://www.newegg.ca/p/32K-001U-00018",
+      "url": "https://www.newegg.ca/corsair-ch-9311011-na-harpoon-bluetooth-wireless/p/N82E16826816124",
       "category": "mice",
       "sourceCategory": "mice",
-      "brand": "Kensington",
+      "brand": "Corsair",
       "modelKey": null,
-      "description": "Trackball mouse with scroll ring in white for ergonomic pointer control.",
+      "description": "Wireless rechargeable gaming mouse with 10,000 DPI sensor and SLIPSTREAM technology.",
       "specs": {
-        "type": "trackball",
-        "color": "white",
-        "feature": "scroll ring"
+        "dpi": "10000",
+        "sensor": "Optical",
+        "technology": "SLIPSTREAM",
+        "connectivity": "Wireless Rechargeable"
       },
-      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/V009_1_202002241566044237.jpg",
+      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/26-816-124-V04.jpg",
       "matchGroup": null,
-      "canonicalId": 4349,
+      "canonicalId": 3410,
       "isOpenbox": false,
-      "firstSeen": "2026-03-09T08:02:39+00:00",
-      "lastSeen": "2026-04-16T02:43:59+00:00",
-      "currentPrice": 52.99,
-      "minPrice": 52.99,
-      "maxPrice": 151.99,
-      "priceCount": 11,
-      "lastUpdated": "2026-04-12T05:29:23+00:00",
-      "dropPct": 65.13586420159221,
-      "savings": 99.0
+      "firstSeen": "2026-03-09T08:02:32+00:00",
+      "lastSeen": "2026-04-17T03:42:04+00:00",
+      "currentPrice": 69.99,
+      "minPrice": 69.99,
+      "maxPrice": 200.99,
+      "priceCount": 13,
+      "lastUpdated": "2026-04-17T03:42:04+00:00",
+      "dropPct": 65.17737200855763,
+      "savings": 131.0
     },
     {
       "id": 744231,
