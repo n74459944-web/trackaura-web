@@ -1,35 +1,40 @@
 {
-  "generated": "2026-04-17T10:54:41.935656+00:00",
+  "generated": "2026-04-18T02:06:42.226613+00:00",
   "categories": [
     {
       "key": "ram",
       "count": 3342,
-      "atLowest": 862
+      "atLowest": 853
     },
     {
       "key": "motherboards",
       "count": 3138,
-      "atLowest": 931
+      "atLowest": 923
     },
     {
       "key": "monitors",
-      "count": 3054,
-      "atLowest": 1104
+      "count": 3099,
+      "atLowest": 1115
     },
     {
       "key": "keyboards",
       "count": 2543,
-      "atLowest": 1279
+      "atLowest": 1276
     },
     {
       "key": "gpus",
-      "count": 2503,
-      "atLowest": 944
+      "count": 2506,
+      "atLowest": 936
+    },
+    {
+      "key": "cases",
+      "count": 2461,
+      "atLowest": 713
     },
     {
       "key": "coolers",
-      "count": 2259,
-      "atLowest": 1031
+      "count": 2260,
+      "atLowest": 1018
     },
     {
       "key": "case-fans",
@@ -38,48 +43,43 @@
     },
     {
       "key": "power-supplies",
-      "count": 2033,
+      "count": 2035,
       "atLowest": 935
     },
     {
-      "key": "cases",
-      "count": 1925,
-      "atLowest": 706
-    },
-    {
       "key": "mice",
-      "count": 1747,
-      "atLowest": 655
+      "count": 1750,
+      "atLowest": 658
     },
     {
       "key": "ssds",
-      "count": 1706,
-      "atLowest": 576
+      "count": 1707,
+      "atLowest": 561
     },
     {
       "key": "headphones",
-      "count": 1652,
-      "atLowest": 734
+      "count": 1654,
+      "atLowest": 761
     },
     {
       "key": "laptops",
-      "count": 1352,
-      "atLowest": 558
+      "count": 1362,
+      "atLowest": 523
     },
     {
       "key": "smart-home",
-      "count": 1329,
+      "count": 1325,
       "atLowest": 77
     },
     {
       "key": "ups-power",
       "count": 1093,
-      "atLowest": 148
+      "atLowest": 138
     },
     {
       "key": "network-switches",
-      "count": 1034,
-      "atLowest": 151
+      "count": 1049,
+      "atLowest": 164
     },
     {
       "key": "routers",
@@ -88,18 +88,18 @@
     },
     {
       "key": "hard-drives",
-      "count": 978,
+      "count": 979,
       "atLowest": 67
     },
     {
       "key": "cpus",
-      "count": 957,
-      "atLowest": 571
+      "count": 958,
+      "atLowest": 569
     },
     {
       "key": "desktops",
-      "count": 808,
-      "atLowest": 69
+      "count": 812,
+      "atLowest": 66
     },
     {
       "key": "external-storage",
@@ -109,7 +109,7 @@
     {
       "key": "tvs",
       "count": 513,
-      "atLowest": 21
+      "atLowest": 9
     },
     {
       "key": "cellphones",
@@ -119,7 +119,7 @@
     {
       "key": "speakers",
       "count": 496,
-      "atLowest": 118
+      "atLowest": 127
     },
     {
       "key": "printers",
@@ -133,7 +133,7 @@
     },
     {
       "key": "nas",
-      "count": 376,
+      "count": 374,
       "atLowest": 90
     },
     {
@@ -154,7 +154,7 @@
     {
       "key": "tablets",
       "count": 125,
-      "atLowest": 29
+      "atLowest": 25
     },
     {
       "key": "wearables",

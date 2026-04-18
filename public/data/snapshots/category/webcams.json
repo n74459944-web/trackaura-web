@@ -1,5 +1,5 @@
 {
-  "generated": "2026-04-17T10:54:44.108492+00:00",
+  "generated": "2026-04-18T02:06:44.382788+00:00",
   "products": [
     {
       "id": 21431,
@@ -22,7 +22,7 @@
       "canonicalId": 5160,
       "isOpenbox": false,
       "firstSeen": "2026-03-09T09:25:03+00:00",
-      "lastSeen": "2026-04-14T23:01:01+00:00",
+      "lastSeen": "2026-04-17T03:58:21+00:00",
       "currentPrice": 99.99,
       "minPrice": 99.99,
       "maxPrice": 99.99,
@@ -50,7 +50,7 @@
       "canonicalId": 5161,
       "isOpenbox": false,
       "firstSeen": "2026-03-09T09:25:03+00:00",
-      "lastSeen": "2026-04-14T23:01:01+00:00",
+      "lastSeen": "2026-04-17T03:58:21+00:00",
       "currentPrice": 1254.99,
       "minPrice": 1254.99,
       "maxPrice": 1254.99,
@@ -889,7 +889,7 @@
       "canonicalId": 9416,
       "isOpenbox": false,
       "firstSeen": "2026-03-13T17:05:11+00:00",
-      "lastSeen": "2026-04-14T23:01:01+00:00",
+      "lastSeen": "2026-04-17T03:58:21+00:00",
       "currentPrice": 184.87,
       "minPrice": 184.87,
       "maxPrice": 184.87,
@@ -5137,7 +5137,7 @@
       "canonicalId": null,
       "isOpenbox": false,
       "firstSeen": "2026-04-10T02:44:22+00:00",
-      "lastSeen": "2026-04-14T23:01:01+00:00",
+      "lastSeen": "2026-04-17T03:58:21+00:00",
       "currentPrice": 695.0,
       "minPrice": 695.0,
       "maxPrice": 695.0,
