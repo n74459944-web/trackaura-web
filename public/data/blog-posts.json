@@ -1,5 +1,37 @@
 [
   {
+  "slug": "canada-computers-vs-newegg-canada-april-2026",
+  "title": "Canada Computers vs Newegg Canada: We Compared 661 Identical Products",
+  "description": "We matched 661 products sold at both Canada Computers and Newegg Canada, then compared current prices head-to-head. CC won 47% of the time, NE won 25%, and 28% were priced identically.",
+  "date": "2026-04-17",
+  "category": "Data Analysis",
+  "content": [
+    "If you're shopping for electronics in Canada, the two retailers you're most likely comparing are Canada Computers and Newegg Canada. Both carry thousands of overlapping products. Both claim competitive pricing. So who's actually cheaper?",
+    "We pulled every product currently sold at both retailers that we've matched as the same SKU — 661 products in total — and compared their current prices head-to-head. The short answer: Canada Computers is cheaper more often, but not by as much as you might expect. The more interesting finding is how often they're priced **identically**.",
+    "## The Short Answer",
+    "Out of 661 matched products, **Canada Computers was cheaper on 47.2%** and **Newegg Canada was cheaper on 24.8%**. The remaining **28% were priced identically** — often to the cent. When Canada Computers wins, it wins by a median of 22%. When Newegg Canada wins, the median margin is smaller at about 10%.",
+    "## How We Ran the Comparison",
+    "TrackAura scrapes Canada Computers and Newegg Canada every four hours and matches products across retailers using a shared canonical product ID. For this post, we pulled every product where both retailers currently list the same canonical SKU — 661 products after filtering. We excluded open-box and refurbished SKUs on both sides, used the cheapest non-openbox variant when a product had multiple colors, and dropped pairs with extreme price ratios as likely third-party marketplace listings or stale data. Every number in this post comes from that 661-product sample.",
+    "## 28% of Prices Match — Often to the Cent",
+    "Nearly a third of matched products had the exact same price on both retailers. Not \"within a dollar\" — identical, frequently down to 99-cent endings. On that segment, there's no price difference to exploit.",
+    "This isn't random noise. Random price-setting wouldn't produce 185 exact matches out of 661. Three things plausibly explain it: manufacturer MSRP enforcement on mainstream products, active price-matching between the retailers, or shared distributor pricing applied with similar markups at both stores. Whatever the cause, the practical takeaway is that for roughly a third of the shared catalog, it doesn't matter which site you buy from on price — pick based on shipping, returns, or stock.",
+    "## By Category: Where Each Retailer Wins",
+    "This is the useful part. Some categories skew hard one way. Others are nearly even.",
+    "**Categories where Canada Computers wins:**\n\n- **CPUs**: 76.5% CC, 23.5% NE (17 products)\n- **Routers**: 66.7% CC, 18.2% NE (33 products)\n- **Laptops**: 66.7% CC, 27.8% NE (18 products)\n- **Keyboards**: 57.5% CC, 20.0% NE (40 products)\n- **Coolers**: 55.8% CC, 25.6% NE (43 products)\n- **Cases**: 50.0% CC, 25.0% NE (24 products)\n- **Mice**: 50.0% CC, 10.5% NE (38 products)\n- **Motherboards**: 49.7% CC, 24.5% NE (159 products)\n- **GPUs**: 37.7% CC, 13.8% NE (130 products)\n- **Power supplies**: 27.1% CC, 22.9% NE (48 products)",
+    "**Categories where Newegg Canada wins:**\n\n- **SSDs**: 60.0% NE, 36.7% CC (30 products)\n- **Headphones**: 50.0% NE, 44.4% CC (18 products)\n- **Monitors**: 40.7% NE, 38.9% CC (54 products)",
+    "## The Patterns",
+    "**PC building components favor Canada Computers strongly.** Motherboards, GPUs, CPUs, coolers, cases, and power supplies — CC wins or ties on every one. This tracks with CC's history as a PC enthusiast retailer.",
+    "**SSDs are Newegg Canada's strongest category.** Newegg wins 60% of SSD matchups on a reasonable sample size. If you're building a rig and need storage, that's the one component worth checking Newegg on first.",
+    "**Peripherals split.** Keyboards and mice go hard CC. Headphones go slightly NE. Monitors are essentially a wash.",
+    "## What to Actually Buy Where",
+    "The simplest decision rules from this data:\n\n- **Building or upgrading a PC?** Start at Canada Computers. On CPUs, motherboards, coolers, power supplies, cases, keyboards, and mice, CC is cheaper or tied more than 75% of the time.\n- **Buying an SSD or a name-brand monitor?** Check Newegg Canada first. These are the two categories where it's legitimately cheaper more often than not.\n- **Headphones?** Roughly a coin flip. Check both, or go with whichever retailer you prefer for returns.\n- **Everything else (the 28% tied)?** Pick based on shipping speed, stock, or which site you trust more. Price is a wash.",
+    "## Where This Data Falls Short",
+    "We want to be upfront about what 661 data points can and can't tell you. This is a current-price snapshot, not a historical ranking — April's numbers may shift in May, and category patterns are more durable than any single week's percentages. Individual listings can also be noisy: both retailers occasionally carry a product at a price that's out of step with the real market — stale listings, third-party sellers on Newegg's marketplace, pre-sale pricing. We filtered the worst offenders, but some noise survives. That's why this post leads with aggregate category patterns and not a \"biggest savings\" leaderboard. Product matching also isn't perfect — when two retailers list the same product with different phrasing, we rely on model numbers and brands to link them, and misses happen at the edges. Finally, this comparison doesn't include Vuugo or Visions Electronics, both of which are active Canadian retailers with their own pricing patterns worth covering in a future post.",
+    "## Track It Yourself",
+    "Every product page on TrackAura shows current prices across every retailer that sells it, along with the full price history. Set a price alert on any product and we'll email you when it drops to your target price — across Canada Computers, Newegg Canada, Vuugo, and Visions Electronics. This post was generated from an April 17, 2026 snapshot of our data. We'll rerun this analysis quarterly and track how the category patterns shift."
+    ]
+  },
+  {
     "slug": "canadian-electronics-price-report-2026-04",
     "title": "Canadian Electronics Price Report — April 2026",
     "description": "Our first independent monthly price report on Canadian electronics. How prices are actually moving across tens of thousands of products tracked daily at Canada Computers and Newegg Canada.",
