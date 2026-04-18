@@ -1,115 +1,110 @@
 {
-  "generated": "2026-04-18T13:01:45.329920+00:00",
+  "generated": "2026-04-18T23:48:07.190156+00:00",
   "categories": [
     {
-      "key": "ram",
-      "count": 3342,
-      "atLowest": 853
-    },
-    {
-      "key": "motherboards",
-      "count": 3138,
-      "atLowest": 923
-    },
-    {
       "key": "monitors",
-      "count": 3099,
-      "atLowest": 1115
+      "count": 2975,
+      "atLowest": 975
+    },
+    {
+      "key": "ram",
+      "count": 2601,
+      "atLowest": 688
     },
     {
       "key": "keyboards",
-      "count": 2543,
-      "atLowest": 1276
-    },
-    {
-      "key": "gpus",
-      "count": 2506,
-      "atLowest": 936
+      "count": 2224,
+      "atLowest": 1149
     },
     {
       "key": "cases",
-      "count": 2461,
-      "atLowest": 713
+      "count": 2100,
+      "atLowest": 610
+    },
+    {
+      "key": "motherboards",
+      "count": 2076,
+      "atLowest": 633
+    },
+    {
+      "key": "gpus",
+      "count": 1826,
+      "atLowest": 850
     },
     {
       "key": "coolers",
-      "count": 2260,
-      "atLowest": 1018
-    },
-    {
-      "key": "case-fans",
-      "count": 2100,
-      "atLowest": 318
+      "count": 1808,
+      "atLowest": 798
     },
     {
       "key": "power-supplies",
-      "count": 2035,
-      "atLowest": 935
+      "count": 1568,
+      "atLowest": 820
     },
     {
       "key": "mice",
-      "count": 1750,
-      "atLowest": 658
+      "count": 1548,
+      "atLowest": 694
     },
     {
-      "key": "ssds",
-      "count": 1707,
-      "atLowest": 561
+      "key": "case-fans",
+      "count": 1483,
+      "atLowest": 374
     },
     {
       "key": "headphones",
-      "count": 1654,
-      "atLowest": 761
+      "count": 1450,
+      "atLowest": 628
     },
     {
-      "key": "laptops",
-      "count": 1362,
-      "atLowest": 523
+      "key": "ssds",
+      "count": 1437,
+      "atLowest": 387
     },
     {
       "key": "smart-home",
-      "count": 1325,
-      "atLowest": 77
+      "count": 1312,
+      "atLowest": 80
     },
     {
-      "key": "ups-power",
-      "count": 1093,
-      "atLowest": 138
-    },
-    {
-      "key": "network-switches",
-      "count": 1049,
-      "atLowest": 164
-    },
-    {
-      "key": "routers",
-      "count": 997,
-      "atLowest": 475
-    },
-    {
-      "key": "hard-drives",
-      "count": 979,
-      "atLowest": 67
-    },
-    {
-      "key": "cpus",
-      "count": 958,
-      "atLowest": 569
+      "key": "laptops",
+      "count": 1075,
+      "atLowest": 448
     },
     {
       "key": "desktops",
-      "count": 812,
-      "atLowest": 66
+      "count": 945,
+      "atLowest": 82
+    },
+    {
+      "key": "network-switches",
+      "count": 938,
+      "atLowest": 173
+    },
+    {
+      "key": "routers",
+      "count": 916,
+      "atLowest": 442
+    },
+    {
+      "key": "hard-drives",
+      "count": 849,
+      "atLowest": 81
+    },
+    {
+      "key": "ups-power",
+      "count": 802,
+      "atLowest": 141
+    },
+    {
+      "key": "cpus",
+      "count": 652,
+      "atLowest": 393
     },
     {
       "key": "external-storage",
-      "count": 601,
-      "atLowest": 97
-    },
-    {
-      "key": "tvs",
-      "count": 513,
-      "atLowest": 9
+      "count": 591,
+      "atLowest": 117
     },
     {
       "key": "cellphones",
@@ -117,14 +112,14 @@
       "atLowest": 0
     },
     {
-      "key": "speakers",
-      "count": 496,
-      "atLowest": 127
+      "key": "tvs",
+      "count": 510,
+      "atLowest": 10
     },
     {
-      "key": "printers",
-      "count": 471,
-      "atLowest": 48
+      "key": "speakers",
+      "count": 492,
+      "atLowest": 126
     },
     {
       "key": "cameras",
@@ -133,13 +128,18 @@
     },
     {
       "key": "nas",
-      "count": 374,
-      "atLowest": 90
+      "count": 381,
+      "atLowest": 96
+    },
+    {
+      "key": "printers",
+      "count": 370,
+      "atLowest": 53
     },
     {
       "key": "gaming-consoles",
-      "count": 309,
-      "atLowest": 37
+      "count": 294,
+      "atLowest": 38
     },
     {
       "key": "car-audio",
@@ -148,12 +148,12 @@
     },
     {
       "key": "webcams",
-      "count": 201,
-      "atLowest": 63
+      "count": 165,
+      "atLowest": 48
     },
     {
       "key": "tablets",
-      "count": 125,
+      "count": 122,
       "atLowest": 25
     },
     {
@@ -163,6 +163,37 @@
     }
   ],
   "featured": [
+    {
+      "id": 150826,
+      "slug": "lenovo-4-tb-hard-drive-35-internal-sata-sata600-4xb7a77447",
+      "name": "Lenovo 4 TB Hard Drive 3.5\" Internal SATA SATA/600 4XB7A77447",
+      "retailer": "Newegg Canada",
+      "url": "https://www.newegg.ca/p/1Z4-000G-00JP4?Item=1Z4-000G-00JP4&SoldByNewegg=1",
+      "category": "hard-drives",
+      "sourceCategory": "hard-drives",
+      "brand": "Lenovo",
+      "modelKey": null,
+      "description": "4TB SATA internal hard drive for server and storage systems.",
+      "specs": {
+        "model": "4XB7A77447",
+        "capacity": "4TB",
+        "interface": "SATA",
+        "form_factor": "3.5\""
+      },
+      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/A6ZPD2206291C8UC59E.jpg",
+      "matchGroup": null,
+      "canonicalId": 9805,
+      "isOpenbox": false,
+      "firstSeen": "2026-03-15T03:38:13+00:00",
+      "lastSeen": "2026-04-18T06:04:42+00:00",
+      "currentPrice": 397.99,
+      "minPrice": 397.99,
+      "maxPrice": 1321.63,
+      "priceCount": 4,
+      "lastUpdated": "2026-04-18T06:04:42+00:00",
+      "dropPct": 69.8864281228483,
+      "savings": 923.6400000000001
+    },
     {
       "id": 24098,
       "slug": "noctua-nh-l9i-17xx-premium-low-profile-cpu-cooler-for-intel-lga1700-and-lga1851-brown",
@@ -183,7 +214,7 @@
       "canonicalId": 5197,
       "isOpenbox": false,
       "firstSeen": "2026-03-09T09:36:21+00:00",
-      "lastSeen": "2026-04-17T03:31:14+00:00",
+      "lastSeen": "2026-04-18T04:41:55+00:00",
       "currentPrice": 59.95,
       "minPrice": 59.95,
       "maxPrice": 194.97,
@@ -191,6 +222,37 @@
       "lastUpdated": "2026-04-12T05:42:27+00:00",
       "dropPct": 69.25167974560188,
       "savings": 135.01999999999998
+    },
+    {
+      "id": 34243,
+      "slug": "razer-huntsman-v3-pro-mini-60-analog-optical-esports-keyboard",
+      "name": "Razer Huntsman V3 Pro Mini - 60% Analog Optical Esports Keyboard",
+      "retailer": "Canada Computers",
+      "url": "https://www.canadacomputers.com/en/gaming-keyboards/260591/razer-huntsman-v3-pro-mini-60-analog-optical-esports-keyboard-rz03-04990200-r3u1.html",
+      "category": "keyboards",
+      "sourceCategory": "keyboards",
+      "brand": "Razer",
+      "modelKey": "RAZER|HUNTSMAN V3",
+      "description": "A compact 60% esports keyboard with analog optical switches and pro-level features for competitive gaming.",
+      "specs": {
+        "size": "60%",
+        "designation": "Pro Mini",
+        "switch_type": "analog optical",
+        "product_type": "keyboard"
+      },
+      "imageUrl": "https://ccimg1.canadacomputers.com/Products/250x250/276/4910/260591/98454.jpg",
+      "matchGroup": 41,
+      "canonicalId": 5722,
+      "isOpenbox": false,
+      "firstSeen": "2026-03-09T14:49:33+00:00",
+      "lastSeen": "2026-04-18T04:59:53+00:00",
+      "currentPrice": 79.99,
+      "minPrice": 79.99,
+      "maxPrice": 259.99,
+      "priceCount": 13,
+      "lastUpdated": "2026-04-18T04:59:53+00:00",
+      "dropPct": 69.23343205507904,
+      "savings": 180.0
     },
     {
       "id": 9795,
@@ -225,36 +287,6 @@
       "savings": 329.89
     },
     {
-      "id": 53625,
-      "slug": "lenovo-240-gb-25-internal-solid-state-drive",
-      "name": "Lenovo 240 GB 2.5\" Internal Solid State Drive",
-      "retailer": "Newegg Canada",
-      "url": "https://www.newegg.ca/p/1Z4-000G-003S2",
-      "category": "ssds",
-      "sourceCategory": "hard-drives",
-      "brand": "Lenovo",
-      "modelKey": null,
-      "description": "240GB 2.5\" internal SATA SSD for entry-level enterprise storage.",
-      "specs": {
-        "capacity": "240GB",
-        "interface": "SATA",
-        "form_factor": "2.5\""
-      },
-      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/A4M5_1_201801161282918854.jpg",
-      "matchGroup": null,
-      "canonicalId": 13702,
-      "isOpenbox": false,
-      "firstSeen": "2026-03-10T04:39:21+00:00",
-      "lastSeen": null,
-      "currentPrice": 295.41,
-      "minPrice": 295.41,
-      "maxPrice": 936.65,
-      "priceCount": 13,
-      "lastUpdated": "2026-03-16T00:08:08+00:00",
-      "dropPct": 68.46100464421076,
-      "savings": 641.24
-    },
-    {
       "id": 903899,
       "slug": "250w-300w-700w-850w-1u-modulars-psus-with-low-noise-40mm-cooling-fan-for-limited-space-setups-excludes-power-plug-intell",
       "name": "250W 300W 700W 850W 1U Modulars PSUs with Low Noise 40MM Cooling Fan for Limited Space Setups Excludes Power Plug Intelligent Thermals Control",
@@ -281,61 +313,30 @@
       "savings": 169.0
     },
     {
-      "id": 13460,
-      "slug": "corsair-harpoon-rgb-wireless-wireless-rechargeable-gaming-mouse-with-slipstream-technology-10000-dpi-optical-sensor",
-      "name": "Corsair Harpoon RGB Wireless - Wireless Rechargeable Gaming Mouse with SLIPSTREAM Technology - 10,000 DPI Optical Sensor",
+      "id": 867192,
+      "slug": "synology-d4eu01-16g-ram-ddr4-ecc-unbuffered-udimm-16gb",
+      "name": "Synology D4EU01-16G RAM DDR4 ECC Unbuffered UDIMM 16GB",
       "retailer": "Newegg Canada",
-      "url": "https://www.newegg.ca/corsair-ch-9311011-na-harpoon-bluetooth-wireless/p/N82E16826816124",
-      "category": "mice",
-      "sourceCategory": "mice",
-      "brand": "Corsair",
-      "modelKey": null,
-      "description": "Wireless rechargeable gaming mouse with 10,000 DPI sensor and SLIPSTREAM technology.",
-      "specs": {
-        "dpi": "10000",
-        "sensor": "Optical",
-        "technology": "SLIPSTREAM",
-        "connectivity": "Wireless Rechargeable"
-      },
-      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/26-816-124-V04.jpg",
-      "matchGroup": null,
-      "canonicalId": 3410,
-      "isOpenbox": false,
-      "firstSeen": "2026-03-09T08:02:32+00:00",
-      "lastSeen": "2026-04-17T03:42:04+00:00",
-      "currentPrice": 69.99,
-      "minPrice": 69.99,
-      "maxPrice": 200.99,
-      "priceCount": 13,
-      "lastUpdated": "2026-04-17T03:42:04+00:00",
-      "dropPct": 65.17737200855763,
-      "savings": 131.0
-    },
-    {
-      "id": 744231,
-      "slug": "noctua-na-fc1-4-pin-pwm-fan-controller-black",
-      "name": "Noctua NA-FC1, 4-Pin PWM Fan Controller (Black)",
-      "retailer": "Newegg Canada",
-      "url": "https://www.newegg.ca/p/1YF-000T-005D2",
-      "category": "case-fans",
-      "sourceCategory": "case-fans",
-      "brand": "Noctua",
+      "url": "https://www.newegg.ca/synology-d4eu01-16g/p/N82E16822108800?Item=N82E16822108800&SoldByNewegg=1",
+      "category": "nas",
+      "sourceCategory": "nas",
+      "brand": "(11)",
       "modelKey": null,
       "description": null,
       "specs": null,
-      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/AN7DD210805T2F0I.jpg",
+      "imageUrl": "https://c1.neweggimages.com/productimage/nb300/A2F8S2112276iFQr.jpg",
       "matchGroup": null,
       "canonicalId": null,
       "isOpenbox": false,
-      "firstSeen": "2026-04-06T07:40:32+00:00",
-      "lastSeen": "2026-04-14T02:42:20+00:00",
-      "currentPrice": 40.65,
-      "minPrice": 40.65,
-      "maxPrice": 109.98,
+      "firstSeen": "2026-04-12T05:46:22+00:00",
+      "lastSeen": "2026-04-18T06:05:33+00:00",
+      "currentPrice": 584.99,
+      "minPrice": 584.99,
+      "maxPrice": 1713.1,
       "priceCount": 4,
-      "lastUpdated": "2026-04-12T05:44:12+00:00",
-      "dropPct": 63.03873431533007,
-      "savings": 69.33000000000001
+      "lastUpdated": "2026-04-18T06:05:00+00:00",
+      "dropPct": 65.85196427529041,
+      "savings": 1128.11
     }
   ]
 }
