@@ -79,6 +79,8 @@ export async function getFilteredProducts(
   const rows = data as RpcRow[];
   const total = Number(rows[0].total_count);
 
+  const nowIso = new Date().toISOString();
+
   // Map RPC rows to the frontend Product type. Fields not populated by
   // the canonical listing (priceCount, firstSeen, specs, etc.) are set to
   // sensible defaults — ProductCard only reads the core display fields.
@@ -96,7 +98,9 @@ export async function getFilteredProducts(
     maxPrice: Number(r.max_price),
     priceCount: 0,
     isOpenbox: r.is_openbox,
-  }) as Product);
+    firstSeen: nowIso,
+    lastUpdated: nowIso,
+  }) as unknown as Product);
 
   return {
     products,
