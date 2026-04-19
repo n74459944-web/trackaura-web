@@ -20,10 +20,23 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "vuugo.com" },
     ],
   },
-
   async redirects() {
     return [
-      // Old /products?category=X → new /category/X
+      // New canonical URL shapes. The old /category/:slug and /product/:slug
+      // routes still exist on disk but read the deleted snapshot JSON, so
+      // these redirects ensure every visitor lands on the live SSR pages.
+      {
+        source: "/category/:slug",
+        destination: "/c/:slug",
+        permanent: true,
+      },
+      {
+        source: "/product/:slug",
+        destination: "/p/:slug",
+        permanent: true,
+      },
+
+      // Old /products?category=X → new /c/X (updated from /category/X)
       ...[
         "gpus", "cpus", "ssds", "ram", "monitors", "keyboards", "mice",
         "laptops", "motherboards", "power-supplies", "cases", "coolers",
@@ -34,7 +47,7 @@ const nextConfig: NextConfig = {
       ].map((cat) => ({
         source: "/products",
         has: [{ type: "query" as const, key: "category", value: cat }],
-        destination: `/category/${cat}`,
+        destination: `/c/${cat}`,
         permanent: true,
       })),
 

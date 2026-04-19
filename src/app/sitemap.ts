@@ -1,0 +1,37 @@
+import type { MetadataRoute } from 'next';
+import { createClient } from '@/lib/supabase/server';
+
+// Google's hard cap is 50,000 URLs per sitemap.
+// Using 40k keeps headroom for growth without a redeploy.
+const URLS_PER_CHILD = 40_000;
+
+/**
+ * Sitemap index at /sitemap.xml
+ * Points to /static-sitemap.xml and /products-sitemap/[n].xml
+ */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const supabase = await createClient();
+
+  const { count } = await supabase
+    .from('canonical_products')
+    .select('id', { count: 'exact', head: true })
+    .not('image_url', 'is', null);
+
+  const productCount = count ?? 0;
+  const chunkCount = Math.max(1, Math.ceil(productCount / URLS_PER_CHILD));
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
+
+  return [
+    {
+      url: `${base}/static-sitemap.xml`,
+      lastModified: new Date(),
+    },
+    ...Array.from({ length: chunkCount }, (_, i) => ({
+      url: `${base}/products-sitemap/${i}.xml`,
+      lastModified: new Date(),
+    })),
+  ];
+}
+
+// Refresh the index once a day — child sitemaps have their own revalidation.
+export const revalidate = 86_400;
