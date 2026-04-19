@@ -182,16 +182,44 @@ function computeCategoryStats(products: Product[]): CategoryStats {
 }
 
 // ── Trend banner helper ──
+//
 // Reads the generated price-index.json and returns a pctChange if the
-// category has enough history to make a monthly claim. Noise guards:
+// category has enough CLEAN history to make a monthly claim.
+//
+// Noise guards:
 //   - at least 14 days of trend data (otherwise "this month" is a lie)
 //   - at least 0.5% absolute change (otherwise the banner is clutter)
+//   - earliest trend day must be on/after TREND_BASELINE_DATE (S27 fix)
+//
+// Why the baseline gate:
+// The Session 27 scraper fix on 2026-04-19 materially expanded the CC
+// product basket in several categories (cases 200→800, monitors 237→792,
+// PSUs 147→337, etc.). Index values computed across that boundary mix
+// two different baskets, so any pctChange that spans the fix date is a
+// measurement artifact, not real price movement. Require every day in
+// the trend window to be post-fix so the banner only surfaces honest
+// signal. Banner stays hidden per-category until that category has
+// accumulated 14 days of post-fix history (≈ 2026-05-03).
+//
+// NOTE: assumes cat.trend is chronologically ascending (oldest first),
+// matching the existing `cat.trend.length < 14` "days of history" guard.
+// If that ever changes, swap trend[0] for trend[trend.length - 1].
+//
 // Returns null when the banner should not render.
+const TREND_BASELINE_DATE = "2026-04-19";
+
 async function getCategoryTrendSignal(slug: string): Promise<{ pct: number } | null> {
   try {
     const priceIndex = await getPriceIndex();
     const cat = priceIndex?.categories?.[slug];
     if (!cat || Array.isArray(cat) || !Array.isArray(cat.trend) || cat.trend.length < 14) return null;
+
+    // Fix-date gate: every day in the trend window must be post-S27.
+    const earliestDate = cat.trend[0]?.date;
+    if (typeof earliestDate !== "string" || earliestDate < TREND_BASELINE_DATE) {
+      return null;
+    }
+
     const pct = cat.pctChange;
     if (typeof pct !== "number" || Math.abs(pct) < 0.5) return null;
     return { pct };
