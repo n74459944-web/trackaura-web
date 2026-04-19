@@ -157,7 +157,9 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile menu dropdown */}
+      {/* Mobile menu dropdown — renders the exact same NAV_LINKS as desktop
+          so the two navs stay in sync. Do not add extra links here without
+          also adding them to NAV_LINKS above. */}
       {menuOpen && (
         <div
           style={{
@@ -185,21 +187,6 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/changes"
-            onClick={() => setMenuOpen(false)}
-            style={{
-              display: "block",
-              padding: "0.625rem 0",
-              fontSize: "0.9375rem",
-              fontWeight: 500,
-              color: "var(--text-secondary)",
-              textDecoration: "none",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            Price Changes
-          </Link>
         </div>
       )}
 

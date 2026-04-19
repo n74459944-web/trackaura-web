@@ -98,6 +98,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: "website",
       url: "https://www.trackaura.com/product/" + slug,
+      siteName: "TrackAura",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
     alternates: {
       canonical: "https://www.trackaura.com/product/" + slug,

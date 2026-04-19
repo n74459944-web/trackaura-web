@@ -1,3 +1,4 @@
+import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -42,34 +43,160 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: post.description,
       type: "article",
       url: "https://www.trackaura.com/blog/" + slug,
+      siteName: "TrackAura",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
     },
     alternates: { canonical: "https://www.trackaura.com/blog/" + slug },
   };
 }
 
-function renderContent(line: string): React.ReactElement {
-  // H2 headers
+// -----------------------------------------------------------------------
+// Content rendering
+//
+// Each entry in post.content is treated as a "section". Inside a section
+// we support:
+//   - Full-line H2 headers:       "## Heading"
+//   - Paragraph breaks:           separated by blank line ("\n\n")
+//   - Unordered lists:            block of lines each starting with "- "
+//   - Inline bold:                "**bold**"
+//   - Inline markdown links:      "[text](url)"
+// Anything not matching the above renders as plain paragraph text with
+// "\n" treated as a soft line break within the paragraph.
+// -----------------------------------------------------------------------
+
+function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
+  // Combined regex catches **bold** or [text](url); anything else stays
+  // as a plain text segment between matches.
+  const combined = /\*\*(.+?)\*\*|\[([^\]]+?)\]\(([^)]+?)\)/g;
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let i = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = combined.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(
+        <span key={keyPrefix + "-t" + i++}>
+          {text.slice(lastIndex, match.index)}
+        </span>
+      );
+    }
+    if (match[1] !== undefined) {
+      nodes.push(
+        <strong key={keyPrefix + "-b" + i++} style={{ color: "var(--text-primary)" }}>
+          {match[1]}
+        </strong>
+      );
+    } else if (match[2] !== undefined && match[3] !== undefined) {
+      const href = match[3];
+      const linkText = match[2];
+      // Use Next's Link for internal routes, plain <a> for external
+      if (href.startsWith("/")) {
+        nodes.push(
+          <Link key={keyPrefix + "-l" + i++} href={href} className="accent-link">
+            {linkText}
+          </Link>
+        );
+      } else {
+        nodes.push(
+          <a
+            key={keyPrefix + "-l" + i++}
+            href={href}
+            className="accent-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {linkText}
+          </a>
+        );
+      }
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(<span key={keyPrefix + "-t" + i++}>{text.slice(lastIndex)}</span>);
+  }
+  return nodes;
+}
+
+function renderBlock(block: string, keyPrefix: string): React.ReactElement {
+  const lines = block.split("\n");
+  const isList = lines.length > 0 && lines.every((l) => /^[-*]\s+/.test(l));
+
+  if (isList) {
+    return (
+      <ul
+        key={keyPrefix}
+        style={{
+          color: "var(--text-secondary)",
+          fontSize: "0.9375rem",
+          lineHeight: 1.8,
+          marginBottom: "1rem",
+          paddingLeft: "1.25rem",
+        }}
+      >
+        {lines.map((line, i) => (
+          <li key={keyPrefix + "-li" + i} style={{ marginBottom: "0.375rem" }}>
+            {renderInline(line.replace(/^[-*]\s+/, ""), keyPrefix + "-li" + i)}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  // Paragraph: preserve soft line breaks within the block
+  return (
+    <p
+      key={keyPrefix}
+      style={{
+        color: "var(--text-secondary)",
+        fontSize: "0.9375rem",
+        lineHeight: 1.8,
+        marginBottom: "1rem",
+      }}
+    >
+      {lines.map((line, i) => (
+        <React.Fragment key={keyPrefix + "-ln" + i}>
+          {i > 0 && <br />}
+          {renderInline(line, keyPrefix + "-ln" + i)}
+        </React.Fragment>
+      ))}
+    </p>
+  );
+}
+
+function renderContent(line: string, sectionIndex: number): React.ReactNode {
+  // Whole-line H2 header
   if (line.startsWith("## ")) {
     return (
-      <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: "1.125rem", color: "var(--text-primary)", marginTop: "1.75rem", marginBottom: "0.75rem" }}>
+      <h2
+        key={"sec" + sectionIndex}
+        style={{
+          fontFamily: "'Sora', sans-serif",
+          fontWeight: 700,
+          fontSize: "1.125rem",
+          color: "var(--text-primary)",
+          marginTop: "1.75rem",
+          marginBottom: "0.75rem",
+        }}
+      >
         {line.slice(3)}
       </h2>
     );
   }
 
-  // Bold sections within paragraphs
-  const parts = line.split(/(\*\*.*?\*\*)/g);
-  const rendered = parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} style={{ color: "var(--text-primary)" }}>{part.slice(2, -2)}</strong>;
-    }
-    return <span key={i}>{part}</span>;
-  });
-
+  // Split into blocks on blank lines, then render each block
+  const blocks = line.split(/\n\s*\n/);
   return (
-    <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", lineHeight: 1.8, marginBottom: "1rem" }}>
-      {rendered}
-    </p>
+    <React.Fragment key={"sec" + sectionIndex}>
+      {blocks.map((block, i) =>
+        renderBlock(block, "sec" + sectionIndex + "-b" + i)
+      )}
+    </React.Fragment>
   );
 }
 
@@ -136,9 +263,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
 
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1.5rem" }}>
-          {post.content.map((line, i) => (
-            <div key={i}>{renderContent(line)}</div>
-          ))}
+          {post.content.map((line, i) => renderContent(line, i))}
         </div>
       </article>
 

@@ -202,55 +202,53 @@ export default function PriceChart({ data, currentPrice, minPrice, maxPrice }: P
       </div>
 
       {/* Chart */}
-      <div style={{ width: "100%", height: 320 }}>
-        <ResponsiveContainer>
-          <LineChart data={filteredData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDateShort}
-              stroke="var(--text-secondary)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={{ stroke: "var(--border)" }}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              domain={[yMin, yMax]}
-              tickFormatter={(v: number) => `$${v}`}
-              stroke="var(--text-secondary)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={{ stroke: "var(--border)" }}
-              width={60}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            {minPrice < maxPrice && (
-              <ReferenceLine
-                y={minPrice}
-                stroke="var(--accent)"
-                strokeDasharray="4 4"
-                opacity={0.5}
-                label={{
-                  value: `Low: $${minPrice.toFixed(2)}`,
-                  fill: "var(--accent)",
-                  fontSize: 10,
-                  position: "insideTopRight",
-                }}
-              />
-            )}
-            <Line
-              type="stepAfter"
-              dataKey="price"
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={filteredData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
+          <XAxis
+            dataKey="date"
+            tickFormatter={formatDateShort}
+            stroke="var(--text-secondary)"
+            fontSize={11}
+            tickLine={false}
+            axisLine={{ stroke: "var(--border)" }}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            domain={[yMin, yMax]}
+            tickFormatter={(v: number) => `$${v}`}
+            stroke="var(--text-secondary)"
+            fontSize={11}
+            tickLine={false}
+            axisLine={{ stroke: "var(--border)" }}
+            width={60}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          {minPrice < maxPrice && (
+            <ReferenceLine
+              y={minPrice}
               stroke="var(--accent)"
-              strokeWidth={2}
-              dot={filteredData.length <= 30 ? { r: 3, fill: "var(--accent)", strokeWidth: 0 } : false}
-              activeDot={{ r: 5, fill: "var(--accent)", stroke: "var(--bg-primary)", strokeWidth: 2 }}
-              animationDuration={300}
+              strokeDasharray="4 4"
+              opacity={0.5}
+              label={{
+                value: `Low: $${minPrice.toFixed(2)}`,
+                fill: "var(--accent)",
+                fontSize: 10,
+                position: "insideTopRight",
+              }}
             />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+          )}
+          <Line
+            type="stepAfter"
+            dataKey="price"
+            stroke="var(--accent)"
+            strokeWidth={2}
+            dot={filteredData.length <= 30 ? { r: 3, fill: "var(--accent)", strokeWidth: 0 } : false}
+            activeDot={{ r: 5, fill: "var(--accent)", stroke: "var(--bg-primary)", strokeWidth: 2 }}
+            animationDuration={300}
+          />
+        </LineChart>
+      </ResponsiveContainer>
 
       {/* Sparse data message */}
       {isSparse && (

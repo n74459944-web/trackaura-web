@@ -1,11 +1,27 @@
 """
-Export prices.db to JSON files for the Next.js frontend.
+Export prices.db to JSON files.
+
+Two distinct outputs:
+  1. Frontend-facing JSON (stats.json) goes to trackaura-web/public/data/.
+     The frontend reads these at build time or at request time via
+     src/lib/data.ts.
+
+  2. Backend-internal products.json goes to price-tracker/exports/. This
+     file is consumed by check_alerts.py (which needs the de-duplicated
+     slugs and latest prices but isn't part of the frontend bundle). It
+     is NOT written into the frontend tree because:
+       - Next.js/Turbopack traces public/data as a static directory and
+         would include all 40MB+ in its file scope.
+       - The frontend has no reason to read it (price history is served
+         from Postgres now; product data too).
+
+Historical note: previous versions also wrote per-product
+public/data/history/<id>.json files (~41K files). Nothing on the frontend
+reads them any more — price history is served from Postgres via
+getPriceHistory() in data.ts — so that loop has been removed.
 
 Run this from your price-tracker folder:
     python C:\\dev\\trackaura-web\\scripts\\export_data.py
-
-It reads prices.db and categories.json, then writes JSON files
-to the trackaura-web/public/data/ folder.
 """
 from dotenv import load_dotenv
 load_dotenv(r"C:\Users\crown\price-tracker\.env")
@@ -28,6 +44,14 @@ if os.path.isdir(os.path.dirname(ALT_OUTPUT)):
     OUTPUT_DIR = ALT_OUTPUT
 if os.path.isfile(ALT_CONFIG):
     CONFIG_PATH = ALT_CONFIG
+
+# Backend-internal dir for products.json. Intentionally OUTSIDE the frontend
+# tree so Turbopack doesn't trace the full file and so git doesn't carry
+# the ~40MB blob in every commit. check_alerts.py reads from here.
+BACKEND_EXPORT_DIR = os.environ.get(
+    "BACKEND_EXPORT_DIR",
+    r"C:\Users\crown\price-tracker\exports",
+)
 
 
 def load_category_keywords():
@@ -63,6 +87,10 @@ def slugify(name: str) -> str:
 # --- Category classification rules ---
 
 # Words that BLOCK a product from being in a category, even if keywords match.
+# NOTE: Each category key MUST appear exactly once in this dict. A duplicate key
+# silently overwrites the first entry (plain Python dict behavior) and half your
+# blocklist disappears. If you need to block more terms for an existing category,
+# add them to that category's existing list — do not create a second entry.
 CATEGORY_BLOCKLIST = {
     "gpus": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -76,13 +104,11 @@ CATEGORY_BLOCKLIST = {
         "cpu cooler", "heatsink", "liquid cool",
         "water block", "waterblock", "water cooling block", "gpu block",
         "backplate", "gpu bracket", "gpu holder", "gpu support",
-        "anti-sag", "sag bracket","core i3", "core i5", "core i7", "core i9",
+        "anti-sag", "sag bracket",
+        "core i3", "core i5", "core i7", "core i9",
         "sandy bridge", "ivy bridge", "haswell", "skylake",
         "dual-core", "quad-core", "6-core", "8-core",
         "desktop processor", "socket am4", "socket lga",
-        "desktop processor", "dual-core", "quad-core",
-        "sandy bridge", "ivy bridge",
-        "core i3", "core i5", "core i7", "core i9",
         "vga fan", "pin fan",
         "80+ gold", "80+ bronze", "80+ platinum",
         "full-modular", "semi-modular",
@@ -99,10 +125,17 @@ CATEGORY_BLOCKLIST = {
         "power supply", "psu",
         "ram", "memory module", "dimm",
     ],
+    # SSD blocklist protects against two distinct misclassification patterns:
+    #   1. Prebuilt PCs / motherboards / GPUs that mention "SSD" in their specs
+    #   2. HDDs whose product lines (Barracuda, Ironwolf, NAS drives) could
+    #      otherwise slip through SSD keyword matches
+    # Both groups belong in a SINGLE list under this key. Do NOT split them
+    # into two dict entries — Python would silently drop one of them.
     "ssds": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
         "motherboard", "mobo", "mainboard",
         "graphics card", "gpu",
+        "hard drive", "hdd", "barracuda", "ironwolf", "nas drive",
     ],
     "ram": [
         "laptop", "notebook", "desktop pc", "gaming pc", "prebuilt",
@@ -146,8 +179,8 @@ CATEGORY_BLOCKLIST = {
         "speaker", "soundbar",
     ],
     "external-storage": [],
-    "ssds": ["hard drive", "hdd", "barracuda", "ironwolf", "nas drive"],
-    "hard-drives": ["ssd", "solid state", "nvme", "m.2", "external", "portable"
+    "hard-drives": [
+        "ssd", "solid state", "nvme", "m.2", "external", "portable",
     ],
     "tvs": [
         "laptop", "notebook", "monitor", "computer monitor", "gaming monitor",
@@ -558,7 +591,7 @@ def export():
         return
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    os.makedirs(os.path.join(OUTPUT_DIR, "history"), exist_ok=True)
+    os.makedirs(BACKEND_EXPORT_DIR, exist_ok=True)
 
     keywords_map = load_category_keywords()
     print(f"Loaded {len(keywords_map)} categories from config")
@@ -762,29 +795,19 @@ def export():
     )
     print(f"Price comparison: {canonical_cross} canonical + {legacy_cross} legacy cross-retailer groups, {matched_count} products with comparisons")
 
-    # Write products.json
-    with open(os.path.join(OUTPUT_DIR, "products.json"), "w") as f:
+    # Write products.json to the backend-internal exports dir (NOT public/data).
+    # Only check_alerts.py consumes this file; keeping it out of the frontend
+    # tree prevents Turbopack from tracing 40MB of JSON and keeps git commits
+    # small.
+    products_path = os.path.join(BACKEND_EXPORT_DIR, "products.json")
+    with open(products_path, "w") as f:
         json.dump(products, f, indent=2)
-    print(f"Exported {len(products)} products to products.json")
+    print(f"Exported {len(products)} products to {products_path}")
 
-    # --- Export price history per product ---
-    history_dir = os.path.join(OUTPUT_DIR, "history")
-    history_by_pid = {}
-    for product in products:
-        history_rows = conn.execute("""
-            SELECT price, timestamp
-            FROM price_points
-            WHERE product_id = ?
-            ORDER BY timestamp ASC
-        """, (product["id"],)).fetchall()
-
-        history = [{"price": r["price"], "date": r["timestamp"]} for r in history_rows]
-        history_by_pid[product["id"]] = history
-
-        with open(os.path.join(history_dir, f"{product['id']}.json"), "w") as f:
-            json.dump(history, f)
-
-    print(f"Exported price history for {len(products)} products")
+    # Per-product price history is now served from Postgres (see
+    # getPriceHistory() in src/lib/data.ts). The old loop that wrote
+    # ~41K public/data/history/<id>.json files has been removed — it was
+    # pure write amplification with no readers.
 
     # --- Export stats ---
     stats = {

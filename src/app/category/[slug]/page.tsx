@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductsByCategory, getStats } from "@/lib/data";
+import { getProductsByCategory, getStats, getPriceIndex } from "@/lib/data";
 import {
   getCategorySnapshot,
   type BrandStat,
@@ -181,6 +181,25 @@ function computeCategoryStats(products: Product[]): CategoryStats {
   return { totalProducts: products.length, avgPrice: avg, medianPrice: median, atLowest, withHistory, retailers };
 }
 
+// ── Trend banner helper ──
+// Reads the generated price-index.json and returns a pctChange if the
+// category has enough history to make a monthly claim. Noise guards:
+//   - at least 14 days of trend data (otherwise "this month" is a lie)
+//   - at least 0.5% absolute change (otherwise the banner is clutter)
+// Returns null when the banner should not render.
+async function getCategoryTrendSignal(slug: string): Promise<{ pct: number } | null> {
+  try {
+    const priceIndex = await getPriceIndex();
+    const cat = priceIndex?.categories?.[slug];
+    if (!cat || !Array.isArray(cat.trend) || cat.trend.length < 14) return null;
+    const pct = cat.pctChange;
+    if (typeof pct !== "number" || Math.abs(pct) < 0.5) return null;
+    return { pct };
+  } catch {
+    return null;
+  }
+}
+
 // ── Page ──
 
 export default async function CategoryPage({ params }: PageProps) {
@@ -213,6 +232,7 @@ export default async function CategoryPage({ params }: PageProps) {
   const relatedCats = (RELATED_CATEGORIES[slug] || []).filter(
     (c) => CATEGORY_LABELS[c]
   );
+  const trendSignal = await getCategoryTrendSignal(slug);
 
   // Structured data
   const structuredData = [
@@ -344,6 +364,47 @@ export default async function CategoryPage({ params }: PageProps) {
         ))}
       </div>
 
+      {/* Trend signal banner — cross-links to /trends when the category has
+          meaningful monthly movement. Silently hides for categories with
+          thin history or near-flat trends (see getCategoryTrendSignal above). */}
+      {trendSignal && (
+        <Link
+          href="/trends"
+          aria-label={`${label} are ${trendSignal.pct < 0 ? "down" : "up"} ${Math.abs(trendSignal.pct).toFixed(1)} percent this month. See all category trends.`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            padding: "0.625rem 1rem",
+            marginBottom: "1.5rem",
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            background: "var(--card-bg, rgba(255,255,255,0.03))",
+            fontSize: "0.8125rem",
+            textDecoration: "none",
+            color: "var(--text-primary)",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Sora', sans-serif",
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              color: trendSignal.pct < 0 ? "var(--accent)" : "var(--danger, #ff6b6b)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {`${trendSignal.pct < 0 ? "↓" : "↑"} ${Math.abs(trendSignal.pct).toFixed(1)}%`}
+          </span>
+          <span style={{ flex: 1, color: "var(--text-secondary)" }}>
+            {`${label} this month`}
+          </span>
+          <span style={{ color: "var(--accent)", fontWeight: 600, whiteSpace: "nowrap" }}>
+            See all trends →
+          </span>
+        </Link>
+      )}
+
       {/* Client component handles tabs, filtering, sorting, brand drill-down */}
       <CategoryPageClient
         slug={slug}
@@ -432,7 +493,7 @@ export default async function CategoryPage({ params }: PageProps) {
           lineHeight: 1.6,
         }}
       >
-        Prices in Canadian dollars (CAD), updated every 4 hours. Amazon and Newegg links may earn TrackAura a commission.
+        Prices in Canadian dollars (CAD), updated every 4 hours. Some links may earn TrackAura a commission.
       </div>
     </div>
   );
