@@ -191,7 +191,7 @@ async function getCategoryTrendSignal(slug: string): Promise<{ pct: number } | n
   try {
     const priceIndex = await getPriceIndex();
     const cat = priceIndex?.categories?.[slug];
-    if (!cat || !Array.isArray(cat.trend) || cat.trend.length < 14) return null;
+    if (!cat || Array.isArray(cat) || !Array.isArray(cat.trend) || cat.trend.length < 14) return null;
     const pct = cat.pctChange;
     if (typeof pct !== "number" || Math.abs(pct) < 0.5) return null;
     return { pct };
