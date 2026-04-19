@@ -146,7 +146,11 @@ export default async function TrendsPage() {
 
   const overallChange = priceIndex?.overallPctChange ?? null;
   const basketSize = priceIndex?.basketSize ?? 0;
-  const basketDate = priceIndex?.basketDate ?? "";
+  // S28: derive anchor date from the first (oldest) point in the overall trend array.
+  // The JSON's own `basketDate` field is unreliable — the snapshot pipeline rewrites it
+  // to today's date on every run. Assumes `priceIndex.overall` is ordered oldest-first
+  // (same assumption used by getCategoryTrendSignal in src/app/category/[slug]/page.tsx).
+  const basketDate = priceIndex?.overall?.[0]?.date ?? "";
 
   const structuredData = {
     "@context": "https://schema.org",
