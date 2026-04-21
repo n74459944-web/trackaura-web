@@ -1,6 +1,6 @@
 # TrackAura — Architecture Bible
 
-**Status:** Draft 1 · Locked decisions in **bold** · Questions marked [TBD] · Last revised: session of 2026-04-19
+**Status:** Draft 2 · Locked decisions in **bold** · Questions marked [TBD] · Last revised: session of 2026-04-20
 
 ---
 
@@ -9,6 +9,17 @@
 This is the source of truth for every engineering decision on TrackAura. Paste it at the top of every future development session. When we disagree with what's written here, we update the document first, then change the code. When this doc and the code disagree, the code is wrong.
 
 Every section tagged `[TBD]` is a decision we're deferring. When we make the decision, we update the section and remove the tag.
+
+### Changelog
+
+- **Draft 2 (2026-04-20)** — First Week 2 session. Amendments driven by reality:
+  - TechPowerUp switched to PoW + drag-captcha anti-scrape; section 5 rewritten to reflect source selection principles learned from this
+  - Three-phase catalog import model added (§5)
+  - Variant-as-attribute rule added (§3)
+  - Display name cleanup deferred (§3)
+  - New-canonicals-via-review-queue principle added (§5)
+  - Catalog source quality warning added (§11)
+  - Two-level entity type naming documented (§3): `gpu_chip` / `gpus`
 
 ---
 
@@ -51,21 +62,19 @@ TrackAura's promise to the user: **"Pick any item in any category. We know what 
 
 ### Item categories, in order of launch
 
-**Phase 0 (today):** Canadian consumer electronics — GPUs, CPUs, motherboards, laptops, peripherals. ~23k canonical entities already exist.
+**Phase 0 (today):** Canadian consumer electronics — GPUs, CPUs, motherboards, laptops, peripherals. ~23k canonical entities already exist. As of 2026-04-20, GPU vertical is migrated to the new canonical-entity schema with a two-level tree (chip parents + board children).
 
-**Phase 1 (next 3-6 months):** Collectibles with clean canonical identifiers — Pokemon TCG, MTG, sports cards, sealed video games, comic books (graded), LEGO sets. These have existing vertical-specific catalog sources (TCGplayer for cards, BrickLink/Rebrickable for LEGO, GoCollect for comics).
+**Phase 1 (next 3-6 months):** Collectibles with clean canonical identifiers — Pokemon TCG, MTG, sports cards, sealed video games, LEGO sets, comic books (graded). Caveat added 2026-04-20: TCGplayer may have anti-scrape measures similar to TechPowerUp's (PoW / captcha). **Verify scrape-ability of TCGplayer and other Phase 1 sources BEFORE committing to Phase 1 start.** Scryfall (MTG) is API-friendly and confirmed open; BrickLink and GoCollect need reconnaissance.
 
 **Phase 2 (6-12 months):** Watches, jewelry, other luxury goods where model identities are clean. Then tools, appliances, cameras where catalog data is available.
 
 **Phase 3 (12+ months):** Commodity physical goods where UPC/EAN suffices as identity (groceries, household goods). Needs a GS1-like catalog source.
 
-**Deferred indefinitely:** Real estate individual properties (aggregate regional data is acceptable, individual units are a different product). Services (plumbers, lawyers — how do you canonicalize an individual?). Digital goods (game keys, NFTs — architecturally possible, culturally different).
+**Deferred indefinitely:** Real estate individual properties. Services. Digital goods.
 
 ### Item conditions
 
-**NEW items only for Phase 0 and Phase 1.** Used, refurbished, open-box, graded-condition variants are Phase 2+. This is the single biggest scope simplification. Every listing on the site is assumed NEW unless explicitly flagged.
-
-Condition handling later requires: a condition taxonomy per vertical (a used GPU has different condition grades than a graded Pokemon card), per-condition price tracking, per-condition matching. It's a 6-month project on its own when we get there.
+**NEW items only for Phase 0 and Phase 1.** Used, refurbished, open-box, graded-condition variants are Phase 2+. Per §3 variant rule (below), conditions when they arrive are `entity_attributes(is_price_defining=true)`, not separate entities.
 
 ---
 
@@ -73,43 +82,46 @@ Condition handling later requires: a condition taxonomy per vertical (a used GPU
 
 ### Core principle
 
-The current `canonical_products` table is **the v0 electronics catalog**. It stays running. We build a new set of generic tables alongside it (`canonical_entities`, `entity_variants`, `entity_attributes`, `listings`, `price_points_v2`) and migrate category-by-category.
+The current `canonical_products` table is **the v0 electronics catalog**. It stays running. We build a new set of generic tables alongside it (`canonical_entities`, `entity_attributes`, `entity_relationships`, `listings`, `price_observations`, `catalog_sources`, `entity_source_mappings`) and migrate category-by-category.
 
 Zero-downtime. Live site keeps working on old tables. New tables come online as categories migrate.
 
-### Proposed new tables
+As of 2026-04-20 the seven new tables exist in Supabase. The GPU vertical is fully migrated and has a working two-level tree (chip parents + board leaves).
+
+### New tables
 
 ```
 canonical_entities
 ─────────────────
 id                 bigint PK
 slug               text unique
-canonical_name     text           -- "iPhone 15 Pro Max 256GB Natural Titanium"
-display_name       text           -- "iPhone 15 Pro Max"
+canonical_name     text           -- the form scrapers match against
+display_name       text           -- NULL during migration; cleaned up
+                                  -- in a Week 5+ polish pass
 vertical           text           -- 'electronics', 'tcg', 'lego', 'watches'
-entity_type        text           -- 'phone', 'gpu', 'card', 'set', 'watch'
-parent_entity_id   bigint FK      -- for tree hierarchy, null for roots
+entity_type        text           -- see type conventions below
+parent_entity_id   bigint FK      -- tree hierarchy, null for roots
 brand              text
 release_date       date
 msrp_cad           numeric
-msrp_currency      text           -- some items MSRP in USD even in CA
+msrp_currency      text
 image_primary_url  text
-description_md     text           -- markdown, LLM-generated or hand-edited
+description_md     text
 created_at         timestamptz
 updated_at         timestamptz
-
 
 entity_attributes
 ─────────────────
 id                    bigint PK
 entity_id             bigint FK
-attribute_key         text       -- 'storage_gb', 'color', 'generation', 'chip'
-attribute_value       text       -- '256', 'Natural Titanium', 'M3 Max'
+attribute_key         text       -- free-form; vertical-specific conventions
+attribute_value       text
 attribute_value_num   numeric    -- when sortable/filterable
-is_price_defining     boolean    -- if true, entity is a leaf and gets its own price
+is_price_defining     boolean    -- true when this attribute splits price
+                                 -- tracking (memory size, condition grade,
+                                 -- foil vs non-foil, etc.)
 
 UNIQUE(entity_id, attribute_key)
-
 
 entity_relationships
 ────────────────────
@@ -118,38 +130,35 @@ from_entity_id   bigint FK
 to_entity_id     bigint FK
 relationship     text  -- 'predecessor', 'successor', 'variant_of', 'alternative_to'
 
-
 listings
 ────────
 id                bigint PK
 entity_id         bigint FK
 retailer          text
-retailer_sku      text          -- their internal ID
+retailer_sku      text
 url               text
 first_seen        timestamptz
 last_seen         timestamptz
 is_active         boolean
-match_confidence  numeric       -- 0.0-1.0, from resolution engine
+match_confidence  numeric       -- 0-1, from resolution engine
 match_source      text          -- 'llm', 'fuzzy', 'human', 'exact_sku'
-country_code      text          -- 'CA', 'US', 'GB'
-
+country_code      text
 
 price_observations
 ──────────────────
 id              bigint PK
 listing_id      bigint FK
-entity_id       bigint FK    -- denormalized for fast entity-level queries
+entity_id       bigint FK    -- denormalized for entity-level queries
 price           numeric
 currency        text
 is_in_stock     boolean
 is_openbox      boolean
 observed_at     timestamptz
 
-
 catalog_sources
 ───────────────
 id             bigint PK
-name           text         -- 'techpowerup', 'tcgplayer', 'manufacturer_nvidia'
+name           text
 vertical       text
 kind           text         -- 'scraped', 'manual', 'api'
 last_imported  timestamptz
@@ -160,30 +169,55 @@ entity_source_mappings
 id                 bigint PK
 entity_id          bigint FK
 source_id          bigint FK
-external_id        text        -- the ID the source uses
+external_id        text
 source_url         text
 confidence         numeric
 verified_by_human  boolean
 ```
 
+### Tree structure and entity_type naming
+
+Entities form a tree via `parent_entity_id`. Each vertical has its own type names, lowercased and snake-cased:
+
+- **Electronics/GPUs:** `gpu_chip` (parent, e.g. "GeForce RTX 5070") → `gpus` (board leaf, e.g. "MSI GeForce RTX 5070 12G GAMING TRIO OC WHITE"). The `gpus` name is historical; later verticals should use cleaner names like `gpu_board`.
+- **TCG (planned):** `tcg_card_base` (parent, e.g. "Pikachu Alt Art") → `tcg_card_printing` (leaf, condition+foil variants as attributes on the leaf, not sub-entities)
+- **LEGO (planned):** `lego_set_base` (parent) → `lego_set_edition` (leaf, regional and release-year variants)
+
+Rule: **if two things share a catalog name but differ in ways that affect price, they are one entity with `is_price_defining` attributes, not two entities.** If they differ in ways that affect identity (different silicon, different set numbers), they are separate entities.
+
+### Variants as attributes, not as entities
+
+**Memory capacity, condition grade, foil vs non-foil, 1st edition vs unlimited, regional release, color variant** — all of these are `entity_attributes(is_price_defining=true)` on a single canonical_entities row, not separate rows.
+
+Rationale: retailers list "RTX 5060 Ti" as one product family with two SKUs (8GB, 16GB). Our canonical should match their mental model. Price tracking per-variant is handled by the leaf entity recording its variant attributes, not by multiplying the entity count.
+
+Source imports that arrive with variants already split (e.g. dbgpu ships "RTX 5060 Ti 8 GB" and "RTX 5060 Ti 16 GB" as separate rows) MUST be collapsed in the import pipeline before they land in `canonical_entities`. See §5 "three-phase catalog import."
+
+### display_name strategy
+
+`canonical_name` is the form scrapers match retailer listings against — messy but necessary.
+`display_name` is what users see on product pages.
+
+During early migration, `display_name` is left NULL and the frontend falls back to `canonical_name`. A polish pass in **Week 5+** will derive cleaner display names from chip parent + board partner + product line. Don't do this work before the tree structure and matching are stable and we've seen actual rendered pages.
+
 ### What this enables
 
-- **Tree hierarchy:** MacBook → MacBook Pro → MacBook Pro 16" → MacBook Pro 16" M3 Max → [specific leaf configuration]. Via `parent_entity_id`.
-- **Leaf-level pricing:** Only entities with `is_price_defining = true` on their variants are the ones with prices attached. Parent nodes aggregate.
-- **Variants as first-class:** Color, storage, capacity are real data, not free-form metadata.
+- **Tree hierarchy:** MacBook → MacBook Pro → MacBook Pro 16" → MacBook Pro 16" M3 Max → leaf. Via `parent_entity_id`.
+- **Leaf-level pricing:** Only entities with `is_price_defining=true` attributes are the ones retailers attach listings to. Parent nodes aggregate.
 - **Cross-vertical queries:** Same tables hold a GPU, a Pokemon card, a LEGO set. Joins are the same.
 - **Source provenance:** We always know where a canonical identity came from.
 
 ### Migration from `canonical_products`
 
-1. Build the new tables empty.
-2. Write a migration script that, for one category at a time, creates `canonical_entities` rows from existing `canonical_products` rows.
-3. Attach existing retailer listings as `listings` rows pointing at the new entities.
-4. Attach existing price points as `price_observations`.
-5. Route new scraper output into new tables only.
-6. Run both pipelines in parallel for one category for 2 weeks. Compare outputs. Investigate discrepancies.
-7. Switch the frontend category-by-category to read from new tables.
-8. Sunset `canonical_products` once all categories are migrated. (Months away.)
+1. Build the new tables empty. ✅ done 2026-04-20
+2. Write a migration script that, for one category at a time, creates `canonical_entities` rows from existing `canonical_products` rows. ✅ GPUs done
+3. Attach existing retailer listings as `listings` rows pointing at the new entities. ✅
+4. Attach existing price points as `price_observations`. ✅
+5. Import catalog source(s) for the vertical as parent entities. ✅ GPUs: dbgpu chips loaded
+6. Link existing leaves to parents (write `parent_entity_id`). ✅ GPUs: 95.6% auto-matched
+7. Route new scraper output into new tables only. Pending (Week 4 adapter work).
+8. Frontend reads switch from old tables to `canonical_entities_view` union. Pending (Week 4).
+9. Sunset `canonical_products` once all categories are migrated. Months away.
 
 ---
 
@@ -212,34 +246,47 @@ These are the same card. The resolution engine must know this.
        └───┬───────┬───┘
            │yes    │no
            ▼       ▼
-       DONE   ┌─────────────────┐
-              │ High-conf fuzzy? │  (trigram on canonical_name, brand match, price sanity)
-              └───┬───────────┬──┘
-                  │yes        │no
-                  ▼           ▼
-              LINK        ┌───────────────────┐
-              (auto)      │ LLM resolution     │
-                          │ (Haiku/mini, cheap)│
-                          └───┬───────────┬────┘
-                              │high conf  │low conf
-                              ▼           ▼
-                          LINK        HUMAN REVIEW
-                          (auto)      QUEUE
+       DONE   ┌───────────────────────┐
+              │ Structured tier parse? │  (brand, series, number, suffix)
+              │ for typed verticals    │
+              └───┬───────────────┬───┘
+                  │yes            │no
+                  ▼               ▼
+              LINK           ┌─────────────────┐
+              (auto)         │ Fuzzy trigram?  │
+                             └───┬───────────┬─┘
+                                 │yes        │no
+                                 ▼           ▼
+                             LINK or     ┌───────────────────┐
+                             REVIEW      │ LLM resolution    │
+                                         └───┬───────────┬───┘
+                                             │high conf  │low conf
+                                             ▼           ▼
+                                         LINK        HUMAN REVIEW
+                                         (auto)      QUEUE
 ```
 
 ### Tier 1: exact SKU match (free)
 
 If a retailer SKU has been linked to an entity before, auto-link. This catches 80%+ of daily re-scrapes.
 
-### Tier 2: deterministic fuzzy match (cheap)
+### Tier 2a: structured tier parse (free, preferred for typed verticals)
 
-Postgres pg_trgm, already available. Compute trigram similarity against existing `canonical_entities.canonical_name` for the same brand + category. If similarity > 0.85, auto-link with confidence score recorded.
+For verticals with predictable model-name structure (GPUs, CPUs, watches with reference numbers, LEGO with set numbers), parse the listing name into structured tokens — e.g. for GPUs, `(brand, series, number, suffix)` — and look up by exact match on those tokens. **This is more reliable than trigram similarity for typed products.**
 
-This catches ~10% more.
+Trigram similarity is a distance metric over character n-grams; it doesn't know that "RTX 5060" and "RTX 5060 Ti" are different products. Structured parsing does, because the suffix token is part of the key.
+
+Tier 2a was proven on the GPU board→chip linking in Week 2: structured parsing gave 88.3% exact matches where pg_trgm had given 1.6%.
+
+### Tier 2b: deterministic fuzzy match (cheap, fallback)
+
+For verticals where names don't structure well (free-form laptop names, loose camera model strings, TCG variant names), Postgres pg_trgm on canonical_name within the same brand + category. Similarity > 0.85 auto-links.
+
+pg_trgm remains useful but it is no longer the default first-line matcher.
 
 ### Tier 3: LLM resolution (paid, rare)
 
-Only fires when tier 1 and 2 miss. We pass the LLM: the raw listing title, the brand, the top 5 fuzzy candidates, and ask "is this a match to one of these, or is this a new entity?"
+Only fires when tiers 1 and 2 miss. We pass the LLM: the raw listing title, the brand, the top 5 fuzzy candidates, and ask "is this a match to one of these, or is this a new entity?"
 
 Use the cheapest LLM that performs acceptably. Current candidates: Claude Haiku, GPT-4o-mini, Gemini Flash. Plan for $0.0005-$0.002 per call.
 
@@ -251,7 +298,9 @@ For the tier 3 LLM result, run a local Ollama model as a sanity check on high-st
 
 ### Tier 5: human review queue
 
-Low-confidence matches, LLM-uncertain matches, and any match that would merge two existing entities get routed to a review queue. This is a simple CRUD page showing pending matches with "approve / reject / new entity" buttons. You review these by hand. Expect 50-200 per week.
+Low-confidence matches, LLM-uncertain matches, ambiguous matches (multiple candidates at same tier key), and any match that would merge two existing entities get routed to a review queue. Simple CRUD page showing pending matches with "approve / reject / new entity" buttons. Expect 50-200 per week.
+
+**The review queue is also the only path for creating new canonical_entities post-initial-seed.** New products released after the catalog source snapshot don't get auto-created — they land in review and a human decides.
 
 ### Confidence scoring
 
@@ -261,40 +310,53 @@ Every `listings` row records `match_confidence` (0.0-1.0) and `match_source` (ex
 
 ## 5. Catalog acquisition strategy
 
-Without a paid catalog source, we bootstrap category-by-category from the best free-ish option. Priority order:
+### Core principles
 
-### Electronics — Phase 0 / already here
+**(1) Prefer freely-licensed reference sources over ad-supported sites.** Wikidata, Scryfall, manufacturer product pages. Specifically, prefer SPARQL/REST endpoints over HTML scraping. Learned 2026-04-20 when TechPowerUp turned out to have proof-of-work challenges and drag-captchas — "scrapable" is not the same as "permitted."
 
-- **GPUs:** TechPowerUp's GPU database is the gold standard. Scrapable, comprehensive, well-structured. Use it to seed the `canonical_entities` table for the GPU vertical. This is the first catalog source to integrate.
-- **CPUs:** TechPowerUp also, plus Intel/AMD ARK-style manufacturer sites. Free, structured.
-- **Laptops:** Hardest. NotebookCheck has a big database. Manufacturer sites are fragmented. May need manual curation for top 500 SKUs.
-- **Motherboards, RAM, SSDs, PSUs:** Manufacturer sites + existing canonicals. Medium difficulty.
-- **Peripherals (keyboards, mice, headsets):** Manufacturer sites. Long tail is messy. Accept imperfection.
+**(2) Store the local dump. Never live-query the source.** Scrape or API-fetch once per source, store the result as a JSON/CSV artifact in the repo (or a regenerable vendored file), re-fetch monthly or on-demand. This is both politeness to sources and insulation from source-side changes (anti-scrape additions, schema changes, outages, takedowns).
 
-### Collectibles — Phase 1
+**(3) New canonicals come from the review queue, not from automated scraping.** After the initial seed, dbgpu/Wikidata/whatever gets re-imported periodically — but the diff goes to the human review queue, it isn't auto-applied. This keeps the catalog clean.
 
-- **TCG (Pokemon, MTG, Yu-Gi-Oh):** TCGplayer has structured data. Scrapable. Existing open-source alternatives (Scryfall for MTG is free and clean).
-- **Sports cards:** Harder. Beckett is paywalled. GoCollect has some free data. May start with modern (2000+) only.
-- **Sealed video games:** PriceCharting has this. Scrapable.
-- **LEGO:** BrickLink + Rebrickable. Clean, structured, free-ish.
-- **Comics (graded):** GoCollect has CGC/CBCS census data. Scrapable.
+**(4) Catalog sources have errors.** Don't treat any source as ground truth. Expect a few percent of entries to have mislabeled codenames, wrong release dates, or typos. Bake in the assumption that Week 3's review queue will surface these, and flag them for correction.
 
-### Watches — Phase 2
+### Three-phase catalog import
 
-- **Reference databases:** Chrono24 (hostile to scrape), WatchRecon (better). May need Wikidata as the free catalog source. Manufacturer sites for current models.
+Every new source import follows three phases, executed in order, each idempotent:
 
-### Strategy for ALL verticals
+**Phase 1 — Raw ingest.** Pull data from the source exactly as the source structures it. Write a vendored local copy to `catalog/<source>/raw/` (or JSON dump in `catalog/<source>/`). No Supabase writes. Repeatable monthly.
 
-1. **Pick one authoritative free source per vertical.** Even if it's imperfect.
-2. **Scrape it once** (or access via API where possible). Store raw dump.
-3. **Normalize into `canonical_entities`** with source provenance in `entity_source_mappings`.
-4. **Manual review of top 100-500 entities** per category to fix obvious issues. This is unavoidable hand-work.
-5. **Retailer scraping maps listings onto this catalog**, doesn't create it.
-6. **Gaps get reported.** If a retailer lists something no catalog source knows about, that's a signal — either the catalog source is incomplete, or the retailer is lying, or it's legitimately new. Human review.
+**Phase 2 — Collapse.** Apply vertical-specific rules to merge the source's redundant entries into canonical shape. Per §3 variant-as-attribute rule: memory variants, condition SKUs, foil variants, edition variants, regional variants all fold into their parent entity as `entity_attributes`. Phase 2 is the hardest phase and has no generic solution — each source has its own redundancies that require vertical-specific collapse logic.
+
+**Phase 3 — Link.** Wire up parent/child relationships between the newly-imported source entities and the existing catalog (chip→boards, set→editions, base model→limited editions). Usually involves the tiered matcher from §4.
+
+**Budget 1-3 days per new catalog source** for the combined three phases. Most of it is Phase 2 learning what the source's quirks are. This is invisible work that doesn't show up in feature counts but is what makes the catalog trustworthy.
+
+### Per-vertical source picks
+
+**GPUs (Phase 0):** dbgpu (PyPI, MIT, vendored bundle of TechPowerUp's data) as near-term seed. **Long-term: Wikidata SPARQL** for chip identity data, supplemented by NVIDIA / AMD / Intel product pages for current-generation spec detail. dbgpu is a one-maintainer project so it's a medium-term bus-factor risk; Wikidata is the durable replacement. **Not used: direct TechPowerUp scraping.** They have PoW + drag-captcha; they've explicitly asked not to be machine-accessed.
+
+**CPUs (Phase 0):** TBD. Candidates: dbgpu's CPU side, manufacturer ARK/spec pages (Intel/AMD), Wikidata.
+
+**Laptops (Phase 0):** Hardest. NotebookCheck has a big database. Manufacturer sites are fragmented. May need manual curation for top 500 SKUs.
+
+**Motherboards, RAM, SSDs, PSUs (Phase 0):** Manufacturer sites + existing canonicals. Medium difficulty.
+
+**Peripherals (Phase 0):** Manufacturer sites. Long tail is messy. Accept imperfection.
+
+**TCG (Phase 1):** Scryfall for MTG (free, clean, API). TCGplayer for Pokemon / sports / Yu-Gi-Oh — reconnaissance needed before committing: they may have added anti-scrape.
+
+**Sealed video games (Phase 1):** PriceCharting. Scrapable.
+
+**LEGO (Phase 1):** BrickLink + Rebrickable. Reconnaissance needed.
+
+**Comics (Phase 1):** GoCollect. Reconnaissance needed.
+
+**Watches (Phase 2):** Wikidata + manufacturer. Chrono24 is hostile; skip.
 
 ### What about items no catalog source has?
 
-Some items (long-tail, brand-new, obscure) won't be in any external catalog. They enter the system via retailer scraping, get a `canonical_entities` row with `match_source = 'scraper_seed'`, and sit in a "provisional" state until a catalog source covers them or a human verifies them. Provisional entities show on the site with a badge: "Limited data — we're still learning about this item."
+Long-tail, brand-new, obscure items not in any external catalog enter the system through the resolution engine's review queue (§4 T5). A retailer listing that can't be matched becomes a candidate "new canonical." A human decides whether it's a real new canonical or a variant of an existing one, and approves. Nothing auto-creates canonicals post-initial-seed.
 
 ---
 
@@ -306,7 +368,7 @@ Site-first scrapers, one per retailer. They enumerate categories, extract listin
 
 ### Target state
 
-**Catalog-first scrapers:** for each entity in the catalog, check each retailer for matching listings. Discovery scrapers still exist for finding new entities not yet in the catalog.
+**Catalog-first scrapers:** for each entity in the catalog, check each retailer for matching listings. Discovery scrapers still exist for finding new entities not yet in the catalog. New-entity candidates go to the review queue (§4 T5), not auto-insert.
 
 ### Adapter pattern
 
@@ -316,10 +378,9 @@ interface RetailerAdapter {
   country_code: string
 
   // Find listings by querying the retailer's search with a known entity.
-  // Returns candidate listings with enough data to run entity resolution.
   findByEntity(entity: CanonicalEntity): Promise<ListingCandidate[]>
 
-  // Fallback: enumerate a category. Used for discovery of new entities.
+  // Fallback: enumerate a category for discovery.
   enumerateCategory(category: string): Promise<ListingCandidate[]>
 
   // Fetch current price for a known listing URL.
@@ -331,47 +392,46 @@ One adapter per retailer. Adding a new retailer = writing one file. The job orch
 
 ### Retailer priority order
 
-1. **Best Buy Canada** — public REST API. Easiest integration. Biggest catalog outside Amazon. Ship first.
-2. **Memory Express** — standard HTML. PC-enthusiast audience overlap with RFD. High value.
-3. **Walmart Canada** — `__NEXT_DATA__` JSON extraction. Broad catalog. Low-margin PC parts but good for general electronics.
-4. **Staples Canada** — HTML + JSON-LD. Broad SMB market.
+1. **Best Buy Canada** — public REST API. Ship first.
+2. **Memory Express** — standard HTML. Previously blocked our IP during a scraper attempt — approach with caution.
+3. **Walmart Canada** — `__NEXT_DATA__` JSON + `curl_cffi` for Akamai TLS fingerprint.
+4. **Staples Canada** — HTML + JSON-LD.
 5. **Canada Computers** — already integrated. Keep running.
 6. **Newegg Canada** — already integrated. Keep running.
-7. **Vuugo** — already integrated. Small, keep running for breadth.
-8. **Visions Electronics** — already integrated. Small, keep running for breadth.
+7. **Vuugo** — already integrated.
+8. **Visions Electronics** — already integrated.
 
-**Not scraped, ever:** Amazon (legal risk), eBay (different product), Facebook Marketplace / Kijiji (user-generated, not retailer).
+**Not scraped, ever:** Amazon, eBay, Facebook Marketplace, Kijiji.
 
 ### Scheduling
 
-**Daily full scrape** for entities in the active catalog. **Hourly delta scrapes** for top 1000 entities (the ones that drive the most page views). **On-demand re-scrape** triggered when a user views a product page with stale data (>24h old).
-
-The hourly and on-demand tiers come later. Daily full is the launch requirement.
+**Daily full scrape** for entities in the active catalog. **Hourly delta scrapes** for top 1000 entities (later). **On-demand re-scrape** triggered when a user views a product page with stale data (>24h old) (later).
 
 ---
 
-## 7. Tech stack — what stays, what changes, what's new
+## 7. Tech stack
 
 ### Stays
 
-- **Next.js 16 (App Router) on Vercel** — frontend. No reason to change.
-- **Supabase Postgres** — main database. Stays.
-- **Python scrapers on Windows** — fine for now. Will move to cloud scheduler (see below) eventually, but not urgent.
-- **Resend for email** — price alerts. Stays.
-- **Existing UI design tokens** — teal accent, Sora/DM Sans, dark theme. Tweak colors later if needed (you mentioned palette changes), but no total rebuild.
+- **Next.js 16 (App Router) on Vercel** — frontend
+- **Supabase Postgres** — main database
+- **Python scrapers on Windows** — fine for now
+- **Resend for email** — price alerts
+- **Existing UI design tokens** — teal accent, Sora/DM Sans, dark theme
 
 ### Changes
 
-- **The `canonical_products` table becomes deprecated** over 6-12 months. Not dropped until all categories migrate.
-- **`products` table becomes `listings`** in the new schema. Same data shape mostly, but tied to `canonical_entities`.
-- **The homepage moves to "encyclopedia framing"** once the new tables have data in them. Current "deals feed" framing is fine for short term.
+- `canonical_products` deprecated over 6-12 months
+- `products` becomes `listings` in the new schema
+- Homepage moves to "encyclopedia framing" once new tables have data
 
 ### New
 
-- **LLM gateway service** — a thin wrapper in Python or TypeScript that batches LLM calls, caches by input hash, falls back between providers (Claude → GPT → Gemini in order of quality/price). Prevents locking in to one vendor.
-- **Ollama instance** — local LLM for deterministic tasks. Runs on your machine initially. Cloud later if scale demands.
-- **Job queue** — right now scrapers run via Windows Scheduled Task. That doesn't scale for catalog-first where there are thousands of targeted lookups. Options: Postgres-based queue (river, graphile-worker), Redis-based (BullMQ), cloud-native (Vercel Cron + small workers). Start with the simplest: a Postgres table + a Python daemon. Migrate when painful.
-- **Human review UI** — a simple admin page at `/admin/review` for approving low-confidence matches. Solo product — no auth complexity, just a shared secret URL or basic HTTP auth.
+- **LLM gateway service** — thin wrapper, batches calls, caches by input hash, falls back Claude → GPT → Gemini, hard $100/mo cap, circuit-breaker at 80%
+- **Ollama instance** — local LLM for deterministic verification
+- **Job queue** — Postgres-based (river/graphile-worker-style), runs scraper adapters against the catalog
+- **Human review UI** at `/admin/review` — approves low-confidence matches AND new-canonical candidates
+- **Per-source import scripts** in `catalog/<source>/` — raw ingest + collapse + link, each phase separately runnable, vendored JSON artifacts committed to repo
 
 ---
 
@@ -379,67 +439,53 @@ The hourly and on-demand tiers come later. Daily full is the launch requirement.
 
 ### Phase 0 (now): Affiliate only
 
-Every retailer "View at X" button is an affiliate link where supported. Canada Computers, Newegg, Best Buy have affiliate programs. Revenue is small but non-zero. No pressure.
+Every retailer "View at X" button is an affiliate link where supported. Canada Computers, Newegg, Best Buy have affiliate programs. Revenue is small but non-zero.
 
-### Phase 1 (post-catalog-first, months 3-6): Affiliate still, but now with scale
+### Phase 1 (post-catalog-first, months 3-6): Affiliate scaled
 
-More retailers = more affiliate coverage = more clicks. SEO traffic compounds as canonical pages rank for long-tail queries. Expect revenue to grow 10-50x from Phase 0 purely from traffic scaling. Still modest in absolute terms.
+More retailers = more affiliate coverage. SEO traffic compounds as canonical pages rank for long-tail queries. Expect 10-50x growth purely from traffic.
 
 ### Phase 2 (months 6-12): API access + premium tier
 
-Once the catalog is genuinely dense, offer:
-- **Free tier:** same as today, with rate limits.
-- **Premium ($5-10/mo):** unlimited alerts, portfolio tracking, history export, API access for small apps.
-- **Business API ($50-500/mo):** bulk API access for resellers, price intelligence tools, insurance appraisers, market research firms.
-
-Decision point: if premium isn't producing revenue within 3 months of launch, kill it and double down on API licensing which has higher per-customer value.
+- **Free tier:** same as today, with rate limits
+- **Premium ($5-10/mo):** unlimited alerts, portfolio tracking, history export, API access
+- **Business API ($50-500/mo):** bulk API for resellers, price intelligence tools, insurance appraisers, market research
 
 ### Phase 3 (year 2+): Data licensing
 
-When the catalog is authoritative, businesses will pay for it. Insurance companies appraising collections. Pawnshops pricing inventory. Secondary-market resellers. This is where the real money is, but it requires catalog credibility that takes 18+ months to build.
+When the catalog is authoritative, businesses will pay for it. Insurance companies appraising collections, pawnshops pricing inventory, secondary-market resellers.
 
 ### What we don't do
 
-- **No ads ever.** RFD crowd hates them, we said it, we mean it.
-- **No paywalled content.** The catalog is free to browse. Locking it defeats the SEO moat.
-- **No sponsored product placements.** Compromises the "authoritative" framing.
+- **No ads ever.**
+- **No paywalled content.** The catalog is free to browse.
+- **No sponsored product placements.**
 
 ---
 
 ## 9. Stopping rules and phase metrics
 
-We need stopping rules so you don't perfect-polish forever.
+### Phase 0 complete when
 
-### Phase 0 complete when:
+- [ ] Top 500 Google searches for "X price history Canada" include at least one TrackAura result in positions 1-10
+- [ ] At least 3 retailers per top-1000-product
+- [ ] Weekly organic traffic growing 5%+ week-over-week for 4 consecutive weeks
 
-- [ ] Top 500 Google searches for "X price history Canada" include at least one TrackAura result in positions 1-10.
-- [ ] At least 3 retailers per top-1000-product (currently at ~1).
-- [ ] Weekly organic traffic is growing 5%+ week-over-week for 4 consecutive weeks.
+### Phase 1 (first new vertical) start when
 
-### Phase 1 (first new vertical) start when:
-
-- [ ] Phase 0 traffic has plateaued for 2+ weeks OR is solid enough to sustain.
-- [ ] Electronics entity resolution runs without human intervention on >95% of daily scraped listings.
-- [ ] Monthly infra + LLM costs under $100 consistently.
-
-### Phase 1 complete when:
-
-- [ ] The new vertical has catalog depth equal to Phase 0 electronics.
-- [ ] Cross-vertical search on the site returns coherent results.
-
-### Phase 2 (portfolio / API) start when:
-
-- [ ] 3+ verticals live at Phase 1 depth each.
-- [ ] Organic traffic > 10k unique visitors/month.
-- [ ] At least one external site or app is scraping TrackAura (signal of catalog value).
+- [ ] Phase 0 traffic has plateaued for 2+ weeks OR is solid enough to sustain
+- [ ] Electronics entity resolution runs without human intervention on >95% of daily scraped listings
+- [ ] Monthly infra + LLM costs under $100 consistently
+- [ ] Review queue processed to zero weekly (no backlog)
+- [ ] Phase 1 source scrape-ability reconnaissance complete (per §2 caveat)
 
 ### Metrics we track weekly
 
 - Entity count (total, per vertical)
-- Listings-per-entity median (coverage metric)
+- Listings-per-entity median
 - Active retailers per entity median
 - Daily resolution engine stats: auto-linked / reviewed / LLM-resolved
-- Human review queue depth
+- Human review queue depth (and queue aging)
 - Organic traffic (GSC + Google Analytics)
 - Monthly infra cost
 - Monthly LLM cost
@@ -452,98 +498,97 @@ We need stopping rules so you don't perfect-polish forever.
 
 ---
 
-## 10. First 30 days checklist
+## 10. 30-day checklist and progress
 
-This is the concrete work to execute Monday morning. In order.
+### Week 1 — schema foundation ✅ DONE 2026-04-20
 
-### Week 1 — foundation
+- [x] New tables live in Supabase (canonical_entities + 6 others, pg_trgm, indexes)
+- [x] `canonical_entities_view` unions old + new for frontend transition
+- [x] GPU migration script: 1,522 canonicals, 1,498 listings, 14,388 price_observations moved to new tables
 
-- [ ] Spin up the new tables (`canonical_entities`, `entity_attributes`, `entity_relationships`, `listings`, `price_observations`, `catalog_sources`, `entity_source_mappings`) in Supabase. Indexes. RLS off (no user data in these).
-- [ ] Write the migration script for ONE category (GPUs): copies existing GPU canonical_products rows into `canonical_entities`, existing products rows into `listings`, existing price_points into `price_observations`.
-- [ ] Run the migration, verify row counts, spot-check data.
-- [ ] Write a read-only `canonical_entities_view` that unions old and new tables — the frontend queries this view during transition.
+### Week 2 — GPU catalog seed and linking ✅ DONE 2026-04-20
 
-### Week 2 — catalog import
+- [x] dbgpu chip extractor → `catalog/dbgpu/chips.json` (1,769 chips vendored)
+- [x] Supabase loader for chips as parent canonical_entities (1,769 rows, entity_type='gpu_chip')
+- [x] Memory-variant collapse (41 safe groups, 44 rows merged into entity_attributes)
+- [x] Structured tier-parse matcher linked 1,455 / 1,522 boards to chip parents (95.6%)
+- [x] 67 unmatched boards remain for Week 3 review queue
 
-- [ ] Build the TechPowerUp GPU importer. Scrapes their DB once, stores as JSON. Parses into `canonical_entities`.
-- [ ] Match existing GPU canonicals to TechPowerUp entities via pg_trgm + manual review. Produces a CSV of conflicts to resolve.
-- [ ] You hand-review conflicts (expect ~100 rows, 2-3 hours of work).
-- [ ] Finalize the GPU catalog. `canonical_entities` for the GPU vertical now has TechPowerUp as the source of truth.
+### Week 3 — resolution engine + review UI
 
-### Week 3 — entity resolution engine
+- [ ] Resolution engine: tiers 1 → 2a (structured parse) → 2b (fuzzy) → 3 (LLM) → 4 (Ollama) → 5 (review)
+- [ ] LLM gateway service with budget cap + circuit-breaker
+- [ ] Admin review UI at `/admin/review`, shared-secret auth
+- [ ] Clear the 67 unparented GPU boards through the review queue
+- [ ] Run resolution engine on live CC/Newegg GPU listings, measure auto-link rate
 
-- [ ] Build the resolution engine: exact → fuzzy → LLM → human pipeline.
-- [ ] LLM gateway service with caching and multi-provider fallback.
-- [ ] Human review UI at `/admin/review`. Simple. Shared-secret auth.
-- [ ] Run engine against live Canada Computers GPU listings. Measure auto-link rate.
+### Week 4 — catalog-first scraping + Best Buy Canada
 
-### Week 4 — catalog-first scraping + one new retailer
+- [ ] RetailerAdapter interface
+- [ ] Port Canada Computers + Newegg scrapers to adapter interface
+- [ ] Build Best Buy Canada adapter (public API)
+- [ ] Wire catalog-first daily job for GPUs
+- [ ] Frontend switches to reading from `canonical_entities_view` (transparent cutover)
 
-- [ ] Build the retailer adapter interface.
-- [ ] Port Canada Computers and Newegg scrapers to the adapter interface.
-- [ ] Build the Best Buy Canada adapter (public API, easiest).
-- [ ] Wire up catalog-first scraping for GPUs: for each TechPowerUp GPU, query each retailer adapter for matches.
-- [ ] Daily job runs end-to-end. Data lands in new tables.
+### End of month 1 success criteria
 
-### End of month 1 — success criteria
-
-- GPU vertical runs on the new architecture end-to-end.
-- Other verticals still run on old architecture. Site is not broken.
-- Best Buy Canada integrated for GPUs.
-- Human review queue exists and is actively used.
-- You can look at a GPU product page on the live site and see richer data than before.
+- GPU vertical runs on new architecture end-to-end
+- Other verticals still run on old architecture; site not broken
+- Best Buy Canada integrated for GPUs
+- Human review queue exists and is actively used
+- Richer data visible on live GPU product pages
 
 ---
 
-## 11. Risk register — what kills this
-
-Ranked by probability × severity.
+## 11. Risk register
 
 ### High risk
 
-1. **Scope creep.** Trying to launch multiple verticals simultaneously. Mitigation: the stopping rules above. Do not start Phase 1 until Phase 0 metrics are met.
-2. **LLM costs spiral.** A bug in the resolution engine calls the LLM 10x more than expected. Mitigation: hard monthly budget cap in the LLM gateway ($100/mo), circuit-breaker that switches to "queue for human review" when budget hits 80%.
-3. **Solo burnout.** Weekend project for a year. Mitigation: the 30-day checklist. Small wins. Shippable milestones. Don't try to finish the whole vision in Q1.
-4. **The catalog source breaks or goes hostile.** TechPowerUp adds anti-scraping or changes their schema. Mitigation: store the catalog dump, don't depend on live queries to the source. Re-scrape monthly, not per-request.
+1. **Scope creep.** Mitigation: §9 stopping rules.
+2. **LLM costs spiral.** Mitigation: hard $100/mo cap in gateway, circuit-breaker to review queue at 80%.
+3. **Solo burnout.** Mitigation: 30-day checklist, small shippable milestones.
+4. **Catalog source breaks or goes hostile.** Mitigation: vendored local dumps, never live-query (§5 principle #2). Proven necessary 2026-04-20 when TechPowerUp's PoW surfaced.
+5. **Per-source collapse is a tax.** Budget 1-3 days per new catalog source for Phase 2 (§5). Scope-plan accordingly. Hit this on dbgpu in Week 2.
+6. **Catalog sources have errors.** Treat as signal, not truth. Review queue surfaces them (§5 principle #4). Example: dbgpu has at least one wrong codename (AMD R7 M350 "Meso" vs "Litho" — neither is a real AMD codename).
 
 ### Medium risk
 
-5. **Retailer blocks your scrapers.** Mitigation: use curl_cffi with TLS fingerprint spoofing (already do this for Walmart). Rotate user agents. Respect rate limits. If blocked, move on — we have 8 retailer plans.
-6. **Legal pressure from a retailer.** Low probability (you're a single-person project with affiliate links). Higher probability at scale. Mitigation: stay affiliate-legitimate, not a price-underminer. Don't expose retailer internal data (prices are fine, SKU structures and URLs are fine, stock levels are borderline).
-7. **Supabase hits pricing tier.** At 100k+ entities and daily scrapes, egress + compute could jump. Mitigation: watch the monthly bill weekly. Partition aggressively. Archive old price_points to cold storage after 2 years.
+7. **Retailer blocks scrapers.** Mitigation: curl_cffi TLS fingerprinting (already used for Walmart). Rotate user agents. Respect rate limits. Move on if blocked — we have 8 retailer plans.
+8. **Legal pressure from a retailer.** Low probability solo, higher at scale. Mitigation: stay affiliate-legitimate, not price-underminer.
+9. **Supabase hits pricing tier.** Watch monthly bill. Partition aggressively. Archive price_observations after 2 years.
 
-### Low risk but worth watching
+### Low risk
 
-8. **Copy-cat competitor.** Unlikely at solo scale, real at scale. Mitigation: the catalog itself is the moat. Competitors can copy features, not 18 months of catalog work.
-9. **Google algo change tanks SEO.** Always possible. Mitigation: don't depend on any single traffic source. Diversify once organic is flowing — Reddit posts, RFD engagement, Twitter.
-10. **The tech changes underneath you.** Next.js breaking change, Supabase policy shift. Mitigation: pin versions, upgrade deliberately. Don't be first on new frameworks.
+10. **Copy-cat competitor.** Moat is catalog, not features. 18 months of catalog work is hard to replicate.
+11. **Google algo change tanks SEO.** Diversify traffic once organic flows — Reddit, RFD, Twitter.
+12. **Tech changes underneath.** Pin versions, upgrade deliberately.
 
 ---
 
-## 12. Open questions for future sessions
+## 12. Open questions
 
-These are decisions we're deferring. When they come up, we update this doc.
-
-- **[TBD]** Exact LLM provider strategy. Claude Haiku vs GPT-4o-mini vs Gemini Flash. Pick after first 1000 real calls.
-- **[TBD]** Ollama model for local verification. Llama 3 8B probably, test alternatives.
+- **[TBD]** Exact LLM provider strategy. Haiku vs GPT-4o-mini vs Gemini Flash. Pick after first 1000 real calls.
+- **[TBD]** Ollama model for local verification. Llama 3 8B probably.
 - **[TBD]** Job queue tech. Start with Postgres polling, migrate if slow.
-- **[TBD]** Admin review UI auth. Shared secret URL initially, proper auth when other humans contribute.
-- **[TBD]** Condition handling. Phase 2+ design needs its own doc. Must handle: used grades (Amazon "Like New", eBay "Used - Good"), collectible grades (CGC 9.8, PSA 10), cosmetic condition for watches, etc.
-- **[TBD]** Portfolio features design. Phase 2+. Consider: is it one-product-per-row or a rich UI with photos? Cross-vertical? How is value calculated for items with price ranges?
-- **[TBD]** Brand strategy. Does TrackAura stay the name? Or spin encyclopedia to a different domain? Revisit at 100k MAU.
-- **[TBD]** Rebrand UI colors. You mentioned wanting to change the palette. Do it when the catalog-first migration is done, not before.
+- **[TBD]** Admin review UI auth. Shared secret URL initially.
+- **[TBD]** Portfolio features design. Phase 2+.
+- **[TBD]** Brand strategy at 100k MAU.
+- **[TBD]** Rebrand UI colors.
+- **[TBD]** TCGplayer anti-scrape reconnaissance (before Phase 1 start).
+- **[TBD]** Wikidata SPARQL migration for GPU chip identity (Week 5+).
+- **[TBD]** display_name cleanup pass for migrated entities (Week 5+).
+- **[TBD]** Entity-type naming: migrate `gpus` → `gpu_board` for consistency?
 
 ---
 
 ## 13. Session protocol
 
-How we work going forward.
-
-1. Every session starts with "is the architecture bible current?" If we've made changes last session, they're in the doc.
+1. Every session starts with "is the architecture bible current?" If we made changes last session, they're in the doc.
 2. Every session ends with "what decisions did we make?" If any, update the doc.
-3. When Claude proposes a change that contradicts the doc, Claude must flag the contradiction explicitly before proceeding.
+3. When Claude proposes a change that contradicts the doc, Claude must flag the contradiction before proceeding.
 4. When you push back on a Claude suggestion, the pushback gets captured — even if the suggestion is rejected, the reasoning helps future sessions.
 5. Concrete code gets generated against the architecture described here. If the architecture is wrong, fix the doc first.
+6. **Grep before deleting.** When cleaning up files, check imports first. This doc is the record of what's intentional; the code is the record of what's used.
 
 ---
 
@@ -555,10 +600,9 @@ How we work going forward.
 - Catalog of 100,000+ canonical entities across verticals.
 - Monthly revenue of $500-2000 from affiliate + early premium users.
 - Monthly cost of $100-200 infra + LLM.
-- A coherent product story that would make sense to a Thiel-style investor if you wanted one.
 
-And — more important than the metrics — a foundation that makes the next 12 months 10x easier than the last 12. That's the compounding play.
+And — more important than the metrics — a foundation that makes the next 12 months 10x easier than the last 12.
 
 ---
 
-*End of architecture bible. This document is the constitution. Amend when reality requires.*
+*End of Draft 2. Amend when reality requires.*
