@@ -26,16 +26,10 @@ export const dynamic = 'force-dynamic';
 const SKIP_COOKIE = 'trackaura_admin_skipped_boards';
 
 interface CandidateBoard {
-  entity_id: number;
-  canonical_name: string;
-  brand: string | null;
-  score: number;
-  shared_sku_token?: string | null;
-  brand_match?: boolean;
-  jaccard?: number;
-  memory_gb?: number | null;
-  product_line?: string | null;
-  singleton_bonus?: boolean;
+  board_id: number;
+  board_name: string;
+  similarity: number | null;
+  reasoning: string | null;
   [key: string]: unknown;
 }
 
@@ -190,7 +184,7 @@ export default async function ReviewBoardsPage() {
 
   const sortedCandidates: CandidateBoard[] = proposal?.candidate_boards
     ? [...proposal.candidate_boards].sort(
-        (a, b) => (b.score ?? 0) - (a.score ?? 0),
+        (a, b) => (b.similarity ?? 0) - (a.similarity ?? 0),
       )
     : [];
 

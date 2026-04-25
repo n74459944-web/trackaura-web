@@ -9,16 +9,10 @@ import {
 } from './actions';
 
 interface CandidateBoard {
-  entity_id: number;
-  canonical_name: string;
-  brand: string | null;
-  score: number;
-  shared_sku_token?: string | null;
-  brand_match?: boolean;
-  jaccard?: number;
-  memory_gb?: number | null;
-  product_line?: string | null;
-  singleton_bonus?: boolean;
+  board_id: number;
+  board_name: string;
+  similarity: number | null;
+  reasoning: string | null;
   [key: string]: unknown;
 }
 
@@ -103,7 +97,7 @@ export function BoardActionPanel({
           <ul className="space-y-2">
             {candidates.map((c) => (
               <li
-                key={c.entity_id}
+                key={c.board_id}
                 className="rounded border border-slate-800 bg-slate-950/50 p-3"
               >
                 <div className="flex items-start gap-3">
@@ -116,7 +110,7 @@ export function BoardActionPanel({
                     <input
                       type="hidden"
                       name="board_id"
-                      value={c.entity_id}
+                      value={c.board_id}
                     />
                     <button
                       type="submit"
@@ -127,48 +121,26 @@ export function BoardActionPanel({
                   </form>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-slate-100">
-                      {c.canonical_name}
+                      {c.board_name}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
                       <span className="font-mono text-slate-500">
-                        id {c.entity_id}
+                        id {c.board_id}
                       </span>
                       <span>
-                        score:{' '}
-                        <span className={`font-mono ${scoreColor(c.score)}`}>
-                          {formatScore(c.score)}
+                        similarity:{' '}
+                        <span
+                          className={`font-mono ${scoreColor(c.similarity)}`}
+                        >
+                          {formatScore(c.similarity)}
                         </span>
                       </span>
-                      {c.brand && (
-                        <span>
-                          brand:{' '}
-                          <span className="font-mono">{c.brand}</span>
-                        </span>
-                      )}
-                      {c.memory_gb != null && (
-                        <span>
-                          mem:{' '}
-                          <span className="font-mono">{c.memory_gb}GB</span>
-                        </span>
-                      )}
-                      {c.product_line && (
-                        <span>
-                          line:{' '}
-                          <span className="font-mono">{c.product_line}</span>
-                        </span>
-                      )}
-                      {c.shared_sku_token && (
-                        <span>
-                          sku:{' '}
-                          <span className="font-mono">
-                            {c.shared_sku_token}
-                          </span>
-                        </span>
-                      )}
-                      {c.singleton_bonus && (
-                        <span className="text-emerald-400">singleton</span>
-                      )}
                     </div>
+                    {c.reasoning && (
+                      <div className="mt-2 rounded border border-slate-800 bg-slate-900/80 p-2 font-mono text-[11px] leading-relaxed text-slate-400">
+                        {c.reasoning}
+                      </div>
+                    )}
                   </div>
                 </div>
               </li>
