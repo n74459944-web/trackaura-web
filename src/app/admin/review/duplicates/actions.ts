@@ -34,6 +34,15 @@ import { requireAdmin } from '@/lib/admin/auth';
  *   skipDuplicate            — defer for this session via cookie
  *   restartDuplicatesQueue   — clear the skip cookie
  *
+ * Idempotency
+ * -----------
+ * Double-click and revalidation-race scenarios can fire the same action
+ * twice. The first call merges (or rejects); the second call arrives at
+ * a row that's already gone (cascade-deleted) or no longer pending. We
+ * treat these as silent no-ops + revalidate, not errors. loadPair returns
+ * null for those cases; callers check and short-circuit. Earned 2026-04-25
+ * after pair 170 surfaced an "Application error" 500 from a double-submit.
+ *
  * On merge: a_entity_id and b_entity_id are ON DELETE CASCADE, so deleting
  * the source canonical_entity auto-cleans this pair row (and any other
  * pending pair involving the source). We deliberately do NOT update the
@@ -73,6 +82,11 @@ export async function mergeKeepA(formData: FormData) {
   const pairId = parseRequiredInt(formData, 'pair_id');
   const supabase = createAdminClient();
   const pair = await loadPair(supabase, pairId);
+  if (pair === null) {
+    // Already processed by an earlier click / concurrent merge — no-op
+    revalidatePath(REVIEW_PATH);
+    return;
+  }
   await callMerge(supabase, pair.b_entity_id, pair.a_entity_id);
   revalidatePath(REVIEW_PATH);
 }
@@ -85,6 +99,10 @@ export async function mergeKeepB(formData: FormData) {
   const pairId = parseRequiredInt(formData, 'pair_id');
   const supabase = createAdminClient();
   const pair = await loadPair(supabase, pairId);
+  if (pair === null) {
+    revalidatePath(REVIEW_PATH);
+    return;
+  }
   await callMerge(supabase, pair.a_entity_id, pair.b_entity_id);
   revalidatePath(REVIEW_PATH);
 }
@@ -108,7 +126,11 @@ export async function rejectNotDuplicate(formData: FormData) {
   const safeReason = validReasons.has(reason) ? reason : 'other';
 
   const supabase = createAdminClient();
-  await loadPair(supabase, pairId); // status='pending' validation only
+  const pair = await loadPair(supabase, pairId);
+  if (pair === null) {
+    revalidatePath(REVIEW_PATH);
+    return;
+  }
 
   const now = new Date().toISOString();
   const { error } = await supabase
@@ -166,10 +188,16 @@ export async function restartDuplicatesQueue() {
 // Internal helpers
 // =========================================================================
 
+/**
+ * Load a pair for processing, returning null if the pair is already
+ * gone (cascade-deleted by an earlier merge) or no longer pending
+ * (already rejected/skipped/stale). DB errors still throw — only the
+ * "row absent" and "row already decided" cases are treated as no-ops.
+ */
 async function loadPair(
   supabase: AdminClient,
   pairId: number,
-): Promise<PairRow> {
+): Promise<PairRow | null> {
   const { data, error } = await supabase
     .from('duplicate_canonical_pairs')
     .select('id, a_entity_id, b_entity_id, status')
@@ -180,12 +208,18 @@ async function loadPair(
     throw new Error(`loadPair: ${error.message}`);
   }
   if (!data) {
-    throw new Error(`loadPair: pair ${pairId} not found`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[duplicates] pair ${pairId} not found — already merged/cascade-deleted, no-op`,
+    );
+    return null;
   }
   if (data.status !== 'pending') {
-    throw new Error(
-      `loadPair: pair ${pairId} status is ${data.status}, expected pending`,
+    // eslint-disable-next-line no-console
+    console.log(
+      `[duplicates] pair ${pairId} status is ${data.status}, already decided, no-op`,
     );
+    return null;
   }
   return data as PairRow;
 }
