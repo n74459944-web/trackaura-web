@@ -30,7 +30,6 @@ interface CandidateBoard {
   canonical_name: string;
   brand: string | null;
   score: number;
-  // Scoring sub-components are optional; whatever the resolver wrote is fine
   shared_sku_token?: string | null;
   brand_match?: boolean;
   jaccard?: number;
@@ -52,16 +51,20 @@ interface PendingProposal {
   id: number;
   retailer: string;
   url: string;
+  retailer_sku: string | null;
   raw_title: string;
   brand: string | null;
   price_cad: number | null;
   scraped_at: string | null;
   source_product_id: number | null;
   proposed_chip_id: number;
+  resolver_tier: string;
+  match_confidence: number | null;
+  resolver_reasoning: string | null;
   candidate_boards: CandidateBoard[] | null;
   proposed_new_board: ProposedNewBoard | null;
-  resolver_tier: string;
   status: string;
+  priority: number | null;
   created_at: string;
 }
 
@@ -120,6 +123,8 @@ async function fetchNextProposal(
     .from('pending_board_proposals')
     .select('*')
     .eq('status', 'pending')
+    // Highest-priority first, then oldest first
+    .order('priority', { ascending: false, nullsFirst: false })
     .order('id', { ascending: true })
     .limit(1);
 
@@ -181,11 +186,8 @@ export default async function ReviewBoardsPage() {
     fetchNextProposal(skippedIds),
   ]);
 
-  const chip = proposal
-    ? await fetchChip(proposal.proposed_chip_id)
-    : null;
+  const chip = proposal ? await fetchChip(proposal.proposed_chip_id) : null;
 
-  // Sort candidates highest-score first; treat missing scores as 0
   const sortedCandidates: CandidateBoard[] = proposal?.candidate_boards
     ? [...proposal.candidate_boards].sort(
         (a, b) => (b.score ?? 0) - (a.score ?? 0),
@@ -206,9 +208,7 @@ export default async function ReviewBoardsPage() {
           </p>
         </div>
         <div className="text-right text-sm">
-          <div className="font-mono text-teal-400">
-            {stats.total} pending
-          </div>
+          <div className="font-mono text-teal-400">{stats.total} pending</div>
           {skippedIds.length > 0 && (
             <form action={restartBoardQueue}>
               <button
@@ -263,8 +263,15 @@ export default async function ReviewBoardsPage() {
         <>
           <section className="mb-6 rounded-md border border-slate-800 bg-slate-900/50 p-5">
             <div className="mb-3 flex items-baseline justify-between">
-              <div className="font-mono text-sm text-slate-500">
-                Proposal #{proposal.id}
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-sm text-slate-500">
+                  Proposal #{proposal.id}
+                </span>
+                {proposal.priority !== null && proposal.priority > 0 && (
+                  <span className="font-mono text-xs text-amber-300">
+                    priority={proposal.priority}
+                  </span>
+                )}
               </div>
               <div className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs uppercase tracking-wider text-amber-400">
                 {formatTier(proposal.resolver_tier)}
@@ -299,6 +306,12 @@ export default async function ReviewBoardsPage() {
                     {formatTimestamp(proposal.scraped_at)}
                   </span>
                 </div>
+                {proposal.retailer_sku && (
+                  <div className="col-span-2">
+                    <span className="text-slate-500">sku:</span>{' '}
+                    <span className="font-mono">{proposal.retailer_sku}</span>
+                  </div>
+                )}
               </div>
               <a
                 href={proposal.url}
@@ -313,6 +326,15 @@ export default async function ReviewBoardsPage() {
             <div className="border-t border-slate-800 pt-3">
               <div className="mb-1 text-xs uppercase tracking-wider text-slate-500">
                 Resolved chip parent
+                {proposal.match_confidence !== null && (
+                  <span className="ml-2 text-slate-400">
+                    (confidence{' '}
+                    <span className="font-mono">
+                      {proposal.match_confidence.toFixed(2)}
+                    </span>
+                    )
+                  </span>
+                )}
               </div>
               {chip ? (
                 <div className="text-sm">
@@ -325,6 +347,11 @@ export default async function ReviewBoardsPage() {
                 <div className="text-sm text-rose-400">
                   Chip {proposal.proposed_chip_id} not found in
                   canonical_entities. Investigate before approving.
+                </div>
+              )}
+              {proposal.resolver_reasoning && (
+                <div className="mt-2 rounded border border-slate-800 bg-slate-950/60 p-2 text-xs italic text-slate-400">
+                  {proposal.resolver_reasoning}
                 </div>
               )}
             </div>

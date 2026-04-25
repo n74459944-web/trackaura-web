@@ -8,25 +8,22 @@ import { requireAdmin } from '@/lib/admin/auth';
 /**
  * Server actions for /admin/review/boards.
  *
- * Four actions correspond to the four decision paths:
+ * Schema confirmed against information_schema.columns 2026-04-24:
+ *   status              text   ('pending' | 'approved' | 'rejected')
+ *   decision_notes      text   (free-form outcome label)
+ *   resolved_board_id   bigint (FK canonical_entities, the resolved board)
+ *   decided_at          timestamptz
+ *   decided_by          text
+ *
+ * Four decision paths:
  *   linkExistingBoard  — write listing under chosen candidate, mark approved
- *   createNewBoard     — create new canonical_entities row + attrs, then link
- *   rejectProposal     — mark proposal rejected, write nothing to new schema
+ *   createNewBoard     — create canonical_entities + attrs, then link
+ *   rejectProposal     — mark rejected, write nothing to new schema
  *   skipBoardProposal  — defer for this session via cookie, no DB change
  *
  * Plus restartBoardQueue() to clear the skip cookie.
  *
  * All writes go through the service-role admin client (bypasses RLS).
- *
- * COLUMN NAME ASSUMPTIONS for pending_board_proposals decision audit fields:
- *   status              — 'pending' | 'approved' | 'rejected'
- *   decision_outcome    — text label of which path was taken
- *   decided_entity_id   — bigint FK to canonical_entities (the resolved board)
- *   decided_at          — timestamptz
- *   decided_by          — text (constant 'admin' for shared-secret auth)
- *
- * If the migration named these differently, edit the buildDecisionPatch()
- * helper at the bottom of this file. Everything else funnels through there.
  */
 
 const SKIP_COOKIE = 'trackaura_admin_skipped_boards';
@@ -71,8 +68,8 @@ export async function linkExistingBoard(formData: FormData) {
   });
 
   await applyDecision(supabase, proposalId, {
-    outcome: 'linked_existing',
-    entityId: boardId,
+    notes: 'linked_existing',
+    boardId,
   });
 
   revalidatePath(REVIEW_PATH);
@@ -86,17 +83,17 @@ export async function createNewBoard(formData: FormData) {
 
   const proposalId = parseRequiredInt(formData, 'proposal_id');
   const chipId = parseRequiredInt(formData, 'chip_id');
-  const canonicalName = (formData.get('canonical_name') as string ?? '').trim();
+  const canonicalName = ((formData.get('canonical_name') as string) ?? '').trim();
   const brand = ((formData.get('brand') as string) ?? '').trim() || null;
   const memoryGbRaw = (formData.get('memory_gb') as string) ?? '';
-  const productLine = ((formData.get('product_line') as string) ?? '').trim() || null;
+  const productLine =
+    ((formData.get('product_line') as string) ?? '').trim() || null;
 
   if (!canonicalName) {
     throw new Error('createNewBoard: canonical_name is required');
   }
 
-  const memoryGb =
-    memoryGbRaw.trim() === '' ? null : Number(memoryGbRaw);
+  const memoryGb = memoryGbRaw.trim() === '' ? null : Number(memoryGbRaw);
   if (memoryGb !== null && !Number.isFinite(memoryGb)) {
     throw new Error(`createNewBoard: memory_gb invalid: ${memoryGbRaw}`);
   }
@@ -142,7 +139,9 @@ export async function createNewBoard(formData: FormData) {
     .single();
   if (insErr || !inserted) {
     throw new Error(
-      `createNewBoard insert canonical_entities: ${insErr?.message ?? 'no row returned'}`,
+      `createNewBoard insert canonical_entities: ${
+        insErr?.message ?? 'no row returned'
+      }`,
     );
   }
   const newBoardId = inserted.id as number;
@@ -187,8 +186,8 @@ export async function createNewBoard(formData: FormData) {
   });
 
   await applyDecision(supabase, proposalId, {
-    outcome: 'created_new',
-    entityId: newBoardId,
+    notes: 'created_new',
+    boardId: newBoardId,
   });
 
   revalidatePath(REVIEW_PATH);
@@ -213,8 +212,8 @@ export async function rejectProposal(formData: FormData) {
 
   const supabase = createAdminClient();
   await applyDecision(supabase, proposalId, {
-    outcome: `rejected_${safeReason}`,
-    entityId: null,
+    notes: `rejected_${safeReason}`,
+    boardId: null,
     status: 'rejected',
   });
 
@@ -263,6 +262,7 @@ interface ProposalRow {
   id: number;
   retailer: string;
   url: string;
+  retailer_sku: string | null;
   raw_title: string;
   brand: string | null;
   price_cad: number | null;
@@ -281,8 +281,8 @@ interface AttrRow {
 }
 
 interface DecisionPatch {
-  outcome: string;
-  entityId: number | null;
+  notes: string;
+  boardId: number | null;
   status?: 'approved' | 'rejected';
 }
 
@@ -295,7 +295,7 @@ async function loadProposal(
   const { data, error } = await supabase
     .from('pending_board_proposals')
     .select(
-      'id, retailer, url, raw_title, brand, price_cad, scraped_at, source_product_id, proposed_chip_id, status',
+      'id, retailer, url, retailer_sku, raw_title, brand, price_cad, scraped_at, source_product_id, proposed_chip_id, status',
     )
     .eq('id', proposalId)
     .maybeSingle();
@@ -327,8 +327,7 @@ async function writeListingAndObservation(
   const now = new Date().toISOString();
   const firstSeen = proposal.scraped_at ?? now;
 
-  // Listing first. If a row for (retailer, url) already exists from a prior
-  // sync run, fold into it instead of double-inserting.
+  // If a listing for (retailer, url) already exists, fold into it
   const { data: existing, error: existingErr } = await supabase
     .from('listings')
     .select('id')
@@ -361,7 +360,7 @@ async function writeListingAndObservation(
       .insert({
         entity_id: entityId,
         retailer: proposal.retailer,
-        retailer_sku: null,
+        retailer_sku: proposal.retailer_sku,
         url: proposal.url,
         first_seen: firstSeen,
         last_seen: firstSeen,
@@ -404,7 +403,14 @@ async function applyDecision(
   proposalId: number,
   patch: DecisionPatch,
 ): Promise<void> {
-  const updateRow = buildDecisionPatch(patch);
+  const updateRow = {
+    status: patch.status ?? 'approved',
+    decision_notes: patch.notes,
+    resolved_board_id: patch.boardId,
+    decided_at: new Date().toISOString(),
+    decided_by: 'admin',
+    updated_at: new Date().toISOString(),
+  };
   const { error } = await supabase
     .from('pending_board_proposals')
     .update(updateRow)
@@ -412,20 +418,6 @@ async function applyDecision(
   if (error) {
     throw new Error(`applyDecision: ${error.message}`);
   }
-}
-
-/**
- * Single source of truth for the decision audit field names.
- * If the migration uses different column names, edit here.
- */
-function buildDecisionPatch(patch: DecisionPatch): Record<string, unknown> {
-  return {
-    status: patch.status ?? 'approved',
-    decision_outcome: patch.outcome,
-    decided_entity_id: patch.entityId,
-    decided_at: new Date().toISOString(),
-    decided_by: 'admin',
-  };
 }
 
 function parseRequiredInt(formData: FormData, key: string): number {
@@ -441,13 +433,15 @@ function parseRequiredInt(formData: FormData, key: string): number {
 }
 
 function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 200) || 'unnamed-board';
+  return (
+    s
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 200) || 'unnamed-board'
+  );
 }
 
 async function ensureUniqueSlug(
@@ -464,7 +458,6 @@ async function ensureUniqueSlug(
   }
   if (!collision) return base;
 
-  // On collision, try base-2, base-3, ... up to base-50
   for (let i = 2; i <= 50; i++) {
     const candidate = `${base}-${i}`.slice(0, 200);
     const { data: row, error: e } = await supabase
