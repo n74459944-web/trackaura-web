@@ -68,6 +68,7 @@ export async function linkExistingBoard(formData: FormData) {
   });
 
   await applyDecision(supabase, proposalId, {
+    status: 'approved_link',
     notes: 'linked_existing',
     boardId,
   });
@@ -186,6 +187,7 @@ export async function createNewBoard(formData: FormData) {
   });
 
   await applyDecision(supabase, proposalId, {
+    status: 'approved_new_board',
     notes: 'created_new',
     boardId: newBoardId,
   });
@@ -281,9 +283,9 @@ interface AttrRow {
 }
 
 interface DecisionPatch {
+  status: 'approved_link' | 'approved_new_board' | 'rejected';
   notes: string;
   boardId: number | null;
-  status?: 'approved' | 'rejected';
 }
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -404,7 +406,7 @@ async function applyDecision(
   patch: DecisionPatch,
 ): Promise<void> {
   const updateRow = {
-    status: patch.status ?? 'approved',
+    status: patch.status,
     decision_notes: patch.notes,
     resolved_board_id: patch.boardId,
     decided_at: new Date().toISOString(),
