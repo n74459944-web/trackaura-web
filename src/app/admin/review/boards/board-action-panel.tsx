@@ -48,10 +48,16 @@ const REJECT_REASONS = [
   { value: 'other', label: 'Other' },
 ];
 
-function scoreColor(score: number): string {
+function scoreColor(score: number | null | undefined): string {
+  if (score == null || !Number.isFinite(score)) return 'text-slate-500';
   if (score >= 0.75) return 'text-emerald-400';
   if (score >= 0.5) return 'text-amber-400';
   return 'text-slate-500';
+}
+
+function formatScore(score: number | null | undefined): string {
+  if (score == null || !Number.isFinite(score)) return '—';
+  return score.toFixed(3);
 }
 
 export function BoardActionPanel({
@@ -130,7 +136,7 @@ export function BoardActionPanel({
                       <span>
                         score:{' '}
                         <span className={`font-mono ${scoreColor(c.score)}`}>
-                          {c.score.toFixed(3)}
+                          {formatScore(c.score)}
                         </span>
                       </span>
                       {c.brand && (
