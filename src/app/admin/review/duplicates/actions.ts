@@ -39,8 +39,15 @@ import { requireAdmin } from '@/lib/admin/auth';
  * pending pair involving the source). We deliberately do NOT update the
  * row to status='merged' before calling merge — that would race the
  * cascade and violate the decided_rows_have_decision_timestamp invariant
- * if the merge fails. Audit lives on the survivor's
- * legacy_source_db = 'merged_into:<source_id>' written by the RPC.
+ * if the merge fails.
+ *
+ * Audit lives in the canonical_entity_merges table (one row per merge),
+ * written by merge_canonical_entity v2 inside the same transaction as
+ * the source delete. Captures source/target names + slugs as text
+ * snapshots and the full per-table row-count summary as JSONB. Verified
+ * 2026-04-25: legacy_source_db (which the bible cited as the audit
+ * mechanism) does not exist on canonical_entities; that column is on
+ * the deprecated canonical_products table only.
  *
  * All writes go through the service-role admin client (bypasses RLS).
  */
@@ -205,8 +212,9 @@ async function callMerge(
     );
   }
 
-  // JSONB summary of rows moved/dropped per table; surfaced to server logs
-  // for operator confidence. No flash UI for parity with /admin/review/boards.
+  // JSONB summary of rows moved/dropped per table; also persisted to
+  // canonical_entity_merges by the function. Logged here for live
+  // operator confidence during merge sessions.
   // eslint-disable-next-line no-console
   console.log(
     `[duplicates] merged ${sourceId} -> ${targetId}:`,
