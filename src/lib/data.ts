@@ -1,5 +1,6 @@
 import { Product, PricePoint, SiteStats } from "@/types";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import fs from "fs";
 import path from "path";
 import { pool } from "./db";
@@ -74,14 +75,43 @@ const PRODUCT_COLUMNS = `
 // Cross-request caching is Vercel's job (via `revalidate`).
 // ============================================================
 
-export const getAllProducts = cache(async (): Promise<Product[]> => {
+// 2026-04-27: getAllProducts() is called from 9 pages (brand/, brands/,
+// categories/, compare/, deals/, mpn/, sitemaps/, trends/, etc.). React's
+// cache() only dedupes within a single render, so every ISR regeneration
+// across every page was firing a fresh full-table scan against `products`
+// (~36k rows, ~1.1s mean exec time). That was burning ~24 min/day of DB
+// compute and triggered Supabase's "exhausting resources" warning.
+//
+// unstable_cache adds Vercel's data cache layer: 30-min TTL, regional
+// scope. Backend scrapes daily at 6 AM, so 30 min of staleness is well
+// within freshness budget. If a scrape needs to invalidate immediately,
+// call revalidateTag('products') from a route handler.
+//
+// Followup: most callers don't actually need the full product list.
+// brand/[brand] wants a brand filter; categories/ wants DISTINCT category +
+// counts; sitemaps wants id/slug/category only. Replace incrementally
+// (see ARCHITECTURE.md §10 tail). Until then, this cache is the bandage.
+
+const ALL_PRODUCTS_TTL_SECONDS = 1800;
+
+const _fetchAllProducts = async (): Promise<Product[]> => {
   // Full-catalog fetch is expensive (~20MB wire, ~40K rows). Prefer
   // getProductsByCategory / getFilteredProducts where possible.
   const res = await pool.query(
     `SELECT ${PRODUCT_COLUMNS} FROM products ORDER BY id`
   );
   return res.rows.map(rowToProduct);
-});
+};
+
+const _cachedFetchAllProducts = unstable_cache(
+  _fetchAllProducts,
+  ["all-products-v1"],
+  { revalidate: ALL_PRODUCTS_TTL_SECONDS, tags: ["products"] }
+);
+
+export const getAllProducts = cache(
+  async (): Promise<Product[]> => _cachedFetchAllProducts()
+);
 
 export const getProductBySlug = cache(async (slug: string): Promise<Product | undefined> => {
   const res = await pool.query(
