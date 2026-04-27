@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server';
 import { resolveRetailer, RETAILERS, type RetailerKey } from '@/lib/retailers';
 import type { CategoryProduct } from '@/lib/queries/category';
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Types
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export type BrandInCategoryViewModel = {
   categorySlug: string;
@@ -23,17 +23,32 @@ export type BrandInCategoryViewModel = {
   siblingBrands: Array<{ name: string; slug: string; count: number }>;
 };
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Helpers
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 const CANONICAL_LIMIT = 5_000;
 const PRODUCT_ROWS_LIMIT = 25_000;
 
+const ACRONYMS = new Set<string>([
+  'GPU', 'CPU', 'RAM', 'SSD', 'HDD', 'PSU', 'NAS', 'PC', 'TV',
+  'USB', 'HDMI', 'AIO', 'API', 'ARGB', 'RGB', 'ATX', 'NVME',
+  'OLED', 'IPS', 'VA', 'TN', 'LCD', 'LED', 'UPS', 'DAC', 'AMP',
+]);
+
 function prettifyCategorySlug(slug: string): string {
   return slug
     .split(/[-_]/)
-    .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : w))
+    .map((w) => {
+      if (!w) return w;
+      const upper = w.toUpperCase();
+      if (upper.length > 1 && upper.endsWith('S')) {
+        const stem = upper.slice(0, -1);
+        if (ACRONYMS.has(stem)) return stem + 's';
+      }
+      if (ACRONYMS.has(upper)) return upper;
+      return w[0].toUpperCase() + w.slice(1);
+    })
     .join(' ');
 }
 
@@ -45,15 +60,19 @@ export function brandToSlug(brand: string): string {
 }
 
 /**
- * Convert a brand slug back into candidate brand names. The brand column
- * has mixed casing ("YEALINK", "Yealink", "NVIDIA") and may contain
- * non-slug characters, so we can't do an exact lookup by slugified name.
- * Instead we fetch the distinct brands for the category and match by slug.
+ * Convert a brand slug back into the set of canonical-brand variants that
+ * map to it. The brand column has mixed casing ("YEALINK"/"Yealink",
+ * "MSI"/"Msi", "SAPPHIRE"/"Sapphire"/"SAPPHIRE TECH") and the slugifier
+ * collapses casing AND non-alphanumerics. So multiple raw brand strings
+ * may share one slug, and we want to fetch products under any of them.
+ *
+ * Returns the most-common variant as `displayName` plus the full list
+ * for a downstream `.in('brand', variants)` query.
  */
-async function resolveBrandName(
+async function resolveBrandVariants(
   categorySlug: string,
   brandSlug: string,
-): Promise<string | null> {
+): Promise<{ displayName: string; variants: string[] } | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('canonical_products')
@@ -63,19 +82,26 @@ async function resolveBrandName(
     .limit(50_000);
 
   if (!data) return null;
-  const seen = new Set<string>();
+
+  const counts = new Map<string, number>();
   for (const row of data) {
     const b = row.brand as string | null;
-    if (!b || seen.has(b)) continue;
-    seen.add(b);
-    if (brandToSlug(b) === brandSlug) return b;
+    if (!b) continue;
+    if (brandToSlug(b) !== brandSlug) continue;
+    counts.set(b, (counts.get(b) ?? 0) + 1);
   }
-  return null;
+  if (counts.size === 0) return null;
+
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  return {
+    displayName: sorted[0][0],
+    variants: sorted.map(([name]) => name),
+  };
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Main query
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getBrandInCategoryViewModel(
   categorySlug: string,
@@ -83,21 +109,22 @@ export async function getBrandInCategoryViewModel(
 ): Promise<BrandInCategoryViewModel | null> {
   const supabase = await createClient();
 
-  // 1. Resolve brand slug → canonical brand name (case-preserving).
-  const brandName = await resolveBrandName(categorySlug, brandSlug);
-  if (!brandName) {
+  // 1. Resolve brand slug → all case variants in this category.
+  const resolved = await resolveBrandVariants(categorySlug, brandSlug);
+  if (!resolved) {
     console.warn(
       `[brand] no brand matching slug="${brandSlug}" in category="${categorySlug}"`,
     );
     return null;
   }
+  const { displayName: brandName, variants } = resolved;
 
-  // 2. Canonical products in this category + brand.
+  // 2. Canonical products in this category + ANY case variant of the brand.
   const { data: canonicalRows, error: cErr } = await supabase
     .from('canonical_products')
     .select('id, slug, name, brand, image_url, msrp')
     .eq('category', categorySlug)
-    .eq('brand', brandName)
+    .in('brand', variants)
     .not('image_url', 'is', null)
     .limit(CANONICAL_LIMIT);
 
@@ -107,7 +134,7 @@ export async function getBrandInCategoryViewModel(
   }
   if (!canonicalRows || canonicalRows.length === 0) {
     console.warn(
-      `[brand] no canonical rows for brand="${brandName}" category="${categorySlug}"`,
+      `[brand] no canonical rows for variants=${JSON.stringify(variants)} category="${categorySlug}"`,
     );
     return null;
   }
@@ -160,6 +187,17 @@ export async function getBrandInCategoryViewModel(
     const allTimeLow = allPrices.length ? Math.min(...allPrices) : null;
     const allTimeHigh = allPrices.length ? Math.max(...allPrices) : null;
 
+    // Same gate as category.ts — don't flag ATL on degenerate price ranges.
+    let isAtl = false;
+    if (
+      bestPrice != null &&
+      allTimeLow != null &&
+      allTimeHigh != null &&
+      allTimeHigh > allTimeLow * 1.02
+    ) {
+      isAtl = bestPrice <= allTimeLow && bestPrice < allTimeHigh * 0.95;
+    }
+
     return {
       id: c.id,
       slug: c.slug,
@@ -176,8 +214,7 @@ export async function getBrandInCategoryViewModel(
       retailerCount: linked.length,
       inStock: inStock.length > 0,
       isOpenBox: best?.is_openbox ?? false,
-      isAtl:
-        bestPrice != null && allTimeLow != null && bestPrice <= allTimeLow,
+      isAtl,
     };
   });
 
@@ -204,7 +241,8 @@ export async function getBrandInCategoryViewModel(
     .map(([id, count]) => ({ id, name: RETAILERS[id].name, count }))
     .sort((a, b) => b.count - a.count);
 
-  // 7. Sibling brands: other brands in this category for the nav strip.
+  // 7. Sibling brands — case-folded by slug so MSI/Msi/Gigabyte/GIGABYTE
+  //    don't appear as duplicate links in the side strip.
   const { data: siblingRows } = await supabase
     .from('canonical_products')
     .select('brand')
@@ -212,15 +250,30 @@ export async function getBrandInCategoryViewModel(
     .not('brand', 'is', null)
     .not('image_url', 'is', null);
 
-  const siblingMap = new Map<string, number>();
+  const siblingMap = new Map<
+    string,
+    { variants: Map<string, number>; count: number }
+  >();
   for (const r of siblingRows ?? []) {
     const b = r.brand as string | null;
     if (!b) continue;
-    siblingMap.set(b, (siblingMap.get(b) ?? 0) + 1);
+    const slug = brandToSlug(b);
+    if (!slug || slug === brandSlug) continue;
+    let entry = siblingMap.get(slug);
+    if (!entry) {
+      entry = { variants: new Map(), count: 0 };
+      siblingMap.set(slug, entry);
+    }
+    entry.variants.set(b, (entry.variants.get(b) ?? 0) + 1);
+    entry.count += 1;
   }
+
   const siblingBrands = [...siblingMap.entries()]
-    .filter(([name, c]) => name !== brandName && c >= 2 && name.length >= 2)
-    .map(([name, count]) => ({ name, slug: brandToSlug(name), count }))
+    .filter(([slug, e]) => e.count >= 2 && slug.length >= 2)
+    .map(([slug, e]) => {
+      const display = [...e.variants.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      return { name: display, slug, count: e.count };
+    })
     .sort((a, b) => b.count - a.count)
     .slice(0, 20);
 

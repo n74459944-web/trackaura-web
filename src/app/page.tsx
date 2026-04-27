@@ -25,7 +25,7 @@ export default async function HomePage() {
     getRecentDrops(6),
   ]);
 
-  // Merge in the emoji icon map from /types (same pattern as the old page).
+  // Merge in the emoji icon map from /types.
   const topCategories = rawCategories.map((c) => ({
     ...c,
     label: CATEGORY_LABELS[c.key] ?? c.label,
@@ -67,7 +67,7 @@ export default async function HomePage() {
             margin: '0 auto 1.75rem',
           }}
         >
-          {stats.totalProducts.toLocaleString()} electronics products tracked daily across Canadian retailers.
+          {stats.totalProducts.toLocaleString()} electronics products tracked daily across {stats.totalRetailers} Canadian retailers.
         </p>
 
         <div
@@ -96,7 +96,11 @@ export default async function HomePage() {
             Newegg Canada
           </span>{' '}
           ·{' '}
-          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Vuugo</span>
+          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Vuugo</span>{' '}
+          ·{' '}
+          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+            Visions Electronics
+          </span>
         </p>
       </div>
 
@@ -318,7 +322,7 @@ export default async function HomePage() {
             {
               step: '1',
               title: 'Prices Get Logged',
-              desc: 'Every day, our system checks prices across Canada Computers, Newegg, and Vuugo.',
+              desc: `Every day, our system checks prices across ${stats.totalRetailers} Canadian retailers.`,
             },
             {
               step: '2',
@@ -400,10 +404,10 @@ export default async function HomePage() {
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Featured product card — inline, uses same .card + .grid-products
    classes as the rest of the homepage.
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 function FeaturedCard({ product }: { product: HomeFeaturedProduct }) {
   return (

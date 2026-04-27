@@ -31,12 +31,14 @@ import type {
   RetailerSnapshot,
   ActivityEntry,
 } from '@/lib/queries/product';
+import type { ChipParentData } from '@/lib/queries/enrichment';
 import type { RetailerKey, RetailerConfig } from '@/lib/retailers';
 import PriceAlertModal from '@/components/product/PriceAlertModal';
+import ChipParentSection from '@/components/product/ChipParentSection';
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Theme helpers
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 const C = {
   bg: 'var(--bg-primary)',
@@ -53,9 +55,9 @@ const C = {
 };
 const FONT_DISPLAY = 'var(--font-sora)';
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Formatters
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 const fmtPrice = (n: number) =>
   `$${Math.round(n).toLocaleString('en-CA', { maximumFractionDigits: 0 })}`;
@@ -76,9 +78,9 @@ const fmtChecked = (iso: string | null): string => {
   return `${Math.round(diff / (24 * hr))}d ago`;
 };
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Small components
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 function RetailerBadge({
   retailer,
@@ -226,9 +228,9 @@ function Stat({
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Sections
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 function Breadcrumbs({
   crumbs,
@@ -1356,11 +1358,17 @@ function ActivityRow({
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Page wrapper
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
-export default function ProductPage({ product }: { product: ProductViewModel }) {
+export default function ProductPage({
+  product,
+  chipParent,
+}: {
+  product: ProductViewModel;
+  chipParent?: ChipParentData | null;
+}) {
   const heroRef = useRef<HTMLDivElement>(null);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -1391,6 +1399,7 @@ export default function ProductPage({ product }: { product: ProductViewModel }) 
       />
       <Breadcrumbs crumbs={product.breadcrumbs} title={product.title} />
       <Hero product={product} heroRef={heroRef} onOpenAlert={openAlert} />
+      {chipParent && <ChipParentSection chip={chipParent} />}
       <PriceChart product={product} />
       <ComparisonTable product={product} />
       <Specs product={product} />

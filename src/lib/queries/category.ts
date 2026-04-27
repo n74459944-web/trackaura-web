@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { resolveRetailer, RETAILERS, type RetailerKey } from '@/lib/retailers';
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Types
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export type CategoryProduct = {
   id: number;
@@ -49,23 +49,46 @@ export type CategoryViewModel = {
   stats: CategoryStats;
 };
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Helpers
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 const CANONICAL_LIMIT = 5_000;
 const PRODUCT_ROWS_LIMIT = 25_000;
 
+/**
+ * Words that should render as ALL CAPS even though the URL slug is lowercase.
+ * Add new acronyms here when verticals expand. The plural form (UPPER + 's')
+ * is handled by the prettifier so e.g. "gpus" -> "GPUs", "cpus" -> "CPUs".
+ */
+const ACRONYMS = new Set<string>([
+  'GPU', 'CPU', 'RAM', 'SSD', 'HDD', 'PSU', 'NAS', 'PC', 'TV',
+  'USB', 'HDMI', 'AIO', 'API', 'ARGB', 'RGB', 'ATX', 'NVME',
+  'OLED', 'IPS', 'VA', 'TN', 'LCD', 'LED', 'UPS', 'DAC', 'AMP',
+]);
+
 function prettifyCategorySlug(slug: string): string {
   return slug
     .split(/[-_]/)
-    .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : w))
+    .map((w) => {
+      if (!w) return w;
+      const upper = w.toUpperCase();
+      // Plural acronym: "gpus" -> "GPUs", "ssds" -> "SSDs"
+      if (upper.length > 1 && upper.endsWith('S')) {
+        const stem = upper.slice(0, -1);
+        if (ACRONYMS.has(stem)) return stem + 's';
+      }
+      // Direct acronym: "cpu" -> "CPU"
+      if (ACRONYMS.has(upper)) return upper;
+      // Default: title-case the word
+      return w[0].toUpperCase() + w.slice(1);
+    })
     .join(' ');
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Main query
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getCategoryViewModel(
   slug: string,
@@ -127,8 +150,7 @@ export async function getCategoryViewModel(
     const bestRetailerCfg = best ? resolveRetailer(best.retailer) : null;
     const bestPrice = best?.current_price != null ? Number(best.current_price) : null;
 
-    // ATL/ATH across all linked products' history (min_price / max_price
-    // already carry the full historical extremes per retailer).
+    // Historical extremes per linked retailer.
     const allPrices = linked
       .flatMap((p) => [
         p.min_price != null ? Number(p.min_price) : null,
@@ -139,6 +161,21 @@ export async function getCategoryViewModel(
 
     const allTimeLow = allPrices.length ? Math.min(...allPrices) : null;
     const allTimeHigh = allPrices.length ? Math.max(...allPrices) : null;
+
+    // ATL gate: a price is at-all-time-low only if there's a meaningful
+    // historical range AND current is materially below the high. Without
+    // the high-vs-current floor, every product where current === min === max
+    // (which is what scrapers often write on first-seen rows) gets the
+    // ATL badge.
+    let isAtl = false;
+    if (
+      bestPrice != null &&
+      allTimeLow != null &&
+      allTimeHigh != null &&
+      allTimeHigh > allTimeLow * 1.02 // at least 2% range
+    ) {
+      isAtl = bestPrice <= allTimeLow && bestPrice < allTimeHigh * 0.95;
+    }
 
     return {
       id: c.id,
@@ -156,8 +193,7 @@ export async function getCategoryViewModel(
       retailerCount: linked.length,
       inStock: inStock.length > 0,
       isOpenBox: best?.is_openbox ?? false,
-      isAtl:
-        bestPrice != null && allTimeLow != null && bestPrice <= allTimeLow,
+      isAtl,
     };
   });
 
@@ -185,37 +221,53 @@ export async function getCategoryViewModel(
     .map(([id, count]) => ({ id, name: RETAILERS[id].name, count }))
     .sort((a, b) => b.count - a.count);
 
-  // 6. Brand summaries. Filter out obvious noise and one-offs.
-  const brandMap = new Map<
-    string,
-    { count: number; prices: number[]; atLowest: number }
-  >();
+  // 6. Brand summaries — case-folded so MSI/Msi, Sapphire/SAPPHIRE collapse
+  //    into a single facet entry. Display name is the most common variant
+  //    so we preserve whatever the source data prefers.
+  type BrandBucket = {
+    variants: Map<string, number>;
+    count: number;
+    prices: number[];
+    atLowest: number;
+  };
+  const brandMap = new Map<string, BrandBucket>();
   for (const p of products) {
     if (!p.brand) continue;
-    const b =
-      brandMap.get(p.brand) ?? { count: 0, prices: [], atLowest: 0 };
-    b.count += 1;
-    if (p.bestPrice != null) b.prices.push(p.bestPrice);
-    if (p.isAtl && p.inStock) b.atLowest += 1;
-    brandMap.set(p.brand, b);
+    const key = p.brand.trim().toUpperCase();
+    if (!key) continue;
+    let bucket = brandMap.get(key);
+    if (!bucket) {
+      bucket = { variants: new Map(), count: 0, prices: [], atLowest: 0 };
+      brandMap.set(key, bucket);
+    }
+    bucket.variants.set(p.brand, (bucket.variants.get(p.brand) ?? 0) + 1);
+    bucket.count += 1;
+    if (p.bestPrice != null) bucket.prices.push(p.bestPrice);
+    if (p.isAtl && p.inStock) bucket.atLowest += 1;
   }
+
   const brands: BrandSummary[] = [...brandMap.entries()]
     .filter(
-      ([name, b]) =>
+      ([key, b]) =>
         b.count >= 2 &&
-        name.length >= 2 &&
-        !/^\d+$/.test(name) &&
-        name !== 'Unknown',
+        key.length >= 2 &&
+        !/^\d+$/.test(key) &&
+        key !== 'UNKNOWN',
     )
-    .map(([name, b]) => ({
-      name,
-      count: b.count,
-      avgPrice: b.prices.length
-        ? Math.round(b.prices.reduce((s, v) => s + v, 0) / b.prices.length)
-        : 0,
-      minPrice: b.prices.length ? Math.min(...b.prices) : 0,
-      atLowestCount: b.atLowest,
-    }))
+    .map(([, b]) => {
+      const displayName = [...b.variants.entries()].sort(
+        (a, c) => c[1] - a[1],
+      )[0][0];
+      return {
+        name: displayName,
+        count: b.count,
+        avgPrice: b.prices.length
+          ? Math.round(b.prices.reduce((s, v) => s + v, 0) / b.prices.length)
+          : 0,
+        minPrice: b.prices.length ? Math.min(...b.prices) : 0,
+        atLowestCount: b.atLowest,
+      };
+    })
     .sort((a, b) => b.count - a.count);
 
   return {

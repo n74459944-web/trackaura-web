@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { resolveRetailer, type RetailerKey } from '@/lib/retailers';
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Types
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export type HomeCategory = {
   key: string;
@@ -47,9 +47,9 @@ export type HomeStats = {
   categoriesTracked: number;
 };
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Utils
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 function prettify(slug: string): string {
   return slug
@@ -66,15 +66,42 @@ function formatRelative(iso: string): string {
   return `${Math.round(diff / d)}d ago`;
 }
 
-/* ──────────────────────────────────────────────────────────────
+/**
+ * Reject obvious junk product names that shouldn't surface on the homepage:
+ * - Template placeholders (Mustache-style {Variable Name})
+ * - Server / enterprise / refurb / accessory keywords
+ * - 1- or 2-word names ("WESTERN DIGITAL", "ASUS", brand-only tiles)
+ * - Names that are entirely uppercase (usually category-header leaks)
+ */
+const SKIP_KEYWORDS = [
+  'server', 'enterprise', 'hpe ', 'proliant', 'rack mount',
+  'ecc reg', 'registered', 'refurbished', 'open box',
+  'replacement', 'spare', 'oem', 'bulk pack',
+  'keycap', 'key cap', 'wrist rest', 'cable', 'adapter',
+  'dongle', 'converter', 'extension', 'splitter',
+];
+
+function isJunkName(name: string): boolean {
+  if (!name) return true;
+  // Mustache/Handlebars template leaks like "Lenovo {Product Condition Short}".
+  if (/[{}]/.test(name)) return true;
+  // Brand-only or near-empty tiles ("WESTERN DIGITAL", "LENOVO").
+  const wordCount = name.trim().split(/\s+/).length;
+  if (wordCount < 3) return true;
+  // Entirely-uppercase short names (header leak / bulk-CSV junk).
+  if (name === name.toUpperCase() && wordCount <= 4) return true;
+  const lower = name.toLowerCase();
+  if (SKIP_KEYWORDS.some((kw) => lower.includes(kw))) return true;
+  return false;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
    Home stats
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getHomeStats(): Promise<HomeStats> {
   const supabase = await createClient();
 
-  // All three in parallel. Each is a HEAD request (count only), so the
-  // cost is a row count, not fetching rows.
   const [canonicalCount, retailersData, categoriesData] = await Promise.all([
     supabase
       .from('canonical_products')
@@ -110,18 +137,15 @@ export async function getHomeStats(): Promise<HomeStats> {
   };
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Top categories
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getHomeCategories(
   limit: number = 12,
 ): Promise<HomeCategory[]> {
   const supabase = await createClient();
 
-  // Aggregation happens server-side via the home_top_categories RPC
-  // (defined in home_rpcs.sql). Avoids Supabase's default row cap on
-  // plain SELECTs and keeps the payload tiny.
   const { data, error } = await supabase.rpc('home_top_categories', {
     result_limit: limit,
   });
@@ -140,28 +164,17 @@ export async function getHomeCategories(
   }));
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Featured deals
-   ────────────────────────────────────────────────────────────── */
-
-const SKIP_KEYWORDS = [
-  'server', 'enterprise', 'hpe ', 'proliant', 'rack mount',
-  'ecc reg', 'registered', 'refurbished', 'open box',
-  'replacement', 'spare', 'oem', 'bulk pack',
-  'keycap', 'key cap', 'wrist rest', 'cable', 'adapter',
-  'dongle', 'converter', 'extension', 'splitter',
-];
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getFeaturedDeals(
   count: number = 6,
 ): Promise<HomeFeaturedProduct[]> {
   const supabase = await createClient();
 
-  // Aggregation + join + drop% ranking all happen server-side via the
-  // home_featured_deals RPC. Postgres returns 40 pre-ranked candidates;
-  // we filter skip keywords + do round-robin category selection in Node.
   const { data, error } = await supabase.rpc('home_featured_deals', {
-    candidate_limit: 40,
+    candidate_limit: 80, // oversample so junk filtering doesn't starve us
   });
 
   if (error) {
@@ -184,18 +197,21 @@ export async function getFeaturedDeals(
     drop_pct: number;
   };
 
-  
   console.log('[home] featured RPC returned', (data as unknown[]).length, 'rows');
   const scored: HomeFeaturedProduct[] = [];
   for (const row of data as RpcRow[]) {
-    const nameLower = row.name.toLowerCase();
-    if (SKIP_KEYWORDS.some((kw) => nameLower.includes(kw))) continue;
-    if (row.name.trim().split(/\s+/).length < 3) continue;
+    if (isJunkName(row.name)) continue;
 
     const curr = Number(row.current_price);
     const min = Number(row.min_price);
     const max = Number(row.max_price);
     const retailerCfg = resolveRetailer(row.retailer);
+
+    // ATL only when there's a meaningful range AND current is at/below the
+    // historical low. Without the high-vs-current check, scrapers that
+    // initialize min_price = current_price make every deal look like ATL.
+    const hasRealRange = max > 0 && min > 0 && max > min * 1.02;
+    const isAtl = hasRealRange && curr <= min && curr < max * 0.95;
 
     scored.push({
       id: row.canonical_id,
@@ -211,7 +227,7 @@ export async function getFeaturedDeals(
       dropPct: Number(row.drop_pct),
       bestRetailerId: retailerCfg.id !== 'unknown' ? retailerCfg.id : null,
       bestRetailerName: retailerCfg.id !== 'unknown' ? retailerCfg.name : null,
-      isAtl: curr <= min,
+      isAtl,
     });
   }
 
@@ -240,16 +256,14 @@ export async function getFeaturedDeals(
   return featured;
 }
 
-/* ──────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────────────────
    Recent price drops
-   ────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────────────── */
 
 export async function getRecentDrops(limit: number = 6): Promise<HomeRecentDrop[]> {
   const supabase = await createClient();
 
   // Pull the 500 newest price points with enough context to detect drops.
-  // We join to products (which carries retailer + url + name via its own
-  // canonical_id link) in two fetches to keep column footprint tiny.
   const { data: points } = await supabase
     .from('price_points')
     .select('product_id, price, timestamp')
@@ -266,7 +280,6 @@ export async function getRecentDrops(limit: number = 6): Promise<HomeRecentDrop[
     byProduct.set(p.product_id, arr);
   }
 
-  // Collect (product_id, drop) candidates.
   type Drop = {
     productId: number;
     oldPrice: number;
@@ -278,13 +291,11 @@ export async function getRecentDrops(limit: number = 6): Promise<HomeRecentDrop[
   const drops: Drop[] = [];
   for (const [productId, arr] of byProduct) {
     if (arr.length < 2) continue;
-    // arr is newest-first; current = arr[0], previous = arr[1]
     const curr = Number(arr[0].price);
     const prev = Number(arr[1].price);
     if (!(prev > 0 && curr < prev)) continue;
     const pct = ((prev - curr) / prev) * 100;
     const dollars = prev - curr;
-    // Filter out noise
     if (pct < 2 || dollars < 2) continue;
     drops.push({
       productId,
@@ -297,7 +308,8 @@ export async function getRecentDrops(limit: number = 6): Promise<HomeRecentDrop[
   }
 
   drops.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  const top = drops.slice(0, limit * 3); // oversample to survive join losses
+  // Oversample heavily — junk filtering can drop a lot of candidates.
+  const top = drops.slice(0, limit * 6);
 
   if (top.length === 0) return [];
 
@@ -331,6 +343,12 @@ export async function getRecentDrops(limit: number = 6): Promise<HomeRecentDrop[
       ? canonicalById.get(product.canonical_id)
       : null;
     if (!canonical) continue;
+
+    // Filter the same way featured deals do — drops were the leak path
+    // that put "WESTERN DIGITAL" and "Lenovo {Product Condition Short}"
+    // on the homepage.
+    if (isJunkName(canonical.name)) continue;
+    if (canonical.category === 'other') continue;
 
     const retailerCfg = resolveRetailer(product.retailer);
     if (retailerCfg.id === 'unknown') continue;
