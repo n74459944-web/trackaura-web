@@ -1,4 +1,8 @@
 import type { MetadataRoute } from 'next';
+import {
+  ALLOWED_SEARCH_ENGINES,
+  ALLOWED_AI_CITATION_BOTS,
+} from '@/lib/bot-policy';
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
 
@@ -17,11 +21,9 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
  *    know TrackAura exists. Disallowed from /p/ and /c/ — the
  *    catalog and category pages, which are the moat (per §1).
  *
- * Bad actors ignore robots.txt; defending against them is an
- * infrastructure concern (rate limiting, bot filtering at the
- * edge), not a robots.txt concern. So we don't enumerate "bad"
- * bots here — anyone unrecognized falls through to the default
- * restrictive policy.
+ * Bot user-agent lists live in src/lib/bot-policy.ts (shared with
+ * src/proxy.ts per ARCHITECTURE.md §13.16). Bad actors ignore
+ * robots.txt; defending against them is proxy.ts's job.
  *
  * Single source of truth — public/robots.txt is deleted; this file
  * generates /robots.txt at request time via Next.js App Router.
@@ -35,34 +37,11 @@ const INTERNAL_DISALLOW = ['/api/', '/_next/', '/admin/'];
 // They do NOT get the catalog or category pages.
 const CATALOG_DISALLOW = ['/p/', '/c/', '/category/', '/products', '/search'];
 
-// Search engines that drive SEO — keep them happy.
-const SEARCH_ENGINES = [
-  'Googlebot',
-  'Bingbot',
-  'Slurp',           // Yahoo
-  'DuckDuckBot',
-  'YandexBot',
-  'Baiduspider',
-];
-
-// AI citation crawlers — they drive measurable traffic via answers
-// citing TrackAura. Allowed for the same reason search engines are:
-// they bring users.
-const AI_CITATION_BOTS = [
-  'GPTBot',          // OpenAI training crawler
-  'ChatGPT-User',    // ChatGPT live browsing on user request
-  'OAI-SearchBot',   // OpenAI search index
-  'ClaudeBot',       // Anthropic training crawler
-  'Claude-Web',      // Anthropic live browsing
-  'anthropic-ai',    // Anthropic alternate UA
-  'PerplexityBot',   // Perplexity index
-  'Perplexity-User', // Perplexity live browsing
-  'Applebot',        // Apple Intelligence / Siri
-  'Google-Extended', // Google AI training (Gemini); separate from Googlebot
-];
-
 export default function robots(): MetadataRoute.Robots {
-  const allowedAudiences = [...SEARCH_ENGINES, ...AI_CITATION_BOTS];
+  const allowedAudiences = [
+    ...ALLOWED_SEARCH_ENGINES,
+    ...ALLOWED_AI_CITATION_BOTS,
+  ];
 
   return {
     rules: [
@@ -72,7 +51,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: INTERNAL_DISALLOW,
       })),
-
       // Default — restrict catalog access for everyone else.
       // They can see the homepage, about, blog, trends, etc.
       {

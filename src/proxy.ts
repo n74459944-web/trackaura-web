@@ -1,63 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isBlockedUserAgent } from "@/lib/bot-policy";
 
-// ========================================
-// Bot user-agent patterns — blocked at edge
-// These return 403 immediately without invoking any page function,
-// which is the cheapest possible way to reject a request on Vercel.
-// ========================================
-const BLOCKED_BOTS = [
-  // AI scrapers
-  "gptbot",
-  "chatgpt-user",
-  "oai-searchbot",
-  "claudebot",
-  "claude-web",
-  "anthropic-ai",
-  "perplexitybot",
-  "perplexity-user",
-  "ccbot",
-  "amazonbot",
-  "bytespider",
-  "google-extended",
-  "facebookbot",
-  "meta-externalagent",
-  "applebot-extended",
-  "cohere-ai",
-  "diffbot",
-  "imagesiftbot",
-  "omgili",
-  "omgilibot",
-  // SEO tool scrapers (aggressive, no value to us)
-  "ahrefsbot",
-  "semrushbot",
-  "mj12bot",
-  "dotbot",
-  "dataforseobot",
-  "blexbot",
-  "petalbot",
-  "seekportbot",
-  "zoominfobot",
-  "timpibot",
-  "velenpublicwebcrawler",
-  // Generic scrapers
-  "scrapy",
-  "python-requests",
-  "python-urllib",
-  "go-http-client",
-  "node-fetch",
-  "axios/",
-  "curl/",
-  "wget/",
-  "libwww-perl",
-  "java/",
-];
+// ============================================================================
+// Edge proxy — runs on every non-static request (see config.matcher below).
+//
+// Two responsibilities:
+//   1. Maintenance kill-switch (env var, no redeploy required).
+//   2. Bot blocking — returns 403 immediately, cheapest possible reject.
+//
+// Bot policy lives in src/lib/bot-policy.ts (single source of truth shared
+// with src/app/robots.ts per ARCHITECTURE.md §13.16). Do NOT add hardcoded
+// UA strings here — edit bot-policy.ts and both consumers update together.
+// ============================================================================
 
 export function proxy(request: NextRequest) {
-  // ========================================
-  // Kill switch — flip MAINTENANCE_MODE=1 in Vercel env vars
-  // to instantly serve a maintenance page without redeploying.
-  // Useful if costs spike again or a bug is discovered in production.
-  // ========================================
+  // ──────────────────────────────────────────────────────────────────────
+  // Kill switch — flip MAINTENANCE_MODE=1 in Vercel env vars to instantly
+  // serve a maintenance page without redeploying. Useful if costs spike
+  // or a bug is found in production.
+  // ──────────────────────────────────────────────────────────────────────
   if (process.env.MAINTENANCE_MODE === "1") {
     const pathname = request.nextUrl.pathname;
     // Allow static assets and the maintenance page itself through
@@ -81,12 +42,12 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  // ========================================
-  // Bot blocking — check user agent against blocklist
-  // ========================================
-  const userAgent = (request.headers.get("user-agent") || "").toLowerCase();
+  // ──────────────────────────────────────────────────────────────────────
+  // Bot blocking — check user agent against shared blocklist.
+  // ──────────────────────────────────────────────────────────────────────
+  const userAgent = request.headers.get("user-agent") || "";
 
-  // Empty user agent is almost always a bot or script
+  // Empty or near-empty UA is almost always a bot or script.
   if (!userAgent || userAgent.length < 10) {
     return new NextResponse("Forbidden", {
       status: 403,
@@ -94,26 +55,24 @@ export function proxy(request: NextRequest) {
     });
   }
 
-  for (const bot of BLOCKED_BOTS) {
-    if (userAgent.includes(bot)) {
-      return new NextResponse("Forbidden: automated access not permitted", {
-        status: 403,
-        headers: {
-          "Cache-Control": "public, max-age=86400",
-          "X-Robots-Tag": "noindex",
-        },
-      });
-    }
+  if (isBlockedUserAgent(userAgent)) {
+    return new NextResponse("Forbidden: automated access not permitted", {
+      status: 403,
+      headers: {
+        "Cache-Control": "public, max-age=86400",
+        "X-Robots-Tag": "noindex",
+      },
+    });
   }
 
   return NextResponse.next();
 }
 
-// ========================================
-// Matcher — run proxy on all routes except static assets
-// Static files don't need bot filtering (they're cached at the edge anyway)
-// and excluding them saves on proxy invocations.
-// ========================================
+// ============================================================================
+// Matcher — run proxy on all routes except static assets.
+// Static files don't need bot filtering (cached at the edge anyway) and
+// excluding them saves on proxy invocations.
+// ============================================================================
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2)$).*)",
