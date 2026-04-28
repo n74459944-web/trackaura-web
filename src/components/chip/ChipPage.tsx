@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import type { ChipViewModel } from '@/lib/queries/chip';
-import BoardTable from './BoardTable';
-
+import { BoardTable } from './BoardTable';
 type Props = { chip: ChipViewModel };
 
 const MONTH_ABBREV = [

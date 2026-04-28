@@ -1,4 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
+import {
+  BRAND_PREFIXES,
+  cleanChipSlug,
+} from '@/lib/chip-slug-helpers';
+
+// Re-export for server-side callers that have been importing from here.
+// Client components MUST import from chip-slug-helpers directly — this
+// module pulls in the Supabase server client (via next/headers) and will
+// break a client-bundled build if imported anywhere with 'use client'.
+export { cleanChipSlug };
 
 /* ────────────────────────────────────────────────────────────────────────
    Chip slug resolution
@@ -17,28 +27,16 @@ import { createClient } from '@/lib/supabase/server';
      3. If the requested slug already had a brand prefix and matched in
         step 1, flag for redirect to the clean form.
 
-   DB stays untouched. Brand-prefix list is closed under known consumer
-   GPU manufacturers; expand if Phase 0 picks up a new one.
+   The brand-prefix list lives in chip-slug-helpers.ts so client
+   components can use it without dragging server-only deps into their
+   bundle.
    ──────────────────────────────────────────────────────────────────────── */
-
-const BRAND_PREFIXES = [
-  'nvidia-geforce-',
-  'amd-radeon-',
-  'intel-arc-',
-] as const;
 
 export type ChipSlugResolution = {
   entityId: string | null;
   cleanSlug: string;
   needsRedirect: boolean;
 };
-
-function stripBrandPrefix(slug: string): string | null {
-  for (const prefix of BRAND_PREFIXES) {
-    if (slug.startsWith(prefix)) return slug.slice(prefix.length);
-  }
-  return null;
-}
 
 export async function resolveChipSlug(
   requestedSlug: string,
@@ -59,16 +57,11 @@ export async function resolveChipSlug(
   }
 
   if (exact) {
-    const cleaned = stripBrandPrefix(requestedSlug);
-    if (cleaned !== null) {
-      // Brand-prefix request hit a brand-prefix DB row → redirect to clean.
-      return { entityId: exact.id, cleanSlug: cleaned, needsRedirect: true };
-    }
-    // No brand prefix on the request → already at the canonical URL.
+    const cleaned = cleanChipSlug(requestedSlug);
     return {
       entityId: exact.id,
-      cleanSlug: requestedSlug,
-      needsRedirect: false,
+      cleanSlug: cleaned,
+      needsRedirect: cleaned !== requestedSlug,
     };
   }
 

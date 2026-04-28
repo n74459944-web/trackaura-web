@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Cpu, ArrowRight } from 'lucide-react';
 import type { ChipParentData } from '@/lib/queries/enrichment';
+import { cleanChipSlug } from '@/lib/chip-slug-helpers';
 
 /* ────────────────────────────────────────────────────────────────────────
    Theme — kept local so this component is self-contained. Mirrors the
@@ -52,6 +53,11 @@ export default function ChipParentSection({
   const hiddenSiblingCount =
     chip.totalBoardCount - 1 - linkableSiblings.length;
 
+  // Public chip-page URL. cleanChipSlug strips the brand prefix; same
+  // helper is used by the chip page's slug resolver, so this URL is
+  // always canonical (no extra 308 hop).
+  const chipPagePath = `/chip/${cleanChipSlug(chip.slug)}`;
+
   return (
     <section style={{ borderBottom: `1px solid ${C.border}` }}>
       <div className="mx-auto max-w-[1400px] px-4 py-6">
@@ -69,7 +75,24 @@ export default function ChipParentSection({
               className="mt-1 flex flex-wrap items-baseline gap-2 text-lg font-semibold"
               style={{ color: C.text, fontFamily: FONT_DISPLAY }}
             >
-              {chip.canonicalName}
+              {/*
+                Chip name links to /chip/[cleanSlug] — the catalog hub for
+                this chip with all boards, full price ranges, and JSON-LD
+                AggregateOffer for SEO. ArrowRight is dim by default and
+                brightens on group-hover. Color inheritance handles the
+                base state; Tailwind hover class overrides on hover.
+              */}
+              <Link
+                href={chipPagePath}
+                className="group inline-flex items-baseline gap-1.5 transition-colors hover:text-[var(--accent)]"
+                style={{ textDecoration: 'none' }}
+                title="View chip page"
+              >
+                <span>{chip.canonicalName}</span>
+                <ArrowRight
+                  className="h-3.5 w-3.5 self-center opacity-40 transition-opacity group-hover:opacity-100"
+                />
+              </Link>
               {chip.brand && (
                 <span
                   className="text-xs font-normal uppercase tracking-wider"
@@ -227,8 +250,20 @@ export default function ChipParentSection({
                 className="mt-2 text-[11px]"
                 style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
               >
-                +{hiddenSiblingCount} more board
-                {hiddenSiblingCount === 1 ? '' : 's'} tracked under this chip.
+                {/*
+                  "More boards" message converted from text to a link.
+                  Dim by default (inherits from parent <p>); brightens to
+                  accent on hover via Tailwind class.
+                */}
+                <Link
+                  href={chipPagePath}
+                  className="inline-flex items-center gap-1 transition-colors hover:text-[var(--accent)]"
+                  style={{ textDecoration: 'none' }}
+                >
+                  +{hiddenSiblingCount} more board
+                  {hiddenSiblingCount === 1 ? '' : 's'} tracked under this chip
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </p>
             )}
           </div>
