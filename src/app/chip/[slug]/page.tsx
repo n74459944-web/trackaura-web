@@ -45,6 +45,9 @@ const resolveChipPage = cache(
        SERP snapshot lags actual price by days/weeks; stale numbers in
        the SERP are a credibility hit.
      - "Price" capitalized — reads as a noun, not a query fragment.
+     - Title is set as `{ absolute }` to bypass the root layout's title
+       template (which would otherwise append " | TrackAura" giving us
+       a double brand suffix).
      - Description leads with `Compare X across N retailers — M active
        listings` (matches comparison-intent queries directly), then adds
        `price history` + `price drop alerts` (matches `canada computers
@@ -59,7 +62,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const { chip } = await resolveChipPage(slug);
-  if (!chip) return { title: 'Chip not found · TrackAura' };
+  if (!chip) return { title: { absolute: 'Chip not found · TrackAura' } };
 
   const { stats } = chip;
 
@@ -67,7 +70,7 @@ export async function generateMetadata({
   // Intel are all fine. Skip for outliers or null brands.
   const brandSuffix =
     chip.brand && chip.brand.length <= 8 ? ` · ${chip.brand} GPU` : '';
-  const title = `${chip.name} Price in Canada${brandSuffix} · TrackAura`;
+  const titleStr = `${chip.name} Price in Canada${brandSuffix} · TrackAura`;
 
   let description: string;
   if (stats.retailerCount >= 2 && stats.activeListingCount > 0) {
@@ -79,7 +82,7 @@ export async function generateMetadata({
   }
 
   return {
-    title,
+    title: { absolute: titleStr },
     description,
     alternates: { canonical: `${SITE}/chip/${chip.cleanSlug}` },
     openGraph: {
