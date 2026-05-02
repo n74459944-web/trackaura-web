@@ -11,7 +11,7 @@ type Params = { slug: string };
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
 
-/* ────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    Slug resolution
 
    Background: 80.5% of canonical_products rows have a duplicated brand
@@ -35,7 +35,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
         canonical URLs, JSON-LD, and internal links emit the clean URL.
 
    DB stays untouched. Slug rebuild (per §12 TBD) is deferred.
-   ──────────────────────────────────────────────────────────────────────── */
+   ───────────────────────────────────────────────────────────────────────── */
 
 /**
  * Strip a duplicated first-segment prefix (e.g. `asus-asus-rog-x` → `asus-rog-x`).
@@ -97,7 +97,28 @@ async function resolveProduct(requestedSlug: string): Promise<Resolution> {
   return { product: null, needsRedirect: false, canonicalSlug: null };
 }
 
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+   Metadata (SEO)
+
+   Targets identified from GSC top queries (2026-05-02 baseline, 0.6% CTR
+   against 38.8K impressions over 3 months):
+     - `canada computers price history`
+     - `electronics price tracker`
+     - `newegg vs canada computers`
+     - `intel b70 canada`, `armoury a08` (specific-product, lower volume)
+
+   Decisions:
+     - Title leads with product name (matches specific-product searches)
+     - "Price in Canada" hook second (matches Canadian-intent searches)
+     - No "· TrackAura" suffix — product names are already long, brand is
+       in URL/OG/JSON-LD, no need to spend chars
+     - No dynamic price in title — Google's SERP snapshot lags actual price
+       by days/weeks; stale numbers in the SERP are a credibility hit
+     - Description leads with `Compare X at {retailer1} and {retailer2}`
+       (matches comparison-intent queries directly)
+     - Description includes `price history` + `price drop alerts` language
+       (matches `canada computers price history` and intent-to-track queries)
+   ───────────────────────────────────────────────────────────────────────── */
 
 export async function generateMetadata({
   params,
@@ -108,19 +129,35 @@ export async function generateMetadata({
   const { product } = await resolveProduct(slug);
   if (!product) return { title: 'Product not found · TrackAura' };
 
-  const priceLabel = product.stats.current
-    ? ` — $${Math.round(product.stats.current).toLocaleString('en-CA')} CAD`
-    : '';
+  const title = `${product.title} — Price in Canada`;
+
+  // Build description from retailer count + names. Falls back gracefully
+  // when retailer data is sparse.
+  const activeRetailers = product.retailers.filter((r) => r.price != null);
+  const retailerCount = activeRetailers.length;
+
+  let description: string;
+  if (retailerCount >= 2) {
+    const [first, second, ...rest] = activeRetailers.map((r) => r.name);
+    const retailerList =
+      rest.length > 0
+        ? `${first}, ${second}, and ${rest.length} more`
+        : `${first} and ${second}`;
+    description = `Compare ${product.title} prices at ${retailerList}. Canadian price history, stock status, and price drop alerts. Updated every few hours.`;
+  } else if (retailerCount === 1) {
+    description = `Track ${product.title} at ${activeRetailers[0].name} in Canada. Price history, stock status, and price drop alerts. Updated every few hours.`;
+  } else {
+    description = `Canadian price history for ${product.title}. Get notified when it returns to stock at major Canadian retailers including Canada Computers, Newegg Canada, Vuugo, and Visions.`;
+  }
 
   return {
-    title: `${product.title}${priceLabel} · TrackAura`,
-    description:
-      product.blurb ??
-      `Live Canadian price tracking for the ${product.title}. Compare prices across Canadian retailers and see price history.`,
+    title,
+    description,
     alternates: { canonical: `${SITE}/p/${product.slug}` },
     openGraph: product.imageUrl
       ? {
-          title: `${product.title}${priceLabel}`,
+          title,
+          description,
           images: [product.imageUrl],
           type: 'website',
           url: `${SITE}/p/${product.slug}`,
@@ -129,14 +166,14 @@ export async function generateMetadata({
   };
 }
 
-/* ────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    JSON-LD builders
 
    Google reads these as structured data and uses them to render rich
    product snippets in search results (price, availability, brand,
    breadcrumbs). See:
    https://developers.google.com/search/docs/appearance/structured-data/product
-   ──────────────────────────────────────────────────────────────────────── */
+   ───────────────────────────────────────────────────────────────────────── */
 
 function buildProductJsonLd(product: ProductViewModel) {
   const url = `${SITE}/p/${product.slug}`;
@@ -217,7 +254,7 @@ function buildBreadcrumbJsonLd(product: ProductViewModel) {
   };
 }
 
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────────────────── */
 
 export default async function Page({
   params,
