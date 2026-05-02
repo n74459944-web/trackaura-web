@@ -30,11 +30,6 @@ const nextConfig: NextConfig = {
         destination: "/c/:slug",
         permanent: true,
       },
-      {
-        source: "/product/:slug",
-        destination: "/p/:slug",
-        permanent: true,
-      },
 
       // Old /products?category=X → new /c/X (updated from /category/X)
       ...[
