@@ -34,24 +34,7 @@ export const metadata: Metadata = {
     template: "%s | TrackAura",
   },
   description:
-    "Track price history for GPUs, CPUs, RAM, monitors, laptops, and more across Canadian retailers. Compare prices at Canada Computers, Newegg Canada, and Amazon.ca. Never overpay.",
-  keywords: [
-    "Canadian electronics price tracker",
-    "Canada Computers prices",
-    "Newegg Canada prices",
-    "GPU price history Canada",
-    "CPU price history Canada",
-    "RAM prices Canada",
-    "monitor prices Canada",
-    "laptop deals Canada",
-    "SSD price history Canada",
-    "price comparison Canada",
-    "electronics deals Canada",
-    "price drop alert Canada",
-    "best electronics prices Canada",
-    "motherboard prices Canada",
-    "power supply prices Canada",
-  ],
+    "Track price history for GPUs, CPUs, RAM, monitors, laptops, and more across Canadian retailers. Never overpay.",
   openGraph: {
     title: "TrackAura — Canadian Electronics Price Tracker",
     description:
