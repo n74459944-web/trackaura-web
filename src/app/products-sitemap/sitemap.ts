@@ -2,10 +2,6 @@ import type { MetadataRoute } from 'next';
 import { createAnonSupabaseClient } from '@/lib/supabase/anon';
 
 const URLS_PER_CHUNK = 40_000;
-
-// PostgREST's default `max-rows` is 1000. A single supabase-js
-// `.range(0, 39999)` request is silently capped at 1000 rows. We
-// paginate explicitly within each chunk to fetch everything.
 const SUPABASE_PAGE_SIZE = 1_000;
 
 type ProductRow = {
@@ -13,34 +9,10 @@ type ProductRow = {
   updated_at: string | null;
 };
 
-/**
- * Generates one sitemap file per chunk of ~40k products.
- * Accessed at /products-sitemap/sitemap/0.xml, /products-sitemap/sitemap/1.xml, etc.
- *
- * Forced to run at request time (not build time) so we can see logs
- * and so a transient backend issue at build time doesn't bake an empty
- * sitemap into the deployment for 24 hours.
- */
 export async function generateSitemaps() {
-  const reqId = Math.random().toString(36).slice(2, 8);
-  console.log(`[sitemap:${reqId}] generateSitemaps START`);
-
-  const supabase = createAnonSupabaseClient();
-  const { count, error } = await supabase
-    .from('canonical_products')
-    .select('id', { count: 'exact', head: true })
-    .not('image_url', 'is', null);
-
-  if (error) {
-    console.error(`[sitemap:${reqId}] generateSitemaps count error:`, JSON.stringify(error));
-  }
-  console.log(`[sitemap:${reqId}] generateSitemaps count=${count}`);
-
-  const productCount = count ?? 0;
-  const chunkCount = Math.max(1, Math.ceil(productCount / URLS_PER_CHUNK));
-  const result = Array.from({ length: chunkCount }, (_, i) => ({ id: i }));
-  console.log(`[sitemap:${reqId}] generateSitemaps returning ${chunkCount} chunks`);
-  return result;
+  // Always return one chunk so the request hits the sitemap function.
+  // We diagnose inside sitemap() and return the diagnostic in the URL list.
+  return [{ id: 0 }];
 }
 
 export default async function sitemap({
@@ -48,64 +20,68 @@ export default async function sitemap({
 }: {
   id: number;
 }): Promise<MetadataRoute.Sitemap> {
-  const reqId = Math.random().toString(36).slice(2, 8);
-  console.log(`[sitemap:${reqId}] sitemap chunk=${id} START`);
-
-  const supabase = createAnonSupabaseClient();
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
-  const chunkStart = id * URLS_PER_CHUNK;
-  const chunkEnd = chunkStart + URLS_PER_CHUNK - 1;
+  const diagnostics: string[] = [];
 
-  // Paginate within the chunk to bypass PostgREST's max-rows cap.
-  const allRows: ProductRow[] = [];
-  let pageStart = chunkStart;
-  let pageNum = 0;
+  // Diagnostic 1: env var presence at request time
+  const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  diagnostics.push(`env-url-present-${hasUrl}-key-present-${hasKey}`);
 
-  while (pageStart <= chunkEnd) {
-    const pageEnd = Math.min(pageStart + SUPABASE_PAGE_SIZE - 1, chunkEnd);
-    console.log(`[sitemap:${reqId}] page ${pageNum} fetching range ${pageStart}-${pageEnd}`);
-
-    const { data: rows, error } = await supabase
-      .from('canonical_products')
-      .select('slug, updated_at')
-      .not('image_url', 'is', null)
-      .order('id', { ascending: true })
-      .range(pageStart, pageEnd);
-
-    if (error) {
-      console.error(`[sitemap:${reqId}] page ${pageNum} error:`, JSON.stringify(error));
-      break;
-    }
-
-    if (!rows || rows.length === 0) {
-      console.log(`[sitemap:${reqId}] page ${pageNum} empty, stopping`);
-      break;
-    }
-
-    allRows.push(...rows);
-    console.log(`[sitemap:${reqId}] page ${pageNum} got ${rows.length} rows (total: ${allRows.length})`);
-
-    if (rows.length < pageEnd - pageStart + 1) {
-      console.log(`[sitemap:${reqId}] short read, stopping`);
-      break;
-    }
-
-    pageStart += SUPABASE_PAGE_SIZE;
-    pageNum += 1;
+  if (!hasUrl || !hasKey) {
+    return diagnostics.map((d, i) => ({
+      url: `${base}/__diag__/${i}/${encodeURIComponent(d)}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.1,
+    }));
   }
 
-  console.log(`[sitemap:${reqId}] sitemap chunk=${id} DONE total=${allRows.length}`);
+  let supabase;
+  try {
+    supabase = createAnonSupabaseClient();
+    diagnostics.push('client-created-ok');
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    diagnostics.push(`client-error-${encodeURIComponent(msg).slice(0, 100)}`);
+    return diagnostics.map((d, i) => ({
+      url: `${base}/__diag__/${i}/${d}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.1,
+    }));
+  }
 
-  return allRows.map((r) => ({
-    url: `${base}/p/${r.slug}`,
-    lastModified: r.updated_at ? new Date(r.updated_at) : new Date(),
+  // Diagnostic 2: count query
+  const { count, error: countError, status: countStatus } = await supabase
+    .from('canonical_products')
+    .select('id', { count: 'exact', head: true })
+    .not('image_url', 'is', null);
+
+  diagnostics.push(`count-${count}-status-${countStatus}-error-${countError ? encodeURIComponent(JSON.stringify(countError)).slice(0, 100) : 'none'}`);
+
+  // Diagnostic 3: data query (first page only)
+  const { data: rows, error: dataError, status: dataStatus } = await supabase
+    .from('canonical_products')
+    .select('slug, updated_at')
+    .not('image_url', 'is', null)
+    .order('id', { ascending: true })
+    .range(0, SUPABASE_PAGE_SIZE - 1);
+
+  diagnostics.push(`rows-${rows?.length ?? 'null'}-status-${dataStatus}-error-${dataError ? encodeURIComponent(JSON.stringify(dataError)).slice(0, 100) : 'none'}`);
+
+  // If we got actual data, also include the first slug so we can verify it's real
+  if (rows && rows.length > 0) {
+    diagnostics.push(`first-slug-${rows[0].slug.slice(0, 60)}`);
+  }
+
+  return diagnostics.map((d, i) => ({
+    url: `${base}/__diag__/${i}/${d}`,
+    lastModified: new Date(),
     changeFrequency: 'daily' as const,
-    priority: 0.7,
+    priority: 0.1,
   }));
 }
 
-// Force every request to execute the route fresh. We've been chasing a
-// build-cache ghost; this kills the ambiguity. CDN/edge caching still
-// applies via Cache-Control headers Next.js sets at the response layer.
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
