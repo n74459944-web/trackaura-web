@@ -78,8 +78,21 @@ export default function PriceAlertModal({
       retailer,
     });
 
-    if (result.ok) setStatus('success');
-    else {
+    if (result.ok) {
+      setStatus('success');
+      // GA4: matches event name fired by legacy PriceAlert.tsx so both
+      // surfaces report under one event. Marked as key event in GA4 admin.
+      if (typeof window !== 'undefined' && (window as { gtag?: (...args: unknown[]) => void }).gtag) {
+        (window as { gtag: (...args: unknown[]) => void }).gtag('event', 'price_alert_set', {
+          event_category: 'engagement',
+          event_label: productName,
+          value: targetPrice,
+          currency: 'CAD',
+          retailer: retailer ?? 'unknown',
+          product_slug: productSlug,
+        });
+      }
+    } else {
       setStatus('error');
       setErrorMsg(result.error);
     }
