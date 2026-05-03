@@ -58,3 +58,7 @@ public/data/changes.json
 # Python cache and logs
 scripts/__pycache__/
 *.log
+
+# Local audit artifacts
+audit-*.ps1
+async-params-audit-*.txt
