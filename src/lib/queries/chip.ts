@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import {
-  resolveRetailer,
-  type RetailerKey,
-} from '@/lib/retailers';
+import { cleanChipSlug } from '@/lib/chip-slug';
+import { resolveRetailer, type RetailerKey } from '@/lib/retailers';
 
 /* ──────────────────────────────────────────────────────────────
    Types
@@ -70,15 +68,6 @@ export type ChipViewModel = {
 // non-null price. 7d gives one full daily-scrape margin.
 const FRESHNESS_DAYS = 7;
 const OBSERVATION_LIMIT = 10_000;
-
-const BRAND_PREFIXES = ['nvidia-geforce-', 'amd-radeon-', 'intel-arc-'];
-
-function cleanChipSlug(dbSlug: string): string {
-  for (const prefix of BRAND_PREFIXES) {
-    if (dbSlug.startsWith(prefix)) return dbSlug.slice(prefix.length);
-  }
-  return dbSlug;
-}
 
 /* ──────────────────────────────────────────────────────────────
    Main query

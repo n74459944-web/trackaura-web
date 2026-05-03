@@ -22,14 +22,11 @@ import {
   Check,
   X,
   ArrowRight,
-  Share2,
-  Star,
   Activity,
 } from 'lucide-react';
 import type {
   ProductViewModel,
   RetailerSnapshot,
-  ActivityEntry,
 } from '@/lib/queries/product';
 import type { ChipParentData } from '@/lib/queries/enrichment';
 import type { RetailerKey, RetailerConfig } from '@/lib/retailers';
@@ -37,7 +34,7 @@ import PriceAlertModal from '@/components/product/PriceAlertModal';
 import ChipParentSection from '@/components/product/ChipParentSection';
 
 /* ────────────────────────────────────────────────────────────────────────
-   Theme helpers
+   Theme
    ──────────────────────────────────────────────────────────────────────── */
 
 const C = {
@@ -68,6 +65,13 @@ const fmtDate = (iso: string) =>
     day: 'numeric',
   });
 
+const fmtFullDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-CA', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
 const fmtChecked = (iso: string | null): string => {
   if (!iso) return '—';
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -77,6 +81,18 @@ const fmtChecked = (iso: string | null): string => {
   if (diff < 24 * hr) return `${Math.round(diff / hr)}h ago`;
   return `${Math.round(diff / (24 * hr))}d ago`;
 };
+
+/* ────────────────────────────────────────────────────────────────────────
+   Helpers
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Most recent retailer-side `last_updated` across all listings. */
+function lastVerifiedAt(retailers: RetailerSnapshot[]): string | null {
+  const ts = retailers
+    .map((r) => (r.lastUpdated ? new Date(r.lastUpdated).getTime() : 0))
+    .reduce((a, b) => Math.max(a, b), 0);
+  return ts ? new Date(ts).toISOString() : null;
+}
 
 /* ────────────────────────────────────────────────────────────────────────
    Small components
@@ -311,7 +327,7 @@ function StickyPriceBar({
             {bestRetailer && (
               <>
                 <span style={{ color: C.border }}>·</span>
-                <span>Best at {bestRetailer.name}</span>
+                <span>{bestRetailer.name}</span>
               </>
             )}
           </div>
@@ -334,6 +350,20 @@ function StickyPriceBar({
   );
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   Hero — identity-first.
+
+   Catalog framing changes vs the previous draft:
+   - H1 is now the visual headline (text-3xl → md:text-5xl), price demoted
+     from text-4xl to text-3xl/md:text-4xl
+   - "Best Canadian Price" eyebrow → "Lowest listed" (fact, not verdict)
+   - "All-time Low" badge removed — catalog doesn't pass deal verdicts
+   - Stat grid replaced: was (MSRP, vs ATL, vs Median, ATH) — half were
+     verdict tiles. Now (MSRP, Observed range, Retailers, Last verified) —
+     all factual catalog signals
+   - Watch / Share buttons removed — Amazon-feature noise
+   - Set Price Alert is the only CTA
+   ──────────────────────────────────────────────────────────────────────── */
 function Hero({
   product,
   heroRef,
@@ -351,11 +381,11 @@ function Hero({
   const delta = prev != null && best ? best - prev : 0;
   const pct = prev ? (delta / prev) * 100 : 0;
 
-  const vsAtl = best && product.stats.atl ? best - product.stats.atl : null;
-  const vsMedian =
-    best && product.stats.median
-      ? ((best - product.stats.median) / product.stats.median) * 100
-      : null;
+  const rangeLabel =
+    product.stats.atl > 0 && product.stats.ath > 0
+      ? `${fmtPrice(product.stats.atl)}–${fmtPrice(product.stats.ath)}`
+      : '—';
+  const lastVerified = lastVerifiedAt(product.retailers);
 
   return (
     <section
@@ -394,7 +424,7 @@ function Hero({
               )}
             </div>
             <h1
-              className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl"
+              className="mt-1 text-3xl font-semibold tracking-tight md:text-5xl"
               style={{ color: C.text, fontFamily: FONT_DISPLAY }}
             >
               {product.title}
@@ -409,67 +439,54 @@ function Hero({
             )}
           </div>
 
-          {/* Price block */}
+          {/* Price card */}
           <div className="card p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div
-                  className="flex items-center gap-2 text-[10px] uppercase tracking-wider"
-                  style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
-                >
-                  <Activity className="h-3 w-3" />
-                  Best Canadian Price
-                </div>
-                <div className="mt-1 flex flex-wrap items-baseline gap-3">
-                  <span
-                    className="text-4xl font-semibold tabular-nums"
-                    style={{ color: C.accent, fontFamily: FONT_DISPLAY }}
-                  >
-                    {best ? fmtPrice(best) : '—'}
-                  </span>
-                  <span className="text-xs" style={{ color: C.textDim }}>
-                    CAD
-                  </span>
-                  {prev != null && <DeltaPill delta={delta} pct={pct} />}
-                </div>
-                {bestRetailer ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                    <RetailerBadge retailer={bestRetailer} size={16} />
-                    <span style={{ color: C.text }}>{bestRetailer.name}</span>
-                    <span style={{ color: C.border }}>·</span>
-                    <span
-                      className="inline-flex items-center gap-1"
-                      style={{ color: C.accent }}
-                    >
-                      <Check className="h-3 w-3" /> In stock
-                    </span>
-                    <span style={{ color: C.border }}>·</span>
-                    <span style={{ color: C.textDim }}>
-                      Checked {fmtChecked(bestRetailer.lastUpdated)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="mt-2 text-xs" style={{ color: C.textDim }}>
-                    Not currently in stock at any tracked retailer.
-                  </div>
-                )}
+            <div>
+              <div
+                className="flex items-center gap-2 text-[10px] uppercase tracking-wider"
+                style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
+              >
+                <Activity className="h-3 w-3" />
+                Lowest listed
               </div>
-              {product.stats.isAtl && best && (
+              <div className="mt-1 flex flex-wrap items-baseline gap-3">
                 <span
-                  className="shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold uppercase"
-                  style={{
-                    background: 'rgba(0, 229, 160, 0.1)',
-                    border: '1px solid rgba(0, 229, 160, 0.3)',
-                    color: C.accent,
-                    fontFamily: FONT_DISPLAY,
-                  }}
+                  className="text-3xl font-semibold tabular-nums md:text-4xl"
+                  style={{ color: C.accent, fontFamily: FONT_DISPLAY }}
                 >
-                  All-time Low
+                  {best ? fmtPrice(best) : '—'}
                 </span>
+                <span className="text-xs" style={{ color: C.textDim }}>
+                  CAD
+                </span>
+                {prev != null && <DeltaPill delta={delta} pct={pct} />}
+              </div>
+              {bestRetailer ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <RetailerBadge retailer={bestRetailer} size={16} />
+                  <span style={{ color: C.text }}>{bestRetailer.name}</span>
+                  <span style={{ color: C.border }}>·</span>
+                  <span
+                    className="inline-flex items-center gap-1"
+                    style={{ color: C.accent }}
+                  >
+                    <Check className="h-3 w-3" /> In stock
+                  </span>
+                  <span style={{ color: C.border }}>·</span>
+                  <span style={{ color: C.textDim }}>
+                    Checked {fmtChecked(bestRetailer.lastUpdated)}
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-2 text-xs" style={{ color: C.textDim }}>
+                  Not currently in stock at any tracked retailer.
+                </div>
               )}
             </div>
 
-            {/* Stat row */}
+            {/* Catalog-facts tiles. Replaces vs-ATL / vs-Median verdict
+                tiles with neutral observations. All four use existing
+                ViewModel data — no query changes. */}
             <div
               className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-md md:grid-cols-4"
               style={{ background: C.border }}
@@ -478,31 +495,19 @@ function Hero({
                 label="MSRP"
                 value={product.msrp ? fmtPrice(product.msrp) : '—'}
               />
+              <Stat label="Observed range" value={rangeLabel} />
               <Stat
-                label="vs. ATL"
-                value={
-                  vsAtl == null ? '—' : vsAtl <= 0 ? 'ATL' : `+${fmtPrice(vsAtl)}`
-                }
-                tone={vsAtl != null && vsAtl <= 0 ? 'good' : 'neutral'}
+                label="Retailers"
+                value={String(product.retailers.length)}
               />
               <Stat
-                label="vs. Median"
-                value={
-                  vsMedian == null
-                    ? '—'
-                    : `${vsMedian > 0 ? '+' : ''}${vsMedian.toFixed(1)}%`
-                }
-                tone={
-                  vsMedian == null ? 'neutral' : vsMedian < 0 ? 'good' : 'bad'
-                }
-              />
-              <Stat
-                label="All-time High"
-                value={product.stats.ath ? fmtPrice(product.stats.ath) : '—'}
+                label="Last verified"
+                value={fmtChecked(lastVerified)}
               />
             </div>
 
-            {/* CTAs */}
+            {/* CTAs — alert is the one durable user action on a catalog
+                page. Watch / Share were Amazon-feature noise; cut. */}
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={onOpenAlert}
@@ -511,16 +516,11 @@ function Hero({
                 <Bell className="h-4 w-4" />
                 Set Price Alert
               </button>
-              <button className="btn-secondary flex items-center gap-2">
-                <Star className="h-4 w-4" /> Watch
-              </button>
-              <button className="btn-secondary flex items-center gap-2">
-                <Share2 className="h-4 w-4" /> Share
-              </button>
             </div>
           </div>
 
-          {/* Retailer quick links */}
+          {/* Retailer quick links — fast-scan zone in the hero.
+              Full table is below in ComparisonTable. */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {product.retailers.map((r) => (
               <a
@@ -575,7 +575,81 @@ function Hero({
   );
 }
 
-/* Price history chart */
+/* ────────────────────────────────────────────────────────────────────────
+   Specs — flat, all groups visible.
+
+   Catalog data IS identity. The previous accordion (closed-by-default
+   for groups beyond the first two) hid the very thing the page exists
+   to convey. Two-column dense layout, all rows visible, no toggling.
+   ──────────────────────────────────────────────────────────────────────── */
+function Specs({ product }: { product: ProductViewModel }) {
+  if (product.specs.length === 0) return null;
+
+  return (
+    <section style={{ borderBottom: `1px solid ${C.border}` }}>
+      <div className="mx-auto max-w-[1400px] px-4 py-6">
+        <div className="mb-4">
+          <div
+            className="text-[10px] uppercase tracking-wider"
+            style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
+          >
+            Specifications
+          </div>
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: C.text, fontFamily: FONT_DISPLAY }}
+          >
+            Technical details
+          </h2>
+        </div>
+        <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+          {product.specs.map((g) => (
+            <div key={g.group}>
+              <h3
+                className="mb-2 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: C.text, fontFamily: FONT_DISPLAY }}
+              >
+                {g.group}
+              </h3>
+              <dl
+                className="overflow-hidden rounded-md"
+                style={{
+                  border: `1px solid ${C.border}`,
+                  background: C.bgCard,
+                }}
+              >
+                {g.items.map(([k, v], idx) => (
+                  <div
+                    key={k}
+                    className="flex items-baseline justify-between gap-4 px-3 py-1.5 text-xs"
+                    style={{
+                      borderTop: idx > 0 ? `1px solid ${C.border}` : 'none',
+                    }}
+                  >
+                    <dt style={{ color: C.textDim }}>{k}</dt>
+                    <dd
+                      className="text-right tabular-nums"
+                      style={{
+                        color: C.text,
+                        fontFamily: FONT_DISPLAY,
+                      }}
+                    >
+                      {v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Price history chart — UNCHANGED structurally.
+   ──────────────────────────────────────────────────────────────────────── */
 function PriceChart({ product }: { product: ProductViewModel }) {
   const [range, setRange] = useState<30 | 90 | 365>(90);
   const [focus, setFocus] = useState<'all' | RetailerKey>('all');
@@ -880,7 +954,11 @@ function ChartTooltip({
   );
 }
 
-/* Price comparison table */
+/* ────────────────────────────────────────────────────────────────────────
+   Comparison table — heading reframed; structure unchanged.
+   "Live price comparison" was deals-y. "Retailer prices" is the
+   neutral catalog statement of the same thing.
+   ──────────────────────────────────────────────────────────────────────── */
 function ComparisonTable({ product }: { product: ProductViewModel }) {
   type SortKey = 'price' | 'change' | 'retailer' | 'checked';
   const [sortKey, setSortKey] = useState<SortKey>('price');
@@ -959,13 +1037,13 @@ function ComparisonTable({ product }: { product: ProductViewModel }) {
               className="text-[10px] uppercase tracking-wider"
               style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
             >
-              Retailer Prices
+              Listings
             </div>
             <h2
               className="text-lg font-semibold"
               style={{ color: C.text, fontFamily: FONT_DISPLAY }}
             >
-              Live price comparison
+              Retailer prices
             </h2>
           </div>
           <span
@@ -1052,7 +1130,7 @@ function ComparisonTable({ product }: { product: ProductViewModel }) {
                               fontFamily: FONT_DISPLAY,
                             }}
                           >
-                            Best
+                            Lowest
                           </span>
                         )}
                       </div>
@@ -1141,103 +1219,19 @@ function ComparisonTable({ product }: { product: ProductViewModel }) {
   );
 }
 
-/* Specs accordion */
-function Specs({ product }: { product: ProductViewModel }) {
-  const [open, setOpen] = useState<Record<string, boolean>>(() => {
-    const o: Record<string, boolean> = {};
-    product.specs.forEach((g, i) => (o[g.group] = i < 2));
-    return o;
-  });
+/* ────────────────────────────────────────────────────────────────────────
+   Provenance footer — NEW.
 
-  if (product.specs.length === 0) return null;
-
-  return (
-    <section style={{ borderBottom: `1px solid ${C.border}` }}>
-      <div className="mx-auto max-w-[1400px] px-4 py-6">
-        <div className="mb-3">
-          <div
-            className="text-[10px] uppercase tracking-wider"
-            style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
-          >
-            Specifications
-          </div>
-          <h2
-            className="text-lg font-semibold"
-            style={{ color: C.text, fontFamily: FONT_DISPLAY }}
-          >
-            Technical details
-          </h2>
-        </div>
-        <div className="grid gap-2 md:grid-cols-2">
-          {product.specs.map((g) => {
-            const isOpen = open[g.group];
-            return (
-              <div
-                key={g.group}
-                className="overflow-hidden rounded-lg"
-                style={{
-                  border: `1px solid ${C.border}`,
-                  background: C.bgCard,
-                }}
-              >
-                <button
-                  onClick={() => setOpen({ ...open, [g.group]: !isOpen })}
-                  className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/[0.02]"
-                >
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: C.text, fontFamily: FONT_DISPLAY }}
-                  >
-                    {g.group}
-                  </span>
-                  <ChevronDown
-                    className="h-4 w-4 transition"
-                    style={{
-                      color: C.textDim,
-                      transform: isOpen ? 'rotate(180deg)' : 'none',
-                    }}
-                  />
-                </button>
-                {isOpen && (
-                  <div style={{ borderTop: `1px solid ${C.border}` }}>
-                    <dl>
-                      {g.items.map(([k, v], idx) => (
-                        <div
-                          key={k}
-                          className="flex items-center justify-between gap-4 px-4 py-2 text-xs"
-                          style={{
-                            borderTop: idx > 0 ? `1px solid ${C.border}` : 'none',
-                          }}
-                        >
-                          <dt style={{ color: C.textDim }}>{k}</dt>
-                          <dd
-                            className="truncate tabular-nums"
-                            style={{
-                              color: C.text,
-                              fontFamily: FONT_DISPLAY,
-                            }}
-                          >
-                            {v}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* Activity feed */
-function ActivityFeed({ product }: { product: ProductViewModel }) {
-  if (product.activity.length === 0) return null;
-
-  const retailerById = new Map(product.retailers.map((r) => [r.id, r]));
+   Catalog-trust signals derived entirely from existing ViewModel data.
+   No query changes; richer provenance (entity_source_mappings, true
+   first-seen pre-365d window, raw observation count) lands in the
+   ViewModel pass that follows.
+   ──────────────────────────────────────────────────────────────────────── */
+function ProvenanceFooter({ product }: { product: ProductViewModel }) {
+  const lastVerified = lastVerifiedAt(product.retailers);
+  const firstObs = product.priceHistory[0]?.date ?? null;
+  const obsDays = product.priceHistory.length;
+  const sources = product.retailers.map((r) => r.name);
 
   return (
     <section style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -1247,119 +1241,114 @@ function ActivityFeed({ product }: { product: ProductViewModel }) {
             className="text-[10px] uppercase tracking-wider"
             style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
           >
-            Price Activity
+            Catalog Provenance
           </div>
           <h2
             className="text-lg font-semibold"
             style={{ color: C.text, fontFamily: FONT_DISPLAY }}
           >
-            Recent changes across retailers
+            Where this data comes from
           </h2>
         </div>
-        <div
-          className="overflow-hidden rounded-lg"
-          style={{
-            background: C.bgCard,
-            border: `1px solid ${C.border}`,
-          }}
+        <dl
+          className="grid gap-px overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-4"
+          style={{ background: C.border }}
         >
-          <ol className="text-xs">
-            {product.activity.map((a, i) => (
-              <ActivityRow
-                key={i}
-                entry={a}
-                retailer={retailerById.get(a.retailerId) ?? null}
-                first={i === 0}
-              />
-            ))}
-          </ol>
-        </div>
+          <ProvItem
+            label="Tracked retailers"
+            value={String(sources.length)}
+            sub={sources.join(', ')}
+          />
+          <ProvItem
+            label="First observation"
+            value={firstObs ? fmtFullDate(firstObs) : '—'}
+            sub="within last 365 days"
+          />
+          <ProvItem
+            label="Last verified"
+            value={fmtChecked(lastVerified)}
+            sub={
+              lastVerified
+                ? new Date(lastVerified).toLocaleString('en-CA')
+                : null
+            }
+          />
+          <ProvItem
+            label="Days of price data"
+            value={String(obsDays)}
+            sub="distinct dates with at least one observation"
+          />
+        </dl>
       </div>
     </section>
   );
 }
 
-function ActivityRow({
-  entry,
-  retailer,
-  first,
+function ProvItem({
+  label,
+  value,
+  sub,
 }: {
-  entry: ActivityEntry;
-  retailer: RetailerSnapshot | null;
-  first: boolean;
+  label: string;
+  value: string;
+  sub: string | null;
 }) {
-  let icon: React.ReactNode;
-  let text: React.ReactNode;
-  let tone = C.text;
-
-  if (entry.kind === 'drop') {
-    icon = <TrendingDown className="h-3.5 w-3.5" style={{ color: C.accent }} />;
-    tone = C.accent;
-    text = (
-      <>
-        Dropped <span style={{ color: C.textDim }}>{fmtPrice(entry.from)}</span>{' '}
-        <span style={{ color: C.border }}>→</span> {fmtPrice(entry.to)}{' '}
-        <span style={{ color: C.textDim }}>({fmtPrice(entry.delta)})</span>
-      </>
-    );
-  } else if (entry.kind === 'rise') {
-    icon = <TrendingUp className="h-3.5 w-3.5" style={{ color: C.danger }} />;
-    tone = C.danger;
-    text = (
-      <>
-        Raised <span style={{ color: C.textDim }}>{fmtPrice(entry.from)}</span>{' '}
-        <span style={{ color: C.border }}>→</span> {fmtPrice(entry.to)}{' '}
-        <span style={{ color: C.textDim }}>(+{fmtPrice(entry.delta)})</span>
-      </>
-    );
-  } else {
-    icon = <Star className="h-3.5 w-3.5" style={{ color: C.accent }} />;
-    tone = C.accent;
-    text = (
-      <>
-        New all-time low:{' '}
-        <span style={{ color: C.textDim }}>{fmtPrice(entry.from)}</span>{' '}
-        <span style={{ color: C.border }}>→</span> {fmtPrice(entry.to)}
-      </>
-    );
-  }
-
   return (
-    <li
-      className="flex items-center gap-3 px-4 py-2.5"
-      style={{
-        borderTop: first ? 'none' : `1px solid ${C.border}`,
-        fontFamily: FONT_DISPLAY,
-      }}
-    >
+    <div className="px-4 py-3" style={{ background: C.bgCard }}>
       <div
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm"
-        style={{ background: C.bgSecondary }}
+        className="text-[9px] uppercase tracking-wider"
+        style={{ color: C.textDim, fontFamily: FONT_DISPLAY }}
       >
-        {icon}
+        {label}
       </div>
-      {retailer && <RetailerBadge retailer={retailer} size={20} />}
-      <span
-        className="w-36 shrink-0 truncate"
-        style={{ color: C.text }}
+      <dd
+        className="mt-1 text-sm font-medium tabular-nums"
+        style={{ color: C.text, fontFamily: FONT_DISPLAY }}
       >
-        {retailer?.name ?? entry.retailerId}
-      </span>
-      <span
-        className="flex-1 truncate tabular-nums"
-        style={{ color: tone }}
-      >
-        {text}
-      </span>
-      <span className="shrink-0 text-[10px]" style={{ color: C.textDim }}>
-        {entry.when}
-      </span>
-    </li>
+        {value}
+      </dd>
+      {sub && (
+        <div
+          className="mt-1 text-[10px] leading-snug"
+          style={{ color: C.textDim }}
+        >
+          {sub}
+        </div>
+      )}
+    </div>
   );
 }
 
 /* ────────────────────────────────────────────────────────────────────────
    Page wrapper
+
+   New section order (catalog-frame):
+
+     StickyPriceBar
+     Breadcrumbs
+     Hero              — identity-first
+     ChipParentSection — identity context (GPU pages only)
+     Specs             — catalog data (was at bottom in an accordion)
+     PriceChart        — observations
+     ComparisonTable   — listings
+     ProvenanceFooter  — trust signals (new)
+
+   Diff vs previous draft, summarized:
+     - Specs moved from bottom to right after identity. Catalog data IS
+       identity; it does not belong below price observations.
+     - ActivityFeed cut entirely. "Dropped from $X to $Y" was a deals-site
+       framing of what the chart already shows.
+     - Watch / Share buttons cut. Set-Alert is the single CTA.
+     - Hero H1 promoted (md:text-5xl), price demoted (md:text-4xl). The
+       canonical name is the headline; price is one of its observations.
+     - "Best Canadian Price" eyebrow → "Lowest listed".
+     - Verdict tiles (vs ATL, vs Median) → fact tiles (Observed range,
+       Retailers, Last verified).
+     - "All-time Low" badge removed.
+     - Sticky-bar "Best at X" → just "X".
+     - ComparisonTable header: "Live price comparison" → "Retailer prices".
+     - "Best" cell badge → "Lowest" (descriptive, not deal-flavored).
+     - ProvenanceFooter added (existing data, no query changes).
    ──────────────────────────────────────────────────────────────────────── */
 
 export default function ProductPage({
@@ -1400,10 +1389,10 @@ export default function ProductPage({
       <Breadcrumbs crumbs={product.breadcrumbs} title={product.title} />
       <Hero product={product} heroRef={heroRef} onOpenAlert={openAlert} />
       {chipParent && <ChipParentSection chip={chipParent} />}
+      <Specs product={product} />
       <PriceChart product={product} />
       <ComparisonTable product={product} />
-      <Specs product={product} />
-      <ActivityFeed product={product} />
+      <ProvenanceFooter product={product} />
 
       <PriceAlertModal
         open={alertOpen}
