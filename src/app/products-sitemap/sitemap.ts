@@ -17,10 +17,14 @@ type ProductRow = {
  * Generates one sitemap file per chunk of ~40k products.
  * Accessed at /products-sitemap/sitemap/0.xml, /products-sitemap/sitemap/1.xml, etc.
  *
- * Uses the anon client (no cookies) because sitemaps run during build-time
- * static generation — cookies() isn't available in that context.
+ * Forced to run at request time (not build time) so we can see logs
+ * and so a transient backend issue at build time doesn't bake an empty
+ * sitemap into the deployment for 24 hours.
  */
 export async function generateSitemaps() {
+  const reqId = Math.random().toString(36).slice(2, 8);
+  console.log(`[sitemap:${reqId}] generateSitemaps START`);
+
   const supabase = createAnonSupabaseClient();
   const { count, error } = await supabase
     .from('canonical_products')
@@ -28,13 +32,15 @@ export async function generateSitemaps() {
     .not('image_url', 'is', null);
 
   if (error) {
-    console.error('[sitemap] generateSitemaps count query failed:', error);
+    console.error(`[sitemap:${reqId}] generateSitemaps count error:`, JSON.stringify(error));
   }
-  console.log('[sitemap] generateSitemaps productCount:', count);
+  console.log(`[sitemap:${reqId}] generateSitemaps count=${count}`);
 
   const productCount = count ?? 0;
   const chunkCount = Math.max(1, Math.ceil(productCount / URLS_PER_CHUNK));
-  return Array.from({ length: chunkCount }, (_, i) => ({ id: i }));
+  const result = Array.from({ length: chunkCount }, (_, i) => ({ id: i }));
+  console.log(`[sitemap:${reqId}] generateSitemaps returning ${chunkCount} chunks`);
+  return result;
 }
 
 export default async function sitemap({
@@ -42,6 +48,9 @@ export default async function sitemap({
 }: {
   id: number;
 }): Promise<MetadataRoute.Sitemap> {
+  const reqId = Math.random().toString(36).slice(2, 8);
+  console.log(`[sitemap:${reqId}] sitemap chunk=${id} START`);
+
   const supabase = createAnonSupabaseClient();
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://trackaura.com';
   const chunkStart = id * URLS_PER_CHUNK;
@@ -54,6 +63,7 @@ export default async function sitemap({
 
   while (pageStart <= chunkEnd) {
     const pageEnd = Math.min(pageStart + SUPABASE_PAGE_SIZE - 1, chunkEnd);
+    console.log(`[sitemap:${reqId}] page ${pageNum} fetching range ${pageStart}-${pageEnd}`);
 
     const { data: rows, error } = await supabase
       .from('canonical_products')
@@ -63,24 +73,20 @@ export default async function sitemap({
       .range(pageStart, pageEnd);
 
     if (error) {
-      console.error('[sitemap] page query failed', {
-        chunkId: id,
-        pageNum,
-        pageStart,
-        pageEnd,
-        error,
-      });
+      console.error(`[sitemap:${reqId}] page ${pageNum} error:`, JSON.stringify(error));
       break;
     }
 
     if (!rows || rows.length === 0) {
+      console.log(`[sitemap:${reqId}] page ${pageNum} empty, stopping`);
       break;
     }
 
     allRows.push(...rows);
+    console.log(`[sitemap:${reqId}] page ${pageNum} got ${rows.length} rows (total: ${allRows.length})`);
 
-    // Last page: short read means we've hit the end of the result set.
     if (rows.length < pageEnd - pageStart + 1) {
+      console.log(`[sitemap:${reqId}] short read, stopping`);
       break;
     }
 
@@ -88,7 +94,7 @@ export default async function sitemap({
     pageNum += 1;
   }
 
-  console.log('[sitemap] chunk', id, 'fetched', allRows.length, 'rows across', pageNum + 1, 'pages');
+  console.log(`[sitemap:${reqId}] sitemap chunk=${id} DONE total=${allRows.length}`);
 
   return allRows.map((r) => ({
     url: `${base}/p/${r.slug}`,
@@ -98,5 +104,8 @@ export default async function sitemap({
   }));
 }
 
-// Refresh each chunk once a day. Scraper cadence is slower than this.
-export const revalidate = 86_400;
+// Force every request to execute the route fresh. We've been chasing a
+// build-cache ghost; this kills the ambiguity. CDN/edge caching still
+// applies via Cache-Control headers Next.js sets at the response layer.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
